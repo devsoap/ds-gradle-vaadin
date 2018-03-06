@@ -1,0 +1,105 @@
+/***********************************************************************************************************************
+ *
+ * Plugins
+ *
+ **********************************************************************************************************************/
+
+plugins {
+    id 'java-gradle-plugin'
+    id 'groovy'
+    id 'idea'
+}
+
+/***********************************************************************************************************************
+ *
+ * Basic properties
+ *
+ **********************************************************************************************************************/
+
+defaultTasks 'jar'
+group 'com.devsoap'
+version = project.hasProperty('BUILD_VERSION') ? getProperty('BUILD_VERSION') : 'SNAPSHOT-'+ new Date().format('yyyyMMdd')
+archivesBaseName = 'gradle-vaadin-flow-plugin'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+
+/***********************************************************************************************************************
+ *
+ * Repositories & Dependencies
+ *
+ **********************************************************************************************************************/
+
+dependencies {
+  compile localGroovy()
+}
+
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
+
+/***********************************************************************************************************************
+ *
+ * Artifacts
+ *
+ **********************************************************************************************************************/
+
+jar {
+    manifest{
+        attributes(
+                'Vaadin-Package-Version': 1,
+                'Implementation-Title': 'Vaadin Flow Plugin for Gradle',
+                'Implementation-Version': version,
+                'Implementation-Vendor': 'John Ahlroos',
+        )
+    }
+    from 'gradle.properties'
+}
+
+
+/**
+ * Plugin artifact sources.
+ */
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+    include 'com/**/*.groovy'
+    include 'com/**/*.java'
+}
+
+
+/**
+ * Artifacts in build
+ */
+artifacts {
+    archives jar
+    archives sourcesJar
+}
+
+/**
+ * API documentation
+ */
+groovydoc {
+    docTitle = "Gradle Vaadin Flow Plugin $version API"
+    windowTitle = "Gradle Vaadin Flow Plugin Version $version"
+    footer = "Gradle Vaadin Flow Plugin is maintained by <a href=\"https://github.com/johndevs/\">@johndevs</a>. Copyright © 2018"
+}
+
+
+/***********************************************************************************************************************
+ *
+ * Deployment
+ *
+ ***********************************************************************************************************************/
+
+gradlePlugin {
+    plugins {
+        vaadinPlugin {
+            id = 'com.devsoap.vaadin-flow'
+            implementationClass = 'com.devsoap.vaadinflow.VaadinFlowPlugin'
+        }
+    }
+}
