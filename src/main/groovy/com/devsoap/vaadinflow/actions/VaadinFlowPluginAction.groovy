@@ -13,31 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.devsoap.vaadinflow
+package com.devsoap.vaadinflow.actions
 
-import com.devsoap.vaadinflow.actions.PluginAction
-import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
-import org.gradle.api.Plugin
+import com.devsoap.vaadinflow.VaadinFlowPlugin
 import org.gradle.api.Project
 
 /**
- * Main plugin class
+ * Action taken when the Vaadin plugin is applied to a project
  *
  * @author John Ahlroos
  * @since 1.0
  */
-class VaadinFlowPlugin implements Plugin<Project> {
+class VaadinFlowPluginAction extends PluginAction {
 
-    static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
-
-    private final List<PluginAction> actions = []
-
-    VaadinFlowPlugin() {
-        actions << new VaadinFlowPluginAction()
+    @Override
+    String getPluginId() {
+        VaadinFlowPlugin.PLUGIN_ID
     }
 
     @Override
     void apply(Project project) {
-       actions.each { it.apply(project)}
+        super.apply(project)
+        project.plugins.apply('java')
     }
 }
