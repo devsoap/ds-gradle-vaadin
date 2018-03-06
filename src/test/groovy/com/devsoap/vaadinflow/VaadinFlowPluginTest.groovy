@@ -15,29 +15,21 @@
  */
 package com.devsoap.vaadinflow
 
-import com.devsoap.vaadinflow.actions.PluginAction
-import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
-import org.gradle.api.Plugin
-import org.gradle.api.Project
+import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 /**
- * Main plugin class
+ * Test the basic vaadin plugin features defined in the VaadinFlowPlugin
  *
  * @author John Ahlroos
  * @since 1.0
  */
-class VaadinFlowPlugin implements Plugin<Project> {
+class VaadinFlowPluginTest extends FunctionalTest {
 
-    static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
-
-    private final List<PluginAction> actions = []
-
-    VaadinFlowPlugin() {
-        actions << new VaadinFlowPluginAction()
-    }
-
-    @Override
-    void apply(Project project) {
-       actions.each { it.apply(project)}
+    def "can successfully be applied to project"() {
+        when:
+            def result = run("jar")
+        then:
+            println(result.output)
+            result.task(":jar").outcome == SUCCESS
     }
 }
