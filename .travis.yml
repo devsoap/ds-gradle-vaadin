@@ -1,0 +1,11 @@
+language: groovy
+jdk:
+  - oraclejdk8
+script: "./gradlew --stacktrace check"
+branches:
+  only:
+    - "master"
+cache:
+  directories:
+    - $HOME/.m2
+    - $HOME/.gradle
