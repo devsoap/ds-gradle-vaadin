@@ -23,6 +23,24 @@ archivesBaseName = 'gradle-vaadin-flow-plugin'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+/***********************************************************************************************************************
+ *
+ * Sources
+ *
+ **********************************************************************************************************************/
+
+sourceSets {
+    functionalTest {
+        groovy {
+            srcDir file('src/functionalTest/groovy')
+        }
+        resources {
+            srcDir file('src/functionalTest/resources')
+        }
+        compileClasspath += sourceSets.main.output + configurations.testRuntime
+        runtimeClasspath += output + compileClasspath
+    }
+}
 
 /***********************************************************************************************************************
  *
@@ -99,11 +117,23 @@ groovydoc {
 
 /***********************************************************************************************************************
  *
+ * Testing
+ *
+ ***********************************************************************************************************************/
+task functionalTest(type: Test) {
+    testClassesDirs = sourceSets.functionalTest.output.classesDirs
+    classpath = sourceSets.functionalTest.runtimeClasspath
+}
+check.dependsOn functionalTest
+
+
+/***********************************************************************************************************************
+ *
  * Deployment
  *
  ***********************************************************************************************************************/
-
 gradlePlugin {
+    testSourceSets sourceSets.functionalTest
     plugins {
         vaadinPlugin {
             id = 'com.devsoap.vaadin-flow'
@@ -111,11 +141,3 @@ gradlePlugin {
         }
     }
 }
-
-
-
-/***********************************************************************************************************************
- *
- * Testing
- *
- ***********************************************************************************************************************/
