@@ -19,7 +19,7 @@ plugins {
 
 defaultTasks 'jar'
 group 'com.devsoap'
-version = project.hasProperty('BUILD_VERSION') ? getProperty('BUILD_VERSION') : 'SNAPSHOT-'+ new Date().format('yyyyMMdd')
+version = project.hasProperty('BUILD_VERSION') ? getProperty('BUILD_VERSION') : '1.0-SNAPSHOT-'+ new Date().format('yyyyMMdd')
 archivesBaseName = 'gradle-vaadin-flow-plugin'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
