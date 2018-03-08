@@ -29,17 +29,17 @@ import spock.lang.Specification
  */
 class FunctionalTest extends Specification {
 
-    static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
+    private static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
     @Rule
-    TemporaryFolder testProjectDir
+    protected TemporaryFolder testProjectDir
 
-    File buildFile
+    protected File buildFile
 
     /**
      * Sets up the test
      */
-    def setup() {
+    protected void setup() {
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << """
             plugins {
@@ -56,7 +56,7 @@ class FunctionalTest extends Specification {
      * @return
      *      the result of the build
      */
-    BuildResult run(String... args) {
+    protected BuildResult run(String... args) {
         GradleRunner.create()
                 .withProjectDir(testProjectDir.root)
                 .withArguments(args)

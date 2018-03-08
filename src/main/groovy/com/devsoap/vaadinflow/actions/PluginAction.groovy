@@ -15,7 +15,7 @@
  */
 package com.devsoap.vaadinflow.actions
 
-import com.devsoap.vaadinflow.VaadinFlowPlugin;
+import com.devsoap.vaadinflow.VaadinFlowPlugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.execution.TaskExecutionListener
@@ -55,7 +55,7 @@ abstract class PluginAction {
      * @param project
      *      the project which was evaluated
      */
-    protected void executeAfterEvaluate(Project project){
+    protected void executeAfterEvaluate(Project project) {
         project.logger.debug("Executing afterEvaluate hook for ${getClass().simpleName}")
     }
 
