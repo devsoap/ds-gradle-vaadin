@@ -17,6 +17,8 @@ package com.devsoap.vaadinflow
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
+import org.gradle.testkit.runner.BuildResult
+
 /**
  * Test the basic vaadin plugin features defined in the VaadinFlowPlugin
  *
@@ -25,11 +27,10 @@ import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
  */
 class VaadinFlowPluginTest extends FunctionalTest {
 
-    def "can successfully be applied to project"() {
+    void "can successfully be applied to project"() {
         when:
-            def result = run("jar")
+            BuildResult result = run('jar')
         then:
-            println(result.output)
-            result.task(":jar").outcome == SUCCESS
+            result.task(':jar').outcome == SUCCESS
     }
 }

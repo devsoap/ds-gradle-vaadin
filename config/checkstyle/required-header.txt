@@ -1,7 +1,7 @@
-/*
- * Copyright 2018 Devsoap Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
+^/\*\s*$
+^ \* Copyright 2018 Devsoap Inc.$
+^ \*\s*$
+^ \* Licensed under the Apache License, Version 2\.0 \(the "License"\);\s*$
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -13,8 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * The root package for the plugin. Every class of the plugin resides under this.
- */
-package com.devsoap.vaadinflow

@@ -3,11 +3,12 @@
  * Plugins
  *
  **********************************************************************************************************************/
-
 plugins {
     id 'java-gradle-plugin'
     id 'groovy'
     id 'idea'
+    id 'codenarc'
+    id 'checkstyle'
 }
 
 /***********************************************************************************************************************
@@ -117,7 +118,7 @@ groovydoc {
 
 /***********************************************************************************************************************
  *
- * Testing
+ * Testing & Quality
  *
  ***********************************************************************************************************************/
 task functionalTest(type: Test) {
@@ -126,7 +127,34 @@ task functionalTest(type: Test) {
 }
 check.dependsOn functionalTest
 
+codenarc{
+    toolVersion = '0.27.0'
+    configFile = rootProject.file('config/codenarc/ruleset.groovy')
+    maxPriority1Violations = 0
+    maxPriority2Violations = 0
+    maxPriority3Violations = 0
+    codenarcFunctionalTest {
+        configFile = rootProject.file('config/codenarc/ruleset-test.groovy')
+    }
+    codenarcTest {
+        configFile = rootProject.file('config/codenarc/ruleset-test.groovy')
+    }
+}
 
+checkstyle {
+    configDir = rootProject.file('config/checkstyle')
+}
+
+plugins.withType(GroovyBasePlugin) {
+    sourceSets.all { sourceSet ->
+        task "${sourceSet.getTaskName('checkstyle', 'groovy')}"(type: Checkstyle) {
+            configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+            source sourceSet.allGroovy
+            classpath = sourceSet.compileClasspath
+            reports.xml.destination rootProject.file("build/reports/checkstyle/${sourceSet.name}.xml")
+        }
+    }
+}
 /***********************************************************************************************************************
  *
  * Deployment

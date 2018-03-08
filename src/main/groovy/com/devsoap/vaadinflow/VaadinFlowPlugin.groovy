@@ -38,6 +38,6 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-       actions.each { it.apply(project)}
+       actions.each { it.apply(project) }
     }
 }
