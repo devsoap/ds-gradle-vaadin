@@ -9,6 +9,7 @@ plugins {
     id 'idea'
     id 'codenarc'
     id 'checkstyle'
+    id 'com.gradle.plugin-publish' version '0.9.10'
 }
 
 /***********************************************************************************************************************
@@ -167,5 +168,22 @@ gradlePlugin {
             id = 'com.devsoap.vaadin-flow'
             implementationClass = 'com.devsoap.vaadinflow.VaadinFlowPlugin'
         }
+    }
+}
+
+pluginBundle {
+    website = 'https://github.com/devsoap/gradle-vaadin-flow/wiki'
+    vcsUrl = 'https://github.com/devsoap/gradle-vaadin-flow'
+    description = 'Build Vaadin Flow applications with Gradle!'
+    tags = ['vaadin', 'vaadin-flow', 'vaadin-elements', 'polymer', 'java', 'groovy', 'kotlin']
+    plugins {
+        vaadinPlugin {
+            id = gradlePlugin.plugins.vaadinPlugin.id
+            displayName = 'Gradle Vaadin Flow plugin'
+        }
+    }
+    mavenCoordinates {
+        groupId = project.group
+        artifactId = project.archivesBaseName
     }
 }
