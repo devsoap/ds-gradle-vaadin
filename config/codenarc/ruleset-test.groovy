@@ -94,7 +94,6 @@ ruleset {
     LongLiteralWithLowerCaseL
     NoDef
     NoTabCharacter
-    ParameterReassignment
     TernaryCouldBeElvis
     TrailingComma
     VectorIsObsolete

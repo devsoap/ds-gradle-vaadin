@@ -56,12 +56,38 @@ class FunctionalTest extends Specification {
      * @return
      *      the result of the build
      */
-    protected BuildResult run(String... args) {
-        GradleRunner.create()
+    protected BuildResult run(ConfigureRunner config = { }, String... args) {
+        GradleRunner runner = GradleRunner.create()
                 .withProjectDir(testProjectDir.root)
                 .withArguments(args)
                 .withPluginClasspath()
-                .build()
+        config.run(runner)
+        runner.build()
+    }
+
+    /**
+     * Runs the project and is expected to fail
+     *
+     * @param args
+     *      the command line arguments to pass to gradle
+     * @return
+     *       the result of the build
+     */
+    protected BuildResult runAndFail(ConfigureRunner config = { }, String... args) {
+        GradleRunner runner = GradleRunner.create()
+                .withProjectDir(testProjectDir.root)
+                .withArguments(args)
+                .withPluginClasspath()
+        config.run(runner)
+        runner.buildAndFail()
+    }
+
+    /**
+     * Interface representing a GradleRunner configuration closure
+     */
+    @FunctionalInterface
+    interface ConfigureRunner {
+        void run(GradleRunner runner)
     }
 
 }
