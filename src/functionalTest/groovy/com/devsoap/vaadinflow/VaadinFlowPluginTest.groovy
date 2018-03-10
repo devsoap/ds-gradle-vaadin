@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 import org.gradle.testkit.runner.BuildResult
+import spock.lang.Unroll
 
 /**
  * Test the basic vaadin plugin features defined in the VaadinFlowPlugin
@@ -27,10 +28,30 @@ import org.gradle.testkit.runner.BuildResult
  */
 class VaadinFlowPluginTest extends FunctionalTest {
 
-    void "can successfully be applied to project"() {
+    void 'can successfully be applied to project'() {
         when:
-            BuildResult result = run('jar')
+            BuildResult result = run'jar'
         then:
             result.task(':jar').outcome == SUCCESS
+    }
+
+    @Unroll
+    void '#version is an invalid gradle version'(String version) {
+        when:
+            BuildResult result = runAndFail({ it.withGradleVersion(version) }, '--info', 'jar')
+        then:
+            result.output.contains("Your gradle version ($version.0) is too old")
+        where:
+            version = '4.5'
+    }
+
+    @Unroll
+    void '#version is a valid gradle version'(String version) {
+        when:
+             BuildResult result = run({ it.withGradleVersion(version) }, 'jar')
+        then:
+            result.task(':jar').outcome == SUCCESS
+        where:
+            version = '4.6'
     }
 }

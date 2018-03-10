@@ -17,8 +17,12 @@ package com.devsoap.vaadinflow
 
 import com.devsoap.vaadinflow.actions.PluginAction
 import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
+import com.devsoap.vaadinflow.util.Versions
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.invocation.Gradle
+import org.gradle.tooling.UnsupportedVersionException
+import org.gradle.util.VersionNumber
 
 /**
  * Main plugin class
@@ -38,6 +42,18 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-       actions.each { it.apply(project) }
+        validateGradleVersion(project)
+        actions.each { it.apply(project) }
+    }
+
+    private static void validateGradleVersion(Project project) {
+        Gradle gradle = project.gradle
+        VersionNumber version = VersionNumber.parse(gradle.gradleVersion)
+        VersionNumber requiredVersion = Versions.version('vaadin.plugin.gradle.version')
+        println(requiredVersion)
+        if ( version.baseVersion < requiredVersion ) {
+            throw new UnsupportedVersionException("Your gradle version ($version) is too old. " +
+                    "Plugin requires Gradle $requiredVersion+")
+        }
     }
 }
