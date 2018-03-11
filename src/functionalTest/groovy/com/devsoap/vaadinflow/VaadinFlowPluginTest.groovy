@@ -48,10 +48,28 @@ class VaadinFlowPluginTest extends FunctionalTest {
     @Unroll
     void '#version is a valid gradle version'(String version) {
         when:
-             BuildResult result = run({ it.withGradleVersion(version) }, 'jar')
+            BuildResult result = run({ it.withGradleVersion(version) }, 'jar')
         then:
             result.task(':jar').outcome == SUCCESS
         where:
             version = '4.6'
+    }
+
+    void 'server dependencies are applied to project'() {
+        setup:
+            buildFile << """
+                repositories {
+                    mavenCentral()
+                    vaadin.prereleases()
+                }
+                dependencies {
+                    implementation vaadin.dependency('core')
+                }
+            """.stripMargin()
+            run  'vaadinCreateProject'
+        when:
+            BuildResult result = run'jar'
+        then:
+            result.task(':jar').outcome == SUCCESS
     }
 }

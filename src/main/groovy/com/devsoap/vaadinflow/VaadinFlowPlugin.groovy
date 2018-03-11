@@ -17,6 +17,7 @@ package com.devsoap.vaadinflow
 
 import com.devsoap.vaadinflow.actions.PluginAction
 import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.CreateProjectTask
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
@@ -47,7 +48,50 @@ class VaadinFlowPlugin implements Plugin<Project> {
     void apply(Project project) {
         validateGradleVersion(project)
         actions.each { it.apply(project) }
+
+        project.extensions.create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project)
+
         project.tasks.create(CreateProjectTask.NAME, CreateProjectTask)
+
+        addServletApi(project)
+
+        workaroundInvalidBomVersionRanges(project)
+    }
+
+    private static void addServletApi(Project project) {
+        project.configurations.getByName('compileOnly').defaultDependencies { dependencies ->
+            String version = Versions.rawVersion('servlet.version')
+            dependencies.add(project.dependencies.create("javax.servlet:javax.servlet-api:$version"))
+        }
+    }
+
+    /**
+     * Looks like vaadins BOM is using invalid version ranges which do not account for alpha/beta releases.
+     * Workaround it here by using the '+' notation.
+     *
+     * FIXME This is a ugly hack that should be removed once Vaadin gets its BOMs fixed.
+     *
+     * @param project
+     *      the project
+     */
+    private static void workaroundInvalidBomVersionRanges(Project project) {
+        project.configurations.all {
+            it.resolutionStrategy.eachDependency { dep ->
+
+                // Mitigate issues with ranges
+                if (dep.requested.group == 'org.webjars.bowergithub.vaadin' && dep.requested.version.startsWith('[')) {
+                    // Convert version range [1.2.3,4) -> 3+
+                    int maxVersion = Integer.parseInt(dep.requested.version.split(',')[1] - ')')
+                    String baseVersion = (maxVersion - 1) + '+'
+                    dep.useVersion(baseVersion)
+                }
+
+                // Mitigate #116
+                if (dep.requested.name == 'vaadin-checkbox') {
+                    dep.useVersion('2.0.0-alpha7')
+                }
+            }
+        }
     }
 
     private static void validateGradleVersion(Project project) {
