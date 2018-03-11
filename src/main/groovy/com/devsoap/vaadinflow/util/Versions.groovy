@@ -15,7 +15,7 @@
  */
 package com.devsoap.vaadinflow.util
 
-import groovy.transform.Memoized
+import groovy.util.logging.Log
 import org.gradle.util.VersionNumber
 
 /**
@@ -24,6 +24,7 @@ import org.gradle.util.VersionNumber
  * @author John Ahlroos
  * @since 1.0
  */
+@Log('LOGGER')
 class Versions {
 
     private Versions() { }
@@ -36,15 +37,28 @@ class Versions {
      * @return
      *      the version number. If not found VersionNumber.UNKNOWN is returned.
      */
-    @Memoized
     static final VersionNumber version(String key) {
+        String versionString = rawVersion(key)
+        versionString != null ? VersionNumber.parse(versionString) : VersionNumber.UNKNOWN
+    }
+
+    /**
+     * Get a raw version string for a key
+     *
+     * @param key
+     *      the key to get the version for
+     * @return
+     *      the raw version number as it has been defined in the properties file
+     */
+    static final String rawVersion(String key) {
         Properties properties = new Properties()
         Versions.getResourceAsStream( '/versions.properties' ).with {
             properties.load(it)
         }
         if (properties.get(key)) {
-            return VersionNumber.parse(properties.get(key).toString())
+            return properties.get(key).toString()
         }
-        VersionNumber.UNKNOWN
+        LOGGER.warning("Failed to find key $key in versions.properties")
+        null
     }
 }

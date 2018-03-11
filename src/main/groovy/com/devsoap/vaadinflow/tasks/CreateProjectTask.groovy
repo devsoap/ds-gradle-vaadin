@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow.tasks
 import com.devsoap.vaadinflow.creators.VaadinProjectCreator
 import com.devsoap.vaadinflow.models.VaadinProject
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 

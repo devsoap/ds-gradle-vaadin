@@ -15,9 +15,9 @@
  */
 package com.devsoap.vaadinflow
 
-import spock.lang.Unroll
-
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
+
+import spock.lang.Unroll
 
 import org.gradle.testkit.runner.BuildResult
 
@@ -56,11 +56,11 @@ class CreateProjectTest extends FunctionalTest {
             File rootDir = testProjectDir.root
             File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
             File pkg = Paths.get(javaSourceDir.canonicalPath, applicationPackage.split('\\.')).toFile()
-            File servletFile = Paths.get(pkg.canonicalPath,"${applicationName}Servlet.java").toFile()
+            File servletFile = Paths.get(pkg.canonicalPath, "${applicationName}Servlet.java").toFile()
             File viewFile = Paths.get(pkg.canonicalPath, "${applicationName}View.java").toFile()
         when:
             BuildResult result = run'vaadinCreateProject',
-                    "--name=$applicationName","--package=$applicationPackage"
+                    "--name=$applicationName", "--package=$applicationPackage"
         then:
             result.task(':vaadinCreateProject').outcome == SUCCESS
             servletFile.exists()
@@ -77,8 +77,8 @@ class CreateProjectTest extends FunctionalTest {
             File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
             File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
                 testProjectDir.root.name.toLowerCase()).toFile()
-            File servletFile = Paths.get(pkg.canonicalPath,"123FooBarServlet.java").toFile()
-            File viewFile = Paths.get(pkg.canonicalPath, "123FooBarView.java").toFile()
+            File servletFile = Paths.get(pkg.canonicalPath, '123FooBarServlet.java').toFile()
+            File viewFile = Paths.get(pkg.canonicalPath, '123FooBarView.java').toFile()
         when:
             BuildResult result = run'vaadinCreateProject', '--name="*123-Foo bar"'
         then:
