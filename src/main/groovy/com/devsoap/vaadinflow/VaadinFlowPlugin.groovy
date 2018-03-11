@@ -17,7 +17,9 @@ package com.devsoap.vaadinflow
 
 import com.devsoap.vaadinflow.actions.PluginAction
 import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
+import com.devsoap.vaadinflow.tasks.CreateProjectTask
 import com.devsoap.vaadinflow.util.Versions
+import groovy.util.logging.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.invocation.Gradle
@@ -30,6 +32,7 @@ import org.gradle.util.VersionNumber
  * @author John Ahlroos
  * @since 1.0
  */
+@Log('LOGGER')
 class VaadinFlowPlugin implements Plugin<Project> {
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
@@ -44,13 +47,13 @@ class VaadinFlowPlugin implements Plugin<Project> {
     void apply(Project project) {
         validateGradleVersion(project)
         actions.each { it.apply(project) }
+        project.tasks.create(CreateProjectTask.NAME, CreateProjectTask)
     }
 
     private static void validateGradleVersion(Project project) {
         Gradle gradle = project.gradle
         VersionNumber version = VersionNumber.parse(gradle.gradleVersion)
         VersionNumber requiredVersion = Versions.version('vaadin.plugin.gradle.version')
-        println(requiredVersion)
         if ( version.baseVersion < requiredVersion ) {
             throw new UnsupportedVersionException("Your gradle version ($version) is too old. " +
                     "Plugin requires Gradle $requiredVersion+")

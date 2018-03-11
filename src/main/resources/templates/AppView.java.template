@@ -1,0 +1,29 @@
+package ${applicationPackage};
+
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.label.Label;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.page.BodySize;
+import com.vaadin.flow.router.Route;
+import com.vaadin.flow.theme.Theme;
+import com.vaadin.flow.theme.lumo.Lumo;
+
+/**
+ * The main view of the application
+ */
+@Route("")
+@Theme(Lumo.class)
+@BodySize(height = "100vh", width = "100vw")
+public class ${applicationName}View extends VerticalLayout {
+
+    public ${applicationName}View() {
+
+        setClassName("app-view");
+
+        Label hello = new Label("Hello Gradle app!");
+        add(hello);
+
+        Button button = new Button("Click me", event -> hello.setValue("Clicked!"));
+        add(button);
+    }
+}

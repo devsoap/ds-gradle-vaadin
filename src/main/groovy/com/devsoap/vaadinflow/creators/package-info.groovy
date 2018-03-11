@@ -13,30 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.devsoap.vaadinflow.actions
-
-import com.devsoap.vaadinflow.VaadinFlowPlugin
-import com.devsoap.vaadinflow.creators.VaadinProjectCreator
-import groovy.util.logging.Log
-import org.gradle.api.Project
 
 /**
- * Action taken when the Vaadin plugin is applied to a project
- *
- * @author John Ahlroos
- * @since 1.0
+ * Contains classes for generating source code from templates
  */
-@Log('LOGGER')
-class VaadinFlowPluginAction extends PluginAction {
-
-    @Override
-    String getPluginId() {
-        VaadinFlowPlugin.PLUGIN_ID
-    }
-
-    @Override
-    void apply(Project project) {
-        super.apply(project)
-        project.plugins.apply('java')
-    }
-}
+package com.devsoap.vaadinflow.creators
