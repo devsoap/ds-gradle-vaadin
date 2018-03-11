@@ -39,6 +39,11 @@ class CreateProjectTask extends DefaultTask {
 
     private final VaadinProjectCreator projectCreator = new VaadinProjectCreator()
 
+    CreateProjectTask() {
+        description = 'Creates a Vaadin Flow project'
+        group = 'Vaadin'
+    }
+
     @TaskAction
     void run() {
         VaadinProject vaadinProject = VaadinProject.builder()
