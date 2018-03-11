@@ -32,10 +32,10 @@ class CreateProjectTask extends DefaultTask {
     static final String NAME = 'vaadinCreateProject'
 
     @Option(option = 'name', description = 'Application name')
-    private String applicationName
+    String applicationName
 
     @Option(option = 'package', description = 'Application UI package')
-    private String applicationPackage
+    String applicationPackage
 
     private final VaadinProjectCreator projectCreator = new VaadinProjectCreator()
 
