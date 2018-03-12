@@ -13,24 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.devsoap.vaadinflow.models
-
-import groovy.transform.builder.Builder
 
 /**
- * Model for representing a Vaadin Project
- *
- * @author John Ahlroos
- * @since 1.0
+ * Contains Gradle extensions
  */
-@Builder
-class VaadinProject {
-
-    String applicationName
-
-    String applicationPackage
-
-    String applicationBaseTheme
-
-    File rootDirectory
-}
+package com.devsoap.vaadinflow.extensions
