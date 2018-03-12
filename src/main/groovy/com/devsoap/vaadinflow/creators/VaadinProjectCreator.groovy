@@ -50,8 +50,7 @@ class VaadinProjectCreator {
                     'applicationPackage' : vaadinProject.applicationPackage,
                     'applicationName' : vaadinProject.applicationName
                 ])
-                .build()
-                .write()
+                .build().write()
 
         TemplateWriter.builder()
                 .templateFileName('AppView.java')
@@ -59,9 +58,10 @@ class VaadinProjectCreator {
                 .targetFileName("${appClassName}View.java")
                 .substitutions([
                         'applicationPackage': vaadinProject.applicationPackage,
-                        'applicationName' : vaadinProject.applicationName
+                        'applicationName' : vaadinProject.applicationName,
+                        'applicationBaseTheme' : vaadinProject.applicationBaseTheme,
+                        'applicationTheme' : vaadinProject.applicationName.toLowerCase() + '-theme.css'
                 ])
-                .build()
-                .write()
+                .build().write()
     }
 }

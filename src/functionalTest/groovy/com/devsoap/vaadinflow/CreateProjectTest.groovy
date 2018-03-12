@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow
 
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 import spock.lang.Unroll
@@ -42,7 +43,7 @@ class CreateProjectTest extends FunctionalTest {
             File viewFile = Paths.get(pkg.canonicalPath,
                     "${testProjectDir.root.name.capitalize()}View.java").toFile()
         when:
-            BuildResult result = run'--info', 'vaadinCreateProject'
+            BuildResult result = run'vaadinCreateProject'
         then:
             result.task(':vaadinCreateProject').outcome == SUCCESS
             servletFile.exists()
@@ -70,7 +71,6 @@ class CreateProjectTest extends FunctionalTest {
             applicationPackage = 'bar.baz'
     }
 
-    @Unroll
     void '*123-foo bar is converted to a valid application name'() {
         setup:
             File rootDir = testProjectDir.root
@@ -85,5 +85,54 @@ class CreateProjectTest extends FunctionalTest {
             result.task(':vaadinCreateProject').outcome == SUCCESS
             servletFile.exists()
             viewFile.exists()
+    }
+
+    void 'default theme is created'() {
+        setup:
+            File rootDir = testProjectDir.root
+            File webappDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'webapp').toFile()
+            File frontendDir = new File(webappDir, 'frontend')
+            File cssFile = new File(frontendDir, rootDir.name.toLowerCase() + '-theme.css')
+
+            File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
+            File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
+                testProjectDir.root.name.toLowerCase()).toFile()
+            File viewFile = Paths.get(pkg.canonicalPath,
+                "${testProjectDir.root.name.capitalize()}View.java").toFile()
+        when:
+            BuildResult result = run 'vaadinCreateProject'
+        then:
+            result.task(':vaadinCreateProject').outcome == SUCCESS
+            cssFile.exists()
+            cssFile.text.contains('This file contains the Application theme')
+            viewFile.exists()
+            viewFile.text.contains("@StyleSheet(\"frontend://${cssFile.name}\")")
+            viewFile.text.contains('@Theme(Lumo.class)')
+    }
+
+    void 'Material base theme is used'() {
+        setup:
+            File rootDir = testProjectDir.root
+            File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
+            File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
+                    testProjectDir.root.name.toLowerCase()).toFile()
+            File viewFile = Paths.get(pkg.canonicalPath,
+                    "${testProjectDir.root.name.capitalize()}View.java").toFile()
+        when:
+            BuildResult result = run 'vaadinCreateProject', '--baseTheme=Material'
+        then:
+            result.task(':vaadinCreateProject').outcome == SUCCESS
+            viewFile.exists()
+            viewFile.text.contains('@Theme(Material.class)')
+    }
+
+    @Unroll
+    void 'setting base theme to #baseTheme fails'(String baseTheme) {
+        when:
+            BuildResult result = runAndFail( 'vaadinCreateProject', "--baseTheme=$baseTheme")
+        then:
+            result.task(':vaadinCreateProject').outcome == FAILED
+        where:
+            baseTheme = 'foobar'
     }
 }
