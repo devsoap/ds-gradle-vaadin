@@ -37,6 +37,8 @@ class VaadinFlowPluginTest extends FunctionalTest {
 
     @Unroll
     void '#version is an invalid gradle version'(String version) {
+        setup:
+            settingsFile.text = ''
         when:
             BuildResult result = runAndFail({ it.withGradleVersion(version) }, '--info', 'jar')
         then:
@@ -55,21 +57,87 @@ class VaadinFlowPluginTest extends FunctionalTest {
             version = '4.6'
     }
 
-    void 'server dependencies are applied to project'() {
+    @Unroll
+    void 'use vaadin version #version'(String version) {
         setup:
             buildFile << """
+                vaadin {
+                    version '$version'
+                }
                 repositories {
                     mavenCentral()
                     vaadin.prereleases()
                 }
                 dependencies {
-                    implementation vaadin.dependency('core')
+                    implementation vaadin.core()
                 }
             """.stripMargin()
+        when:
+            BuildResult result = run('dependencyInsight', '--dependency', 'com.vaadin:flow-server')
+        then:
+            result.task(':dependencyInsight').outcome == SUCCESS
+            result.output.contains("com.vaadin:vaadin-core:$version")
+        where:
+            version = '10.0.0.beta1'
+    }
+
+    void 'server dependencies are applied to project'() {
+        setup:
+            buildFile << '''
+                repositories {
+                    mavenCentral()
+                    vaadin.prereleases()
+                }
+                dependencies {
+                    implementation vaadin.core()
+                }
+            '''.stripMargin()
             run  'vaadinCreateProject'
         when:
             BuildResult result = run'jar'
         then:
             result.task(':jar').outcome == SUCCESS
+    }
+
+    void 'individual dependencies are applied to project using BOM versions'() {
+        setup:
+            buildFile << '''
+                    repositories {
+                        mavenCentral()
+                        vaadin.prereleases()
+                    }
+                    dependencies {
+                        implementation vaadin.bom()
+                        implementation vaadin.dependency('lumo-theme', false)
+                        implementation vaadin.dependency('ordered-layout-flow', false)
+                        implementation vaadin.dependency('button-flow', false)
+                    }
+                '''.stripMargin()
+             run  'vaadinCreateProject'
+        when:
+            BuildResult result = run'jar'
+        then:
+            result.task(':jar').outcome == SUCCESS
+    }
+
+    void 'all repositories are added to project'() {
+        setup:
+        buildFile << '''
+                vaadin {
+                    version '10.0.0.beta1'
+                }
+                repositories {
+                    mavenCentral()
+                    vaadin.repositories()
+                }
+                dependencies {
+                    implementation vaadin.core()
+                }
+            '''.stripMargin()
+        when:
+            BuildResult result = run('dependencyInsight', '--dependency', 'com.vaadin:flow-server')
+        then:
+            result.task(':dependencyInsight').outcome == SUCCESS
+            result.output.contains('com.vaadin:vaadin-core:10.0.0.beta1')
     }
 }

@@ -36,6 +36,8 @@ class FunctionalTest extends Specification {
 
     protected File buildFile
 
+    protected File settingsFile
+
     /**
      * Sets up the test
      */
@@ -46,6 +48,11 @@ class FunctionalTest extends Specification {
                 id '$PLUGIN_ID'
             }
         """.stripMargin()
+
+        settingsFile = testProjectDir.newFile('settings.gradle')
+        settingsFile << '''
+            enableFeaturePreview('IMPROVED_POM_SUPPORT')
+        '''.stripMargin()
     }
 
     /**
