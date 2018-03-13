@@ -77,18 +77,11 @@ class VaadinFlowPlugin implements Plugin<Project> {
     private static void workaroundInvalidBomVersionRanges(Project project) {
         project.configurations.all {
             it.resolutionStrategy.eachDependency { dep ->
-
-                // Mitigate issues with ranges
                 if (dep.requested.group == 'org.webjars.bowergithub.vaadin' && dep.requested.version.startsWith('[')) {
                     // Convert version range [1.2.3,4) -> 3+
                     int maxVersion = Integer.parseInt(dep.requested.version.split(',')[1] - ')')
                     String baseVersion = (maxVersion - 1) + '+'
                     dep.useVersion(baseVersion)
-                }
-
-                // Mitigate #116
-                if (dep.requested.name == 'vaadin-checkbox') {
-                    dep.useVersion('2.0.0-alpha7')
                 }
             }
         }

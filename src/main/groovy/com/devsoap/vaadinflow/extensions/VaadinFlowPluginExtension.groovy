@@ -31,17 +31,18 @@ import org.gradle.api.provider.Property
  */
 class VaadinFlowPluginExtension {
 
-    static final NAME = 'vaadin'
+    static final String NAME = VAADIN
     static final String GROUP = 'com.vaadin'
+    static final String VAADIN = 'vaadin'
 
     private final Property<String> version
 
-    private final DependencyHandler dependencies
-    private final RepositoryHandler repositories
+    private final DependencyHandler dependencyHandler
+    private final RepositoryHandler repositoryHandler
 
     VaadinFlowPluginExtension(Project project) {
-        dependencies = project.dependencies
-        repositories = project.repositories
+        dependencyHandler = project.dependencies
+        repositoryHandler = project.repositories
         version = project.objects.property(String)
     }
 
@@ -86,6 +87,46 @@ class VaadinFlowPluginExtension {
     }
 
     /**
+     * Include the Vaadin addons repository
+     *
+     * Usage:
+     *    repositories {
+     *        vaadin.addons()
+     *    }
+     */
+    ArtifactRepository addons() {
+        repository('Vaadin Addons', 'http://maven.vaadin.com/vaadin-addons')
+    }
+
+    /**
+     * Add all Vaadin repositories
+     */
+    Collection<ArtifactRepository> repositories() {
+        [snapshots(), prereleases(), addons() ]
+    }
+
+    /**
+     * Adds the Vaadin platform dependency which contains all dependencies both commercial and open source
+     */
+    Dependency platform() {
+        dependency(VAADIN)
+    }
+
+    /**
+     * Add the core dependency with the open source components
+     */
+    Dependency core() {
+        dependency('core')
+    }
+
+    /**
+     * Add the BOM that provides the versions of the dependencies
+     */
+    Dependency bom() {
+        dependency('bom')
+    }
+
+    /**
      * Get a Vaadin dependency
      *
      * Usage:
@@ -98,12 +139,20 @@ class VaadinFlowPluginExtension {
      *      the dependency
      */
     Dependency dependency(String name, boolean useVersion=true) {
-        List<String> dependency = [GROUP, "vaadin-${name}"]
+        List<String> dependency = [GROUP]
+
+        if (name == VAADIN) {
+           dependency << name
+        } else {
+           dependency << "vaadin-${name}"
+        }
+
         if (useVersion) {
             String defaultVersion = Versions.rawVersion('vaadin.default.version')
             dependency << version.getOrElse(defaultVersion)
         }
-        dependencies.create(dependency.join(':'))
+
+        dependencyHandler.create(dependency.join(':'))
     }
 
     /**
@@ -115,7 +164,7 @@ class VaadinFlowPluginExtension {
      *      the url of the repository
      */
     private ArtifactRepository repository(String name, String url) {
-        repositories.maven { repository ->
+        repositoryHandler.maven { repository ->
             repository.name = name
             repository.url = url
         }
