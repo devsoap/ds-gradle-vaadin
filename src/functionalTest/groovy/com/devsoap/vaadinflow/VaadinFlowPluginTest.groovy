@@ -70,6 +70,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                 }
                 dependencies {
                     implementation vaadin.core()
+                    compileOnly vaadin.servletApi()
                 }
             """.stripMargin()
         when:
@@ -90,6 +91,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                 }
                 dependencies {
                     implementation vaadin.core()
+                    compileOnly vaadin.servletApi()
                 }
             '''.stripMargin()
             run  'vaadinCreateProject'
@@ -111,6 +113,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                         implementation vaadin.dependency('lumo-theme', false)
                         implementation vaadin.dependency('ordered-layout-flow', false)
                         implementation vaadin.dependency('button-flow', false)
+                        compileOnly vaadin.servletApi()
                     }
                 '''.stripMargin()
              run  'vaadinCreateProject'
@@ -132,6 +135,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                 }
                 dependencies {
                     implementation vaadin.core()
+                    compileOnly vaadin.servletApi()
                 }
             '''.stripMargin()
         when:

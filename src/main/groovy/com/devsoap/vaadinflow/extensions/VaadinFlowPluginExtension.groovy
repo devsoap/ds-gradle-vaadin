@@ -99,10 +99,10 @@ class VaadinFlowPluginExtension {
     }
 
     /**
-     * Add all Vaadin repositories
+     * Add all stable Vaadin repositories
      */
     Collection<ArtifactRepository> repositories() {
-        [snapshots(), prereleases(), addons() ]
+        [prereleases(), addons() ]
     }
 
     /**
@@ -124,6 +124,14 @@ class VaadinFlowPluginExtension {
      */
     Dependency bom() {
         dependency('bom')
+    }
+
+    /**
+     * Returns the servlet API dependency
+     */
+    Dependency servletApi() {
+        String version = Versions.rawVersion('servlet.version')
+        dependencyHandler.create("javax.servlet:javax.servlet-api:$version")
     }
 
     /**
