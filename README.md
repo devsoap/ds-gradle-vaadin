@@ -4,6 +4,8 @@ The Gradle Vaadin Flow plugin allows you to easily build Vaadin 10+ projects wit
 projects from pre-made project templates, themes and components. It handles cross-compiling for older browsers which do 
 not yet support ES6 and helps with integrating with other useful Gradle plugins.
 
+[![Build Status](https://api.travis-ci.org/devsoap/gradle-vaadin-flow.svg?branch=master)](https://travis-ci.org/devsoap/gradle-vaadin-flow)
+
 # Getting started
 
 To get started using the plugin have a look a the plugin Wiki at https://github.com/devsoap/gradle-vaadin-flow/wiki
