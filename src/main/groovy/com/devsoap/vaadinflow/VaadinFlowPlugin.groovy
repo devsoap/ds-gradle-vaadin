@@ -53,16 +53,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
         project.tasks.create(CreateProjectTask.NAME, CreateProjectTask)
 
-        addServletApi(project)
-
         workaroundInvalidBomVersionRanges(project)
-    }
-
-    private static void addServletApi(Project project) {
-        project.configurations.getByName('compileOnly').defaultDependencies { dependencies ->
-            String version = Versions.rawVersion('servlet.version')
-            dependencies.add(project.dependencies.create("javax.servlet:javax.servlet-api:$version"))
-        }
     }
 
     /**
