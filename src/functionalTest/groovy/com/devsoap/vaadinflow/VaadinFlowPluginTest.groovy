@@ -144,4 +144,16 @@ class VaadinFlowPluginTest extends FunctionalTest {
             result.task(':dependencyInsight').outcome == SUCCESS
             result.output.contains('com.vaadin:vaadin-core:10.0.0.beta1')
     }
+
+    void 'autoconfigure project'() {
+        setup:
+        buildFile << '''
+                vaadin.autoconfigure()
+            '''.stripMargin()
+            run  'vaadinCreateProject'
+        when:
+            BuildResult result = run'jar'
+        then:
+            result.task(':jar').outcome == SUCCESS
+    }
 }
