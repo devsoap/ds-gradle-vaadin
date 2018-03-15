@@ -47,6 +47,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
         validateGradleVersion(project)
+
         actions.each { it.apply(project) }
 
         project.extensions.create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project)
