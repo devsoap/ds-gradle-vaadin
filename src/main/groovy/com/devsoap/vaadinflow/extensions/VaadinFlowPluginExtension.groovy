@@ -61,6 +61,16 @@ class VaadinFlowPluginExtension {
     }
 
     /**
+     * Autoconfigures repositories and dependencies
+     */
+    void autoconfigure() {
+        repositoryHandler.mavenCentral()
+        repositoryHandler.addAll(repositories())
+        dependencyHandler.add('implementation', platform())
+        dependencyHandler.add('compileOnly', servletApi())
+    }
+
+    /**
      * Include Vaadin snapshots in the build
      *
      * Usage:
