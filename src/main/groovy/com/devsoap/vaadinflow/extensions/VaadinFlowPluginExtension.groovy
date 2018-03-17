@@ -69,9 +69,11 @@ class VaadinFlowPluginExtension {
      * Autoconfigures repositories and dependencies
      */
     void autoconfigure() {
-        repositoryHandler.mavenCentral()
+        repositoryHandler.jcenter()
         repositoryHandler.addAll(repositories())
         dependencyHandler.add('implementation', platform())
+        // Add to compile as well for backwards compatibility with 3rd party plugins
+        dependencyHandler.add('compile', platform())
         dependencyHandler.add('compileOnly', servletApi())
     }
 
