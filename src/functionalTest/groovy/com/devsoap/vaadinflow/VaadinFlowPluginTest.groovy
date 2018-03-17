@@ -147,7 +147,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
 
     void 'autoconfigure project'() {
         setup:
-        buildFile << '''
+            buildFile << '''
                 vaadin.autoconfigure()
             '''.stripMargin()
             run  'vaadinCreateProject'
@@ -155,5 +155,17 @@ class VaadinFlowPluginTest extends FunctionalTest {
             BuildResult result = run'jar'
         then:
             result.task(':jar').outcome == SUCCESS
+    }
+
+    void 'no vaadin version is set, fall back to latest version'() {
+        setup:
+            buildFile << '''
+                vaadin.autoconfigure()
+            '''.stripMargin()
+        when:
+            BuildResult result = run'jar'
+        then:
+            result.task(':jar').outcome == SUCCESS
+            result.output.contains('vaadin.version is not set, falling back to latest Vaadin version')
     }
 }

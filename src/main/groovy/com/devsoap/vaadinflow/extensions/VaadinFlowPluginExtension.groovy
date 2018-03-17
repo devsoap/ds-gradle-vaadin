@@ -16,6 +16,7 @@
 package com.devsoap.vaadinflow.extensions
 
 import com.devsoap.vaadinflow.util.Versions
+import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
@@ -29,18 +30,22 @@ import org.gradle.api.provider.Property
  * @author John Ahlroos
  * @since 1.0
  */
+@Log('LOGGER')
 class VaadinFlowPluginExtension {
 
     static final String NAME = VAADIN
     static final String GROUP = 'com.vaadin'
     static final String VAADIN = 'vaadin'
+    public static final String COLON = ':'
 
     private final Property<String> version
 
     private final DependencyHandler dependencyHandler
     private final RepositoryHandler repositoryHandler
+    private final Project project
 
     VaadinFlowPluginExtension(Project project) {
+        this.project = project
         dependencyHandler = project.dependencies
         repositoryHandler = project.repositories
         version = project.objects.property(String)
@@ -166,11 +171,18 @@ class VaadinFlowPluginExtension {
         }
 
         if (useVersion) {
-            String defaultVersion = Versions.rawVersion('vaadin.default.version')
-            dependency << version.getOrElse(defaultVersion)
+            if (version.present) {
+                dependency << version.get()
+            } else {
+                dependency << Versions.rawVersion('vaadin.default.version')
+                project.afterEvaluate {
+                    LOGGER.warning('vaadin.version is not set, ' +
+                            "falling back to latest Vaadin version for ${dependency.subList(0, 2).join(COLON)}")
+                }
+            }
         }
 
-        dependencyHandler.create(dependency.join(':'))
+        dependencyHandler.create(dependency.join(COLON))
     }
 
     /**
