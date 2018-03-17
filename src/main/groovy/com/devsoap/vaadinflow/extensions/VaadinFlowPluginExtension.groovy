@@ -75,6 +75,7 @@ class VaadinFlowPluginExtension {
         // Add to compile as well for backwards compatibility with 3rd party plugins
         dependencyHandler.add('compile', platform())
         dependencyHandler.add('compileOnly', servletApi())
+        dependencyHandler.add('runtime', slf4j())
     }
 
     /**
@@ -149,6 +150,15 @@ class VaadinFlowPluginExtension {
     Dependency servletApi() {
         String version = Versions.rawVersion('servlet.version')
         dependencyHandler.create("javax.servlet:javax.servlet-api:$version")
+    }
+
+    /**
+     * Returns the SLF4J simple implementation
+     * @return
+     */
+    Dependency slf4j() {
+        String version = Versions.rawVersion('slf4j.simple.version')
+        dependencyHandler.create("org.slf4j:slf4j-simple:$version")
     }
 
     /**
