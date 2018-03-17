@@ -16,7 +16,7 @@
 package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.VaadinFlowPlugin
-import com.devsoap.vaadinflow.creators.VaadinProjectCreator
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.Project
@@ -28,6 +28,7 @@ import org.gradle.api.invocation.Gradle
  * @author John Ahlroos
  * @since 1.0
  */
+@Log('LOGGER')
 class VaadinFlowPluginAction extends PluginAction {
 
     @Override
@@ -45,6 +46,10 @@ class VaadinFlowPluginAction extends PluginAction {
     protected void executeAfterEvaluate(Project project) {
         super.executeAfterEvaluate(project)
         VersionPrinter.instance.printIfNotPrintedBefore(project)
+        VaadinFlowPluginExtension vaadin = project.extensions['vaadin']
+        if (!vaadin.version) {
+            LOGGER.warning('vaadin.version is not set, falling back to latest Vaadin version')
+        }
     }
 
     @Singleton(lazy = false, strict = true)
