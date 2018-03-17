@@ -171,15 +171,7 @@ class VaadinFlowPluginExtension {
         }
 
         if (useVersion) {
-            if (version.present) {
-                dependency << version.get()
-            } else {
-                dependency << Versions.rawVersion('vaadin.default.version')
-                project.afterEvaluate {
-                    LOGGER.warning('vaadin.version is not set, ' +
-                            "falling back to latest Vaadin version for ${dependency.subList(0, 2).join(COLON)}")
-                }
-            }
+            dependency << version.getOrElse(Versions.rawVersion('vaadin.default.version'))
         }
 
         dependencyHandler.create(dependency.join(COLON))
