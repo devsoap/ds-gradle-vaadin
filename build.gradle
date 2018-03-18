@@ -108,7 +108,7 @@ jar {
                 'Vaadin-Package-Version': 1,
                 'Implementation-Title': 'Vaadin Flow Plugin for Gradle',
                 'Implementation-Version': version,
-                'Implementation-Vendor': 'John Ahlroos',
+                'Implementation-Vendor': 'Devsoap Inc.',
         )
     }
     from 'gradle.properties'
