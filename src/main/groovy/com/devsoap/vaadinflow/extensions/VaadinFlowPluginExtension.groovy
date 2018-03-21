@@ -17,6 +17,7 @@ package com.devsoap.vaadinflow.extensions
 
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
@@ -44,6 +45,8 @@ class VaadinFlowPluginExtension {
     private final RepositoryHandler repositoryHandler
     private final Project project
 
+    private boolean dependencyApplied = false
+
     VaadinFlowPluginExtension(Project project) {
         this.project = project
         dependencyHandler = project.dependencies
@@ -62,6 +65,9 @@ class VaadinFlowPluginExtension {
      * The vaadin version to use. By default latest Vaadin 7 version.
      */
     void setVersion(String version) {
+        if (dependencyApplied) {
+            throw new GradleException('Cannot set vaadin.version after dependencies have been added')
+        }
         this.version.set(version)
     }
 
@@ -186,6 +192,7 @@ class VaadinFlowPluginExtension {
             dependency << version.getOrElse(Versions.rawVersion('vaadin.default.version'))
         }
 
+        dependencyApplied = true
         dependencyHandler.create(dependency.join(COLON))
     }
 
