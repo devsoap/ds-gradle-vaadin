@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow
 
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 import org.gradle.testkit.runner.BuildResult
@@ -167,5 +168,21 @@ class VaadinFlowPluginTest extends FunctionalTest {
         then:
             result.task(':jar').outcome == SUCCESS
             result.output.contains('vaadin.version is not set, falling back to latest Vaadin version')
+    }
+
+    void 'not able to set version after dependency has been added'() {
+        setup:
+            buildFile << '''
+                dependencies {
+                    implementation vaadin.core()
+                }
+                vaadin {
+                    version 'x.x.x'
+                }
+            '''.stripMargin()
+        when:
+             BuildResult result = runAndFail'jar'
+        then:
+            result.output.contains 'Cannot set vaadin.version after dependencies have been added'
     }
 }
