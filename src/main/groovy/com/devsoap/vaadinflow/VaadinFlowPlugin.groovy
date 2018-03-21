@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow
 import com.devsoap.vaadinflow.actions.PluginAction
 import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
+import com.devsoap.vaadinflow.tasks.CompileTask
 import com.devsoap.vaadinflow.tasks.CreateProjectTask
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
@@ -52,7 +53,10 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
         project.extensions.create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project)
 
-        project.tasks.create(CreateProjectTask.NAME, CreateProjectTask)
+        project.tasks.with {
+            create(CreateProjectTask.NAME, CreateProjectTask)
+            create(CompileTask.NAME, CompileTask)
+        }
 
         workaroundInvalidBomVersionRanges(project)
     }
