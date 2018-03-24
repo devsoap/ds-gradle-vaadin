@@ -15,6 +15,8 @@
  */
 package com.devsoap.vaadinflow.extensions
 
+import com.devsoap.vaadinflow.models.VaadinCompileResolver
+import com.devsoap.vaadinflow.tasks.CompileTask
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.GradleException
@@ -72,16 +74,28 @@ class VaadinFlowPluginExtension {
     }
 
     /**
+     * Has dependencies been applied to the project
+     */
+    boolean isDependenciesApplied() {
+        dependencyApplied
+    }
+
+    /**
      * Autoconfigures repositories and dependencies
      */
     void autoconfigure() {
         repositoryHandler.jcenter()
         repositoryHandler.addAll(repositories())
-        dependencyHandler.add('implementation', platform())
-        // Add to compile as well for backwards compatibility with 3rd party plugins
-        dependencyHandler.add('compile', platform())
+
         dependencyHandler.add('compileOnly', servletApi())
         dependencyHandler.add('runtime', slf4j())
+
+        CompileTask vaadinCompile = project.tasks.getByName(CompileTask.NAME)
+        if (vaadinCompile.clientDependencyResolver.toUpperCase() == VaadinCompileResolver.WEBJAR.name()) {
+            dependencyHandler.add('implementation', platform())
+            // Add to compile as well for backwards compatibility with 3rd party plugins
+            dependencyHandler.add('compile', platform())
+        }
     }
 
     /**
@@ -180,6 +194,16 @@ class VaadinFlowPluginExtension {
      *      the dependency
      */
     Dependency dependency(String name, boolean useVersion=true) {
+        CompileTask vaadinCompile = project.tasks.getByName(CompileTask.NAME)
+        switch (vaadinCompile.clientDependencyResolver.toUpperCase()) {
+            case VaadinCompileResolver.WEBJAR.name():
+                return dependencyWebjar(name, useVersion)
+            default:
+                throw new GradleException("${vaadinCompile.clientDependencyResolver} not implementated")
+        }
+    }
+
+    private Dependency dependencyWebjar(String name, boolean useVersion=true) {
         List<String> dependency = [GROUP]
 
         if (name == VAADIN) {
@@ -196,14 +220,6 @@ class VaadinFlowPluginExtension {
         dependencyHandler.create(dependency.join(COLON))
     }
 
-    /**
-     * Define a Maven repository
-     *
-     * @param name
-     *      the name for the repository
-     * @param url
-     *      the url of the repository
-     */
     private ArtifactRepository repository(String name, String url) {
         repositoryHandler.maven { repository ->
             repository.name = name
