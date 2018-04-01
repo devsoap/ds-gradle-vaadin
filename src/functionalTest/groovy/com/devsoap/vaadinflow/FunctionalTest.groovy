@@ -29,7 +29,7 @@ import spock.lang.Specification
  */
 class FunctionalTest extends Specification {
 
-    private static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
+    static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
     @Rule
     protected TemporaryFolder testProjectDir
@@ -47,6 +47,7 @@ class FunctionalTest extends Specification {
             plugins {
                 id '$PLUGIN_ID'
             }
+
         """.stripMargin()
 
         settingsFile = testProjectDir.newFile('settings.gradle')

@@ -31,10 +31,7 @@ import org.gradle.api.invocation.Gradle
 @Log('LOGGER')
 class VaadinFlowPluginAction extends PluginAction {
 
-    @Override
-    String getPluginId() {
-        VaadinFlowPlugin.PLUGIN_ID
-    }
+    String pluginId = VaadinFlowPlugin.PLUGIN_ID
 
     @Override
     void apply(Project project) {
