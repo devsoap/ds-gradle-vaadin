@@ -79,10 +79,13 @@ processResources {
 
 repositories {
     jcenter()
+    maven { url = 'https://plugins.gradle.org/m2/' }
 }
 
 dependencies {
     compile localGroovy()
+
+    compile group: 'com.moowork.node', name: 'com.moowork.node.gradle.plugin', version: '1.2.0'
 
     testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
         exclude group: 'org.codehaus.groovy'
