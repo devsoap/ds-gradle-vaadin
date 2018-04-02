@@ -21,12 +21,17 @@ import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.CreateProjectTask
+import com.devsoap.vaadinflow.tasks.CreateWebComponentTask
 import com.devsoap.vaadinflow.tasks.InstallClientDependenciesTask
 
 import com.devsoap.vaadinflow.util.Versions
+import com.moowork.gradle.node.NodePlugin
 import groovy.util.logging.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.ConfigurationContainer
+import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.util.VersionNumber
@@ -51,23 +56,26 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        project.plugins.apply('com.moowork.node')
 
-        validateGradleVersion(project)
+        project.with {
+            validateGradleVersion(it)
 
-        actions.each { it.apply(project) }
+            new VaadinFlowPluginAction().apply(it)
+            new NodePluginAction().apply(it)
 
-        project.extensions.with {
-            create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project)
-            create(VaadinClientDependenciesExtension.NAME, VaadinClientDependenciesExtension, project)
+            extensions.with {
+                create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project)
+                create(VaadinClientDependenciesExtension.NAME, VaadinClientDependenciesExtension, project)
+            }
+
+            tasks.with {
+                create(CreateProjectTask.NAME, CreateProjectTask)
+                create(CreateWebComponentTask.NAME, CreateWebComponentTask)
+                create(InstallClientDependenciesTask.NAME, InstallClientDependenciesTask)
+            }
+
+            workaroundInvalidBomVersionRanges(it)
         }
-
-        project.tasks.with {
-            create(CreateProjectTask.NAME, CreateProjectTask)
-            create(InstallClientDependenciesTask.NAME, InstallClientDependenciesTask)
-        }
-
-        workaroundInvalidBomVersionRanges(project)
     }
 
     /**

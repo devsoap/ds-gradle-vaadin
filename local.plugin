@@ -14,11 +14,15 @@ buildscript {
 
     repositories {
         mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     	flatDir dirs: gradlePluginDirectory
     }
 
     dependencies {
         classpath group: 'com.devsoap', name: 'gradle-vaadin-flow-plugin', version: '1.0-SNAPSHOT-'+ new Date().format('yyyyMMdd')
+        classpath "com.moowork.gradle:gradle-node-plugin:1.2.0"
 	}
 }
 

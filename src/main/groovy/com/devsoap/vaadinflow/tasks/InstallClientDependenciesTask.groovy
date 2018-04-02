@@ -46,6 +46,9 @@ class InstallClientDependenciesTask extends DefaultTask {
             !deps.yarnDependencies.empty
         }
 
+        description = 'Installs Vaadin client dependencies'
+        group = 'Vaadin'
+
         yarnRunner = new YarnExecRunner(project)
 
         this.project.afterEvaluate {

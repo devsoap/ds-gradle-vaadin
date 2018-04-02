@@ -1,0 +1,15 @@
+package ${componentPackage};
+
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.dependency.HtmlImport;
+
+@Tag("${componentTag}")
+@HtmlImport("frontend://node_modules/${componentDependency.split(':').first()}/${componentDependency.split(':').first().split('/').last()}.html")
+public class ${componentName} extends Component {
+
+    public ${componentName}() {
+
+    }
+}
+
