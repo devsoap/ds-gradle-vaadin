@@ -17,8 +17,11 @@ package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.moowork.gradle.node.NodeExtension
+import com.moowork.gradle.node.NodePlugin
 import groovy.util.logging.Log
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.dsl.DependencyHandler
 
 /**
  * Action taken when the Node plugin is applied to a project
@@ -30,6 +33,25 @@ import org.gradle.api.Project
 class NodePluginAction extends PluginAction {
 
     String pluginId = 'com.moowork.node'
+
+    @Override
+    void apply(Project project) {
+        super.apply(project)
+        project.with {
+            pluginManager.apply(NodePlugin)
+
+            repositories.maven { repository ->
+                repository.name = 'Gradle Plugin Portal'
+                repository.url = 'https://plugins.gradle.org/m2/'
+            }
+
+            DependencyHandler projectDependencies = dependencies
+            configurations.getByName('runtime').defaultDependencies {
+                Dependency nodeGradlePlugin = projectDependencies.create("com.moowork.gradle:gradle-node-plugin:1.2.0")
+                it.add(nodeGradlePlugin)
+            }
+        }
+    }
 
     @Override
     protected void execute(Project project) {

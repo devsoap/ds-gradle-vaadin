@@ -37,11 +37,42 @@ class ClientDependenciesTest extends FunctionalTest {
                 vaadin.autoconfigure()
 
             """.stripMargin()
-            run '--info', '--stacktrace', 'vaadinCreateProject'
+            run 'vaadinCreateProject'
         when:
             BuildResult result = run '--info', '--stacktrace', 'vaadinInstallClientDependencies'
         then:
+            File frontend = Paths.get(buildFile.parentFile.canonicalPath,
+                    'src', 'main', 'webapp', 'frontend').toFile()
+            File nodeModules = new File(frontend, 'node_modules')
+            File sliderComponent = Paths.get(nodeModules.canonicalPath, '@polymer', 'paper-slider').toFile()
+            sliderComponent.exists()
+    }
+
+    void 'create paper-slider web component'() {
+        setup:
+        buildFile << """               
+                vaadin.autoconfigure()
+            """.stripMargin()
+            run 'vaadinCreateProject'
+        when:
+            BuildResult result = run '--info', '--stacktrace', 'vaadinCreateWebComponent',
+                    '--dependency', '@polymer/paper-slider:0.0.3'
+        then:
             println result.output
+
+            // Validate that the component was created
+            File javaSourceDir = Paths.get(buildFile.parentFile.canonicalPath,
+                    'src', 'main', 'java').toFile()
+            File componentClass = Paths.get(javaSourceDir.canonicalPath,
+                    'com', 'example', testProjectDir.root.name.toLowerCase(),
+                            'ExampleWebComponent.java').toFile()
+            componentClass.exists()
+            componentClass.text.contains('@Tag("example-web-component")')
+            componentClass.text.contains(
+                    '@HtmlImport("frontend://node_modules/@polymer/paper-slider/paper-slider.html")')
+            componentClass.text.contains('public class ExampleWebComponent')
+
+            // Validate that the dependency got downloaded and installed
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
             File nodeModules = new File(frontend, 'node_modules')
