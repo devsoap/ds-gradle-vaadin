@@ -15,8 +15,6 @@
  */
 package com.devsoap.vaadinflow
 
-import org.gradle.testkit.runner.BuildResult
-
 import java.nio.file.Paths
 
 /**
@@ -39,26 +37,50 @@ class ClientDependenciesTest extends FunctionalTest {
             """.stripMargin()
             run 'vaadinCreateProject'
         when:
-            BuildResult result = run '--info', '--stacktrace', 'vaadinInstallClientDependencies'
+            run '--info', '--stacktrace', 'vaadinInstallClientDependencies'
         then:
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
             File nodeModules = new File(frontend, 'node_modules')
             File sliderComponent = Paths.get(nodeModules.canonicalPath, '@polymer', 'paper-slider').toFile()
             sliderComponent.exists()
+            File sliderComponentHTML = new File(sliderComponent, 'paper-slider.html')
+            sliderComponentHTML.exists()
     }
 
-    void 'create paper-slider web component'() {
+    void 'add paper-slider to project as bower dependency'() {
         setup:
-        buildFile << """               
+            buildFile << """
+                vaadinClientDependencies {
+                    bower 'PolymerElements/paper-slider'
+                }
+
                 vaadin.autoconfigure()
+
             """.stripMargin()
+             run 'vaadinCreateProject'
+        when:
+             run 'vaadinInstallClientDependencies'
+        then:
+            File frontend = Paths.get(buildFile.parentFile.canonicalPath,
+                    'src', 'main', 'webapp', 'frontend').toFile()
+            File nodeModules = new File(frontend, 'bower_components')
+            File sliderComponent = Paths.get(nodeModules.canonicalPath,  'paper-slider').toFile()
+            sliderComponent.exists()
+            File sliderComponentHTML = new File(sliderComponent, 'paper-slider.html')
+            sliderComponentHTML.exists()
+    }
+
+    void 'add paper-slider web component via task'() {
+        setup:
+            buildFile << '''
+                vaadin.autoconfigure()
+            '''.stripMargin()
             run 'vaadinCreateProject'
         when:
-            BuildResult result = run '--info', '--stacktrace', 'vaadinCreateWebComponent',
-                    '--dependency', '@polymer/paper-slider:0.0.3'
+            run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
+            run 'jar'
         then:
-            println result.output
 
             // Validate that the component was created
             File javaSourceDir = Paths.get(buildFile.parentFile.canonicalPath,
@@ -69,14 +91,14 @@ class ClientDependenciesTest extends FunctionalTest {
             componentClass.exists()
             componentClass.text.contains('@Tag("example-web-component")')
             componentClass.text.contains(
-                    '@HtmlImport("frontend://node_modules/@polymer/paper-slider/paper-slider.html")')
+                    '@HtmlImport("frontend://bower_components/paper-slider/paper-slider.html")')
             componentClass.text.contains('public class ExampleWebComponent')
 
             // Validate that the dependency got downloaded and installed
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
-            File nodeModules = new File(frontend, 'node_modules')
-            File sliderComponent = Paths.get(nodeModules.canonicalPath, '@polymer', 'paper-slider').toFile()
+            File bowerComponents = new File(frontend, 'bower_components')
+            File sliderComponent = Paths.get(bowerComponents.canonicalPath, 'paper-slider').toFile()
             sliderComponent.exists()
     }
 

@@ -56,7 +56,6 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-
         project.with {
             validateGradleVersion(it)
 
@@ -73,8 +72,10 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 create(CreateWebComponentTask.NAME, CreateWebComponentTask)
                 create(InstallClientDependenciesTask.NAME, InstallClientDependenciesTask)
             }
+            tasks['processResources'].dependsOn(InstallClientDependenciesTask.NAME)
 
             workaroundInvalidBomVersionRanges(it)
+
         }
     }
 
