@@ -16,6 +16,7 @@
 package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.util.Versions
 import com.moowork.gradle.node.NodeExtension
 import com.moowork.gradle.node.NodePlugin
 import groovy.util.logging.Log
@@ -47,7 +48,8 @@ class NodePluginAction extends PluginAction {
 
             DependencyHandler projectDependencies = dependencies
             configurations.getByName('runtime').defaultDependencies {
-                Dependency nodeGradlePlugin = projectDependencies.create("com.moowork.gradle:gradle-node-plugin:1.2.0")
+                Dependency nodeGradlePlugin = projectDependencies.create(
+                        "com.moowork.gradle:gradle-node-plugin:${Versions.rawVersion('node.plugin.version')}")
                 it.add(nodeGradlePlugin)
             }
         }

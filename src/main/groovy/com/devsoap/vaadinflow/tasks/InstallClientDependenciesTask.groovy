@@ -16,8 +16,10 @@
 package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.moowork.gradle.node.npm.NpmExecRunner
 import com.moowork.gradle.node.yarn.YarnExecRunner
 import com.moowork.gradle.node.yarn.YarnSetupTask
+import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
@@ -27,7 +29,10 @@ import org.gradle.api.tasks.TaskAction
  * @author John Ahlroos
  * @since 1.0
  */
+@Log('LOGGER')
 class InstallClientDependenciesTask extends DefaultTask {
+    private static final String BOWER_COMMAND = 'bower'
+    private static final String INSTALL_COMMAND = 'install'
 
     static final String NAME = 'vaadinInstallClientDependencies'
 
@@ -36,6 +41,8 @@ class InstallClientDependenciesTask extends DefaultTask {
      */
     final YarnExecRunner yarnRunner
 
+    final NpmExecRunner npmExecRunner
+
     /**
      * Creates an installation task
      */
@@ -43,19 +50,35 @@ class InstallClientDependenciesTask extends DefaultTask {
         dependsOn( YarnSetupTask.NAME )
         onlyIf {
             VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !deps.yarnDependencies.empty
+            !deps.yarnDependencies.empty || !deps.bowerDependencies.empty
         }
 
         description = 'Installs Vaadin client dependencies'
         group = 'Vaadin'
 
         yarnRunner = new YarnExecRunner(project)
+        npmExecRunner = new NpmExecRunner(project)
+
+        inputs.property('yarnDependencies') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies
+        }
+
+        inputs.property('bowerDependencies') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
+        }
 
         this.project.afterEvaluate {
+
             yarnRunner.workingDir = yarnRunner.workingDir ?: project.node.nodeModulesDir
             if (!yarnRunner.workingDir.exists()) {
                 yarnRunner.workingDir.mkdirs()
             }
+            outputs.dir(yarnRunner.workingDir)
+            npmExecRunner.workingDir = npmExecRunner.workingDir ?: project.node.nodeModulesDir
+            if (!npmExecRunner.workingDir.exists()) {
+                npmExecRunner.workingDir.mkdirs()
+            }
+            outputs.dir(npmExecRunner.workingDir)
         }
     }
 
@@ -66,10 +89,32 @@ class InstallClientDependenciesTask extends DefaultTask {
     void run() {
         VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
 
+        // Create package.json
+        npmExecRunner.arguments = ['init', '-y', '-f']
+        npmExecRunner.execute().assertNormalExitValue()
+
         // Install yarn dependencies
         deps.yarnDependencies.each { String name, String version ->
             yarnRunner.arguments = ['add', "$name@$version"]
             yarnRunner.execute().assertNormalExitValue()
+        }
+
+        if (!deps.bowerDependencies.isEmpty()) {
+            LOGGER.info('Installing Bower first...')
+            // Install bower
+            npmExecRunner.arguments = [INSTALL_COMMAND, BOWER_COMMAND, '--save-dev']
+            npmExecRunner.execute().assertNormalExitValue()
+
+            // Add bower as a script to package.json
+            File pkgjson = new File(npmExecRunner.workingDir, 'package.json')
+            pkgjson.text = pkgjson.text.replace('"scripts": {',
+                    '"scripts": {\n"bower":"bower",\n')
+        }
+
+        // Install bower dependencies
+        deps.bowerDependencies.each { String name, String version ->
+            npmExecRunner.arguments = ['run', BOWER_COMMAND, INSTALL_COMMAND, "$name@$version"]
+            npmExecRunner.execute().assertNormalExitValue()
         }
     }
 }

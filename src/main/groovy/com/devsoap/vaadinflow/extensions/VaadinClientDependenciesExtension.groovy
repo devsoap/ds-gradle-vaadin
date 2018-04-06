@@ -25,11 +25,16 @@ import org.gradle.api.Project
  */
 class VaadinClientDependenciesExtension {
 
+    private static final String COLON = ':'
+    private static final String LATEST = 'latest'
+
     static final String NAME = 'vaadinClientDependencies'
 
     static final String FRONTEND_DIR = 'src/main/webapp/frontend'
 
     private final Map<String, String> yarnDependencies = [:]
+
+    private final Map<String, String> bowerDependencies = [:]
 
     private final Project project
 
@@ -50,8 +55,12 @@ class VaadinClientDependenciesExtension {
      *      the dependency using the "<dependency-name>:<dependency-version>" notation
      */
     void yarn(String dependencyNotation) {
-        dependencyNotation.split(':').with {
-            yarn(it.first(), it.last())
+        if (dependencyNotation.contains(COLON)) {
+            dependencyNotation.split(COLON).with {
+                yarn(it.first(), it.last())
+            }
+        } else {
+            yarn(dependencyNotation, LATEST)
         }
     }
 
@@ -68,6 +77,34 @@ class VaadinClientDependenciesExtension {
     }
 
     /**
+     * Add a Bower dependency using the compact notation
+     *
+     * @param dependencyNotation
+     *      the dependency using the "<dependency-name>:<dependency-version>" notation
+     */
+    void bower(String dependencyNotation) {
+        if (dependencyNotation.contains(COLON)) {
+            dependencyNotation.split(COLON).with {
+                bower(it.first(), it.last())
+            }
+        } else {
+            bower(dependencyNotation, LATEST)
+        }
+    }
+
+    /**
+     * Add a Bower dependency
+     *
+     * @param dependency
+     *      the dependency name
+     * @param version
+     *      the dependency version
+     */
+    void bower(String dependency, String version) {
+        bowerDependencies[dependency] = version
+    }
+
+    /**
      * Retrieve the configured Yarn dependencies
      *
      * @return
@@ -77,4 +114,13 @@ class VaadinClientDependenciesExtension {
         Collections.unmodifiableMap(yarnDependencies)
     }
 
+    /**
+     * Retrieve the configured Bower dependencies
+     *
+     * @return
+     *      a map with the dependency name as key and version as value
+     */
+    Map<String,String> getBowerDependencies() {
+        Collections.unmodifiableMap(bowerDependencies)
+    }
 }
