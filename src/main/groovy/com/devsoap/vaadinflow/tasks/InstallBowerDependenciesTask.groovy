@@ -17,63 +17,43 @@ package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.moowork.gradle.node.npm.NpmExecRunner
-import com.moowork.gradle.node.yarn.YarnExecRunner
-import com.moowork.gradle.node.yarn.YarnSetupTask
+import com.moowork.gradle.node.npm.NpmSetupTask
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
 /**
- * Installs client dependencies into the webapp frontend
+ * Installs Bower dependencies into the webapp frontend
  *
  * @author John Ahlroos
  * @since 1.0
  */
 @Log('LOGGER')
-class InstallClientDependenciesTask extends DefaultTask {
+class InstallBowerDependenciesTask extends DefaultTask {
+
     private static final String BOWER_COMMAND = 'bower'
     private static final String INSTALL_COMMAND = 'install'
 
-    static final String NAME = 'vaadinInstallClientDependencies'
-
-    /**
-     * Runner to run yarn tasks
-     */
-    final YarnExecRunner yarnRunner
+    static final String NAME = 'vaadinInstallBowerDependencies'
 
     final NpmExecRunner npmExecRunner
 
-    /**
-     * Creates an installation task
-     */
-    InstallClientDependenciesTask() {
-        dependsOn( YarnSetupTask.NAME )
+    InstallBowerDependenciesTask() {
+        dependsOn( NpmSetupTask.NAME )
         onlyIf {
-            VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !deps.yarnDependencies.empty || !deps.bowerDependencies.empty
+            !project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies.empty
         }
 
-        description = 'Installs Vaadin client dependencies'
+        description = 'Installs Vaadin bower client dependencies'
         group = 'Vaadin'
 
-        yarnRunner = new YarnExecRunner(project)
         npmExecRunner = new NpmExecRunner(project)
-
-        inputs.property('yarnDependencies') {
-            project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies
-        }
 
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
         }
 
         this.project.afterEvaluate {
-
-            yarnRunner.workingDir = yarnRunner.workingDir ?: project.node.nodeModulesDir
-            if (!yarnRunner.workingDir.exists()) {
-                yarnRunner.workingDir.mkdirs()
-            }
-            outputs.dir(yarnRunner.workingDir)
             npmExecRunner.workingDir = npmExecRunner.workingDir ?: project.node.nodeModulesDir
             if (!npmExecRunner.workingDir.exists()) {
                 npmExecRunner.workingDir.mkdirs()
@@ -93,23 +73,15 @@ class InstallClientDependenciesTask extends DefaultTask {
         npmExecRunner.arguments = ['init', '-y', '-f']
         npmExecRunner.execute().assertNormalExitValue()
 
-        // Install yarn dependencies
-        deps.yarnDependencies.each { String name, String version ->
-            yarnRunner.arguments = ['add', "$name@$version"]
-            yarnRunner.execute().assertNormalExitValue()
-        }
+        // Install bower
+        LOGGER.info('Installing Bower first...')
+        npmExecRunner.arguments = [INSTALL_COMMAND, BOWER_COMMAND, '--save-dev']
+        npmExecRunner.execute().assertNormalExitValue()
 
-        if (!deps.bowerDependencies.isEmpty()) {
-            LOGGER.info('Installing Bower first...')
-            // Install bower
-            npmExecRunner.arguments = [INSTALL_COMMAND, BOWER_COMMAND, '--save-dev']
-            npmExecRunner.execute().assertNormalExitValue()
-
-            // Add bower as a script to package.json
-            File pkgjson = new File(npmExecRunner.workingDir, 'package.json')
-            pkgjson.text = pkgjson.text.replace('"scripts": {',
-                    '"scripts": {\n"bower":"bower",\n')
-        }
+        // Add bower as a script to package.json
+        File pkgjson = new File(npmExecRunner.workingDir, 'package.json')
+        pkgjson.text = pkgjson.text.replace('"scripts": {',
+                '"scripts": {\n"bower":"bower",\n')
 
         // Install bower dependencies
         deps.bowerDependencies.each { String name, String version ->

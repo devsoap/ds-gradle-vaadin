@@ -22,16 +22,13 @@ import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.CreateProjectTask
 import com.devsoap.vaadinflow.tasks.CreateWebComponentTask
-import com.devsoap.vaadinflow.tasks.InstallClientDependenciesTask
+import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
+import com.devsoap.vaadinflow.tasks.InstallYarnDependenciesTask
 
 import com.devsoap.vaadinflow.util.Versions
-import com.moowork.gradle.node.NodePlugin
 import groovy.util.logging.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.ConfigurationContainer
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.util.VersionNumber
@@ -44,6 +41,8 @@ import org.gradle.util.VersionNumber
  */
 @Log('LOGGER')
 class VaadinFlowPlugin implements Plugin<Project> {
+
+    private static final String PROCESS_RESOURCES_TASK = 'processResources'
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
@@ -70,12 +69,13 @@ class VaadinFlowPlugin implements Plugin<Project> {
             tasks.with {
                 create(CreateProjectTask.NAME, CreateProjectTask)
                 create(CreateWebComponentTask.NAME, CreateWebComponentTask)
-                create(InstallClientDependenciesTask.NAME, InstallClientDependenciesTask)
+                create(InstallYarnDependenciesTask.NAME, InstallYarnDependenciesTask)
+                create(InstallBowerDependenciesTask.NAME, InstallBowerDependenciesTask)
             }
-            tasks['processResources'].dependsOn(InstallClientDependenciesTask.NAME)
+            tasks[PROCESS_RESOURCES_TASK].dependsOn(InstallYarnDependenciesTask.NAME)
+            tasks[PROCESS_RESOURCES_TASK].dependsOn(InstallBowerDependenciesTask.NAME)
 
             workaroundInvalidBomVersionRanges(it)
-
         }
     }
 
