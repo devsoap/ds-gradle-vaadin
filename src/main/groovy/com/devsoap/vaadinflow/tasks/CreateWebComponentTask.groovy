@@ -63,7 +63,8 @@ class CreateWebComponentTask extends DefaultTask {
     CreateWebComponentTask() {
         description = 'Creates a new Vaadin web component'
         group = 'Vaadin'
-        finalizedBy(InstallClientDependenciesTask.NAME)
+        finalizedBy(InstallYarnDependenciesTask.NAME)
+        finalizedBy(InstallBowerDependenciesTask.NAME)
     }
 
     @TaskAction

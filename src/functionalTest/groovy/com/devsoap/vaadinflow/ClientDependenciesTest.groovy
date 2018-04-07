@@ -37,7 +37,7 @@ class ClientDependenciesTest extends FunctionalTest {
             """.stripMargin()
             run 'vaadinCreateProject'
         when:
-            run '--info', '--stacktrace', 'vaadinInstallClientDependencies'
+            run 'vaadinInstallYarnDependencies'
         then:
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
@@ -60,7 +60,7 @@ class ClientDependenciesTest extends FunctionalTest {
             """.stripMargin()
              run 'vaadinCreateProject'
         when:
-             run 'vaadinInstallClientDependencies'
+             run 'vaadinInstallBowerDependencies'
         then:
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
