@@ -23,8 +23,9 @@ import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.CreateProjectTask
 import com.devsoap.vaadinflow.tasks.CreateWebComponentTask
 import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
+import com.devsoap.vaadinflow.tasks.InstallNpmDependenciesTask
 import com.devsoap.vaadinflow.tasks.InstallYarnDependenciesTask
-
+import com.devsoap.vaadinflow.tasks.TranspileDependenciesTask
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.Plugin
@@ -41,8 +42,6 @@ import org.gradle.util.VersionNumber
  */
 @Log('LOGGER')
 class VaadinFlowPlugin implements Plugin<Project> {
-
-    private static final String PROCESS_RESOURCES_TASK = 'processResources'
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
@@ -69,11 +68,17 @@ class VaadinFlowPlugin implements Plugin<Project> {
             tasks.with {
                 create(CreateProjectTask.NAME, CreateProjectTask)
                 create(CreateWebComponentTask.NAME, CreateWebComponentTask)
+                create(InstallNpmDependenciesTask.NAME, InstallNpmDependenciesTask)
                 create(InstallYarnDependenciesTask.NAME, InstallYarnDependenciesTask)
                 create(InstallBowerDependenciesTask.NAME, InstallBowerDependenciesTask)
+                create(TranspileDependenciesTask.NAME, TranspileDependenciesTask)
             }
-            tasks[PROCESS_RESOURCES_TASK].dependsOn(InstallYarnDependenciesTask.NAME)
-            tasks[PROCESS_RESOURCES_TASK].dependsOn(InstallBowerDependenciesTask.NAME)
+
+            tasks['processResources'].with {
+                dependsOn(InstallYarnDependenciesTask.NAME)
+                dependsOn(InstallBowerDependenciesTask.NAME)
+                dependsOn(TranspileDependenciesTask.NAME)
+            }
 
             workaroundInvalidBomVersionRanges(it)
         }

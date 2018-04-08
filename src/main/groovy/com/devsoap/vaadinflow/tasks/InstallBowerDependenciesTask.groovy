@@ -16,8 +16,12 @@
 package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.models.ClientPackage
 import com.moowork.gradle.node.npm.NpmExecRunner
 import com.moowork.gradle.node.npm.NpmSetupTask
+import com.sun.security.ntlm.Client
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
@@ -39,7 +43,7 @@ class InstallBowerDependenciesTask extends DefaultTask {
     final NpmExecRunner npmExecRunner
 
     InstallBowerDependenciesTask() {
-        dependsOn( NpmSetupTask.NAME )
+        dependsOn( InstallNpmDependenciesTask.NAME )
         onlyIf {
             !project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies.empty
         }
@@ -69,24 +73,18 @@ class InstallBowerDependenciesTask extends DefaultTask {
     void run() {
         VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
 
-        // Create package.json
-        npmExecRunner.arguments = ['init', '-y', '-f']
-        npmExecRunner.execute().assertNormalExitValue()
-
-        // Install bower
-        LOGGER.info('Installing Bower first...')
-        npmExecRunner.arguments = [INSTALL_COMMAND, BOWER_COMMAND, '--save-dev']
-        npmExecRunner.execute().assertNormalExitValue()
-
-        // Add bower as a script to package.json
-        File pkgjson = new File(npmExecRunner.workingDir, 'package.json')
-        pkgjson.text = pkgjson.text.replace('"scripts": {',
-                '"scripts": {\n"bower":"bower",\n')
-
-        // Install bower dependencies
-        deps.bowerDependencies.each { String name, String version ->
-            npmExecRunner.arguments = ['run', BOWER_COMMAND, INSTALL_COMMAND, "$name@$version"]
-            npmExecRunner.execute().assertNormalExitValue()
+        // Create bower.json
+        File bowerjson = new File(npmExecRunner.workingDir, 'bower.json')
+        ClientPackage bowerModel = new ClientPackage(name: 'frontend', version: '1.0.0').with { model ->
+            deps.bowerDependencies.each { String name, String version ->
+                model.dependencies[name] = version
+            }
+            model
         }
+        bowerjson.text = JsonOutput.prettyPrint(JsonOutput.toJson(bowerModel))
+
+        // Run bower install
+        npmExecRunner.arguments = ['run', BOWER_COMMAND, INSTALL_COMMAND,'--config.interactive=false' ]
+        npmExecRunner.execute().assertNormalExitValue()
     }
 }
