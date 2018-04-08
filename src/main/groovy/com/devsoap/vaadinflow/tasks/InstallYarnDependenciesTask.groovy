@@ -42,7 +42,7 @@ class InstallYarnDependenciesTask extends DefaultTask {
      * Creates an installation task
      */
     InstallYarnDependenciesTask() {
-        dependsOn( YarnSetupTask.NAME )
+        dependsOn( YarnSetupTask.NAME, InstallNpmDependenciesTask.NAME )
         onlyIf {
             !project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies.empty
         }

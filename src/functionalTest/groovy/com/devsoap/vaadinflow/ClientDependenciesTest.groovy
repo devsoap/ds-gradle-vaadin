@@ -102,4 +102,23 @@ class ClientDependenciesTest extends FunctionalTest {
             sliderComponent.exists()
     }
 
+    void 'polymer.json is created'() {
+        setup:
+            buildFile << '''
+                    vaadin.autoconfigure()
+                '''.stripMargin()
+            run 'vaadinCreateProject'
+        when:
+            run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
+            run 'jar'
+        then:
+
+
+            // Validate that the dependency got downloaded and installed
+            File frontend = Paths.get(buildFile.parentFile.canonicalPath,
+                    'src', 'main', 'webapp', 'frontend').toFile()
+            File polymerjson = new File(frontend, 'polymer.json')
+            println polymerjson.text
+    }
+
 }
