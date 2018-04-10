@@ -24,6 +24,9 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 /**
@@ -40,7 +43,13 @@ class InstallBowerDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallBowerDependencies'
 
-    final NpmExecRunner npmExecRunner
+    final NpmExecRunner npmExecRunner = new NpmExecRunner(project)
+
+    @OutputDirectory
+    final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+
+    @OutputFile
+    final File bowerJson = new File(workingDir, 'bower.json')
 
     InstallBowerDependenciesTask() {
         dependsOn( InstallNpmDependenciesTask.NAME )
@@ -51,18 +60,10 @@ class InstallBowerDependenciesTask extends DefaultTask {
         description = 'Installs Vaadin bower client dependencies'
         group = 'Vaadin'
 
-        npmExecRunner = new NpmExecRunner(project)
+        npmExecRunner.workingDir = workingDir
 
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
-        }
-
-        this.project.afterEvaluate {
-            npmExecRunner.workingDir = npmExecRunner.workingDir ?: project.node.nodeModulesDir
-            if (!npmExecRunner.workingDir.exists()) {
-                npmExecRunner.workingDir.mkdirs()
-            }
-            outputs.dir(npmExecRunner.workingDir)
         }
     }
 
@@ -74,14 +75,13 @@ class InstallBowerDependenciesTask extends DefaultTask {
         VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
 
         // Create bower.json
-        File bowerjson = new File(npmExecRunner.workingDir, 'bower.json')
         ClientPackage bowerModel = new ClientPackage(name: 'frontend', version: '1.0.0').with { model ->
             deps.bowerDependencies.each { String name, String version ->
                 model.dependencies[name] = version
             }
             model
         }
-        bowerjson.text = JsonOutput.prettyPrint(JsonOutput.toJson(bowerModel))
+        bowerJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(bowerModel))
 
         // Run bower install
         npmExecRunner.arguments = ['run', BOWER_COMMAND, INSTALL_COMMAND,'--config.interactive=false' ]

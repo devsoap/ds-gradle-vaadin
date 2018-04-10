@@ -8,6 +8,9 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 @Log('LOGGER')
@@ -15,7 +18,14 @@ class InstallNpmDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallNpmDependencies'
 
-    final NpmExecRunner npmExecRunner
+    final NpmExecRunner npmExecRunner = new NpmExecRunner(project)
+
+    @OutputDirectory
+    final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+
+    @OutputFile
+    @InputFile
+    final File packageJson = new File(workingDir, 'package.json')
 
     InstallNpmDependenciesTask() {
         dependsOn( NpmSetupTask.NAME )
@@ -27,16 +37,7 @@ class InstallNpmDependenciesTask extends DefaultTask {
         description = 'Installs Vaadin npm client dependencies'
         group = 'Vaadin'
 
-        npmExecRunner = new NpmExecRunner(project)
-
-        this.project.afterEvaluate {
-            npmExecRunner.workingDir = npmExecRunner.workingDir ?: project.node.nodeModulesDir
-            if (!npmExecRunner.workingDir.exists()) {
-                npmExecRunner.workingDir.mkdirs()
-            }
-            outputs.dir(npmExecRunner.workingDir)
-            inputs.file(new File(npmExecRunner.workingDir, 'package.json'))
-        }
+        npmExecRunner.workingDir = workingDir
     }
 
     @TaskAction
@@ -47,8 +48,7 @@ class InstallNpmDependenciesTask extends DefaultTask {
         npmExecRunner.execute().assertNormalExitValue()
 
         // Set proper defaults for package.json
-        File pkgjson = new File(npmExecRunner.workingDir, 'package.json')
-        ClientPackage pkg = new JsonSlurper().parse(pkgjson) as ClientPackage
+        ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
         pkg.main = ''
         pkg.version = '1.0.0'
         pkg.name = project.name + '-frontend'
@@ -67,6 +67,6 @@ class InstallNpmDependenciesTask extends DefaultTask {
 
         // Generate package.json
         LOGGER.info('Generating package.json...')
-        pkgjson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
+        packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
     }
 }
