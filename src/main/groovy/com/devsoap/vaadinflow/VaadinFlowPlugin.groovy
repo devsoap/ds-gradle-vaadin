@@ -20,6 +20,7 @@ import com.devsoap.vaadinflow.actions.PluginAction
 import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
+import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
 import com.devsoap.vaadinflow.tasks.CreateProjectTask
 import com.devsoap.vaadinflow.tasks.CreateWebComponentTask
 import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
@@ -72,13 +73,10 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 create(InstallYarnDependenciesTask.NAME, InstallYarnDependenciesTask)
                 create(InstallBowerDependenciesTask.NAME, InstallBowerDependenciesTask)
                 create(TranspileDependenciesTask.NAME, TranspileDependenciesTask)
+                create(AssembleClientDependenciesTask.NAME, AssembleClientDependenciesTask)
             }
 
-            tasks['processResources'].with {
-                dependsOn(InstallYarnDependenciesTask.NAME)
-                dependsOn(InstallBowerDependenciesTask.NAME)
-                dependsOn(TranspileDependenciesTask.NAME)
-            }
+            tasks['processResources'].dependsOn(AssembleClientDependenciesTask.NAME)
 
             workaroundInvalidBomVersionRanges(it)
         }

@@ -62,6 +62,6 @@ class NodePluginAction extends PluginAction {
         LOGGER.info('Configuring node extension for vaadin project')
         NodeExtension nodeExtension = project.extensions.getByType(NodeExtension)
         nodeExtension.download = true
-        nodeExtension.nodeModulesDir = project.file(VaadinClientDependenciesExtension.FRONTEND_DIR)
+        nodeExtension.nodeModulesDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     }
 }

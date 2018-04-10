@@ -20,6 +20,7 @@ import com.moowork.gradle.node.yarn.YarnExecRunner
 import com.moowork.gradle.node.yarn.YarnSetupTask
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
 /**
@@ -33,10 +34,10 @@ class InstallYarnDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallYarnDependencies'
 
-    /**
-     * Runner to run yarn tasks
-     */
-    final YarnExecRunner yarnRunner
+    final YarnExecRunner yarnRunner = new YarnExecRunner(project)
+
+    @OutputDirectory
+    final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
 
     /**
      * Creates an installation task
@@ -50,18 +51,10 @@ class InstallYarnDependenciesTask extends DefaultTask {
         description = 'Installs Vaadin yarn dependencies'
         group = 'Vaadin'
 
-        yarnRunner = new YarnExecRunner(project)
+        yarnRunner.workingDir = workingDir
 
         inputs.property('yarnDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies
-        }
-
-        this.project.afterEvaluate {
-            yarnRunner.workingDir = yarnRunner.workingDir ?: project.node.nodeModulesDir
-            if (!yarnRunner.workingDir.exists()) {
-                yarnRunner.workingDir.mkdirs()
-            }
-            outputs.dir(yarnRunner.workingDir)
         }
     }
 
