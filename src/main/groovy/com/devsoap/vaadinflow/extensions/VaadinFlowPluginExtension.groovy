@@ -40,6 +40,7 @@ class VaadinFlowPluginExtension {
     public static final String COLON = ':'
 
     private final Property<String> version
+    private final Property<Boolean> supportLegacyBrowsers
 
     private final DependencyHandler dependencyHandler
     private final RepositoryHandler repositoryHandler
@@ -52,6 +53,7 @@ class VaadinFlowPluginExtension {
         dependencyHandler = project.dependencies
         repositoryHandler = project.repositories
         version = project.objects.property(String)
+        supportLegacyBrowsers = project.objects.property(Boolean)
     }
 
     /**
@@ -69,6 +71,20 @@ class VaadinFlowPluginExtension {
             throw new GradleException('Cannot set vaadin.version after dependencies have been added')
         }
         this.version.set(version)
+    }
+
+    /**
+     * Should the plugin support legacy browsers by transpiling the sources to ES5
+     */
+    boolean isSupportLegacyBrowsers() {
+        supportLegacyBrowsers.getOrElse(false)
+    }
+
+    /**
+     * Should the plugin support legacy browsers by transpiling the sources to ES5
+     */
+    void setSupportLegacyBrowsers(boolean enabled) {
+        supportLegacyBrowsers.set(enabled)
     }
 
     /**

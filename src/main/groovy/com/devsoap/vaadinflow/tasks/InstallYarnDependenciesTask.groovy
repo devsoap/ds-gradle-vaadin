@@ -16,12 +16,18 @@
 package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.util.LogUtils
+import com.moowork.gradle.node.npm.NpmSetupTask
 import com.moowork.gradle.node.yarn.YarnExecRunner
 import com.moowork.gradle.node.yarn.YarnSetupTask
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecSpec
+
+import java.util.logging.Level
 
 /**
  * Installs yarn dependencies into the webapp frontend
@@ -34,7 +40,13 @@ class InstallYarnDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallYarnDependencies'
 
-    final YarnExecRunner yarnRunner = new YarnExecRunner(project)
+    final YarnExecRunner yarnRunner = new YarnExecRunner(project).with {
+        execOverrides = { ExecSpec spec ->
+            spec.standardOutput = LogUtils.getLogOutputStream(Level.FINE)
+            spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
+        }
+        it
+    }
 
     @OutputDirectory
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
@@ -43,19 +55,19 @@ class InstallYarnDependenciesTask extends DefaultTask {
      * Creates an installation task
      */
     InstallYarnDependenciesTask() {
-        dependsOn( YarnSetupTask.NAME, InstallNpmDependenciesTask.NAME )
+        dependsOn( InstallNpmDependenciesTask.NAME, YarnSetupTask.NAME )
         onlyIf {
-            !project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies.empty
+            !project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies.isEmpty()
         }
 
         description = 'Installs Vaadin yarn dependencies'
         group = 'Vaadin'
 
-        yarnRunner.workingDir = workingDir
-
         inputs.property('yarnDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies
         }
+
+        yarnRunner.workingDir = workingDir
     }
 
     /**
