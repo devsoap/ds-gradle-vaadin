@@ -37,7 +37,7 @@ class ClientDependenciesTest extends FunctionalTest {
             """.stripMargin()
             run 'vaadinCreateProject'
         when:
-            run 'vaadinInstallYarnDependencies'
+            run  'vaadinAssembleClient'
         then:
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
@@ -60,7 +60,7 @@ class ClientDependenciesTest extends FunctionalTest {
             """.stripMargin()
              run 'vaadinCreateProject'
         when:
-             run 'vaadinInstallBowerDependencies'
+             run 'vaadinAssembleClient'
         then:
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
@@ -102,9 +102,10 @@ class ClientDependenciesTest extends FunctionalTest {
             sliderComponent.exists()
     }
 
-    void 'polymer.json is created'() {
+    void 'transpile dependencies'() {
         setup:
             buildFile << '''
+                    vaadin.supportLegacyBrowsers = true
                     vaadin.autoconfigure()
                 '''.stripMargin()
             run 'vaadinCreateProject'
@@ -112,13 +113,10 @@ class ClientDependenciesTest extends FunctionalTest {
             run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
             run 'jar'
         then:
-
-
-            // Validate that the dependency got downloaded and installed
-            File frontend = Paths.get(buildFile.parentFile.canonicalPath,
-                    'src', 'main', 'webapp', 'frontend').toFile()
-            File polymerjson = new File(frontend, 'polymer.json')
-            println polymerjson.text
+            File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
+            File frontend5 = new File(webapp, 'frontend-es5')
+            frontend5.exists()
+            File frontend6 = new File(webapp, 'frontend-es6')
+            frontend6.exists()
     }
-
 }

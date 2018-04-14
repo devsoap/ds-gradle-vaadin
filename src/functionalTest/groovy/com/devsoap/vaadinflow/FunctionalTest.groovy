@@ -19,7 +19,11 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Shared
 import spock.lang.Specification
+
+import java.time.Clock
+import java.util.concurrent.TimeUnit
 
 /**
  * Base class for functional tests
@@ -38,6 +42,8 @@ class FunctionalTest extends Specification {
 
     protected File settingsFile
 
+    private long testStart
+
     /**
      * Sets up the test
      */
@@ -54,6 +60,17 @@ class FunctionalTest extends Specification {
         settingsFile << '''
             enableFeaturePreview('IMPROVED_POM_SUPPORT')
         '''.stripMargin()
+
+        testStart = System.currentTimeMillis()
+        println "Running test in ${testProjectDir.root}"
+    }
+
+    /**
+     * Cleans up the test
+     */
+    protected void cleanup() {
+        long ms = System.currentTimeMillis() - testStart
+        println "Test took ${TimeUnit.MILLISECONDS.toSeconds(ms)} seconds."
     }
 
     /**
@@ -67,7 +84,7 @@ class FunctionalTest extends Specification {
     protected BuildResult run(ConfigureRunner config = { }, String... args) {
         GradleRunner runner = GradleRunner.create()
                 .withProjectDir(testProjectDir.root)
-                .withArguments(args)
+                .withArguments(['--stacktrace', '--info'] + (args as List))
                 .withPluginClasspath()
         config.run(runner)
         runner.build()
@@ -84,7 +101,7 @@ class FunctionalTest extends Specification {
     protected BuildResult runAndFail(ConfigureRunner config = { }, String... args) {
         GradleRunner runner = GradleRunner.create()
                 .withProjectDir(testProjectDir.root)
-                .withArguments(args)
+                .withArguments(['--stacktrace', '--info'] + (args as List))
                 .withPluginClasspath()
         config.run(runner)
         runner.buildAndFail()
