@@ -48,7 +48,8 @@ class VaadinProjectCreator {
                 .targetFileName("${appClassName}Servlet.java")
                 .substitutions([
                     'applicationPackage' : vaadinProject.applicationPackage,
-                    'applicationName' : vaadinProject.applicationName
+                    'applicationName' : vaadinProject.applicationName,
+                    'productionMode' : vaadinProject.productionMode
                 ])
                 .build().write()
 
@@ -60,7 +61,7 @@ class VaadinProjectCreator {
                         'applicationPackage': vaadinProject.applicationPackage,
                         'applicationName' : vaadinProject.applicationName,
                         'applicationBaseTheme' : vaadinProject.applicationBaseTheme,
-                        'applicationTheme' : vaadinProject.applicationName.toLowerCase() + '-theme.css'
+                        'applicationTheme' : vaadinProject.applicationName.toLowerCase() + '-theme.css',
                 ])
                 .build().write()
     }

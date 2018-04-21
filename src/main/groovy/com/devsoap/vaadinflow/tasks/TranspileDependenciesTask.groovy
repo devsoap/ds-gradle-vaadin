@@ -56,9 +56,12 @@ import java.util.logging.Level
 class TranspileDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinTranspileDependencies'
-    public static final String POLYMER_COMMAND = 'polymer'
-    public static final String BOWER_JSON_FILE = 'bower.json'
-    public static final String SLASH = '/'
+
+    private static final String POLYMER_COMMAND = 'polymer'
+    private static final String BOWER_JSON_FILE = 'bower.json'
+    private static final String SLASH = '/'
+    private static final String BOWER_COMPONENTS = 'bower_components'
+    private static final String SRC = 'src'
 
     final NpmExecRunner npmExecRunner = new NpmExecRunner(project).with {
         execOverrides = { ExecSpec spec ->
@@ -68,25 +71,21 @@ class TranspileDependenciesTask extends DefaultTask {
         it
     }
 
-    @InputDirectory
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
 
-    final File frontendDir = project.file(VaadinClientDependenciesExtension.FRONTEND_DIR)
-
     @InputFile
-    @OutputFile
     final File packageJson = new File(workingDir, 'package.json')
-
-    @OutputFile
-    final File polymerJson = new File(workingDir, 'polymer.json')
 
     @InputFile
     final File bowerJson = new File(workingDir, BOWER_JSON_FILE)
 
     @OutputFile
+    final File polymerJson = new File(workingDir, 'polymer.json')
+
+    @OutputFile
     final File html = new File(workingDir, 'index.html')
 
-    @OutputDirectories
+    @OutputDirectory
     final File es5dir = new File(workingDir, 'frontend-es5')
 
     @OutputDirectory
@@ -96,44 +95,57 @@ class TranspileDependenciesTask extends DefaultTask {
         dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME)
         onlyIf {
             VaadinFlowPluginExtension vaadin = project.extensions[VaadinFlowPluginExtension.NAME]
-            vaadin.supportLegacyBrowsers
+            vaadin.productionMode
         }
         description = 'Compiles client modules to support legacy browsers'
         group = 'Vaadin'
         npmExecRunner.workingDir = workingDir
-        project.afterEvaluate {
-            if (frontendDir.exists()) {
-                inputs.dir(frontendDir)
-            }
-        }
     }
 
     @TaskAction
     void run() {
-        if (frontendDir.exists()) {
-            copyFrontend(frontendDir.parentFile, workingDir, project)
-        }
-
-        unpackWebjars(workingDir, project)
 
         // Add polymer-cli as a script
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
         pkg.scripts[POLYMER_COMMAND] = POLYMER_COMMAND
         packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
 
-        initPolymerJson()
+        LOGGER.info('Unpacking webjars...')
+        unpackWebjars(workingDir, project)
 
+        LOGGER.info('Creating index.html...')
         initHtml()
 
+        LOGGER.info('Searching for bower sources to transpile...')
+        List<String> sources = initBowerSources()
+
+        LOGGER.info('Creating polymer.json...')
+        initPolymerJson(sources)
+
         // Run polymer build
+        LOGGER.info('Transpiling...')
         npmExecRunner.arguments = ['run', POLYMER_COMMAND, 'build']
         npmExecRunner.execute().assertNormalExitValue()
     }
 
-    private void initPolymerJson() {
+    private List<String> initBowerSources() {
+        File bowerComponentsDir = new File(workingDir, BOWER_COMPONENTS)
+        LOGGER.info("Searching for bower components in $bowerComponentsDir")
+        List<String> sources = [bowerJson.name]
+        bowerComponentsDir.eachDir { dir ->
+            File src = Paths.get(dir.path, SRC).toFile()
+            if (src.exists()) {
+                LOGGER.info("Found ${dir.name}")
+                sources.add("bower_components/${dir.name}/src/**/*")
+            }
+        }
+        sources
+    }
+
+    private void initPolymerJson(List<String> sources) {
         PolymerBuild buildModel = PolymerBuild.builder()
                 .entrypoint(html.name)
-                .sources([bowerJson.name])
+                .sources(sources)
                 .extraDependencies(['bower_components/webcomponentsjs/webcomponents-lite.js'])
                 .builds([
                 new Build(name: es5dir.name).with { js.compile = true; it },
@@ -146,19 +158,12 @@ class TranspileDependenciesTask extends DefaultTask {
         if (!html.exists()) {
             html.createNewFile()
         }
-        // FIXME Populate html file
-    }
 
-    private static void copyFrontend(File sourceDir, File targetDir, Project project) {
-        project.copy { spec ->
-            spec.from(sourceDir)
-                .include('frontend/**')
-                .into(targetDir)
-        }
+        // FIXME Add component sources here
     }
 
     private static void unpackWebjars(File targetDir, Project project) {
-        File bowerComponents = new File(targetDir, 'bower_components')
+        File bowerComponents = new File(targetDir, BOWER_COMPONENTS)
         if (!bowerComponents.exists()) {
             bowerComponents.mkdirs()
         }
@@ -186,7 +191,7 @@ class TranspileDependenciesTask extends DefaultTask {
                                 }
 
                                 // Unpack directory with bower.json
-                                if (bowerJsonPackage) {
+                                if (bowerJsonPackage && componentRootPackage) {
                                     TranspileDependenciesTask.LOGGER.info("Found bower.json in ${file.name}, " +
                                             "unpacking ${bowerJsonPackage} ...")
 

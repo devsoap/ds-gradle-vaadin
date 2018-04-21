@@ -61,18 +61,17 @@ class InstallNpmDependenciesTask extends DefaultTask {
         it
     }
 
-    @OutputDirectory
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
 
     @OutputFile
-    final File packageJsonOut = new File(VaadinClientDependenciesExtension.FRONTEND_DIR, PACKAGE_JSON_FILE)
+    final File packageJson = new File(workingDir, PACKAGE_JSON_FILE)
 
     InstallNpmDependenciesTask() {
         dependsOn(NpmSetupTask.NAME)
         onlyIf {
             VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty() || vaadin.supportLegacyBrowsers
+            !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty() || vaadin.productionMode
         }
 
         description = 'Installs Vaadin npm client dependencies'
@@ -89,11 +88,10 @@ class InstallNpmDependenciesTask extends DefaultTask {
         npmExecRunner.execute().assertNormalExitValue()
 
         // Set proper defaults for package.json
-        File packageJson = new File(workingDir, PACKAGE_JSON_FILE)
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
         pkg.main = ''
         pkg.version = '1.0.0'
-        pkg.name = project.name + '-frontend'
+        pkg.name = 'frontend'
 
         // Install bower (required by polymer-cli, even if no bower dependencies are added)
         LOGGER.info('Installing Bower ...')
@@ -108,14 +106,6 @@ class InstallNpmDependenciesTask extends DefaultTask {
                                    SAVE_AS_DEV_PARAM]
         npmExecRunner.execute().assertNormalExitValue()
         pkg.scripts[POLYMER_COMMAND] = POLYMER_COMMAND
-
-        // Generate package.json
-        LOGGER.info("Generating ${packageJsonOut} ...")
-        if (!packageJsonOut.parentFile.exists()) {
-            packageJsonOut.parentFile.mkdirs()
-        }
-        packageJsonOut.createNewFile()
-        packageJsonOut.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
         packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
     }
 }

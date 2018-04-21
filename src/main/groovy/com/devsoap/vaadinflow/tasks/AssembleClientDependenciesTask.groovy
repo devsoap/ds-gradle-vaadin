@@ -17,10 +17,13 @@ package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
+import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+
+import java.nio.file.Paths
 
 /**
  * Assembles the files into the frontend directory
@@ -28,55 +31,72 @@ import org.gradle.api.tasks.TaskAction
  * @author John Ahlroos
  * @since 1.0
  */
+@Log('LOGGER')
 class AssembleClientDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinAssembleClient'
 
-    @InputDirectory
     final File sourceDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+    final File sourceDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es5')
+    final File sourceDirEs6 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es6')
 
-    @OutputDirectory
-    final File targetDir = project.file(VaadinClientDependenciesExtension.WEBAPP_DIR)
+    final File targetDir = project.file(VaadinClientDependenciesExtension.WEBAPP_DIR + '/frontend')
+    final File targetDirEs5 = project.file(VaadinClientDependenciesExtension.WEBAPP_DIR + '/frontend-es5')
+    final File targetDirEs6 = project.file(VaadinClientDependenciesExtension.WEBAPP_DIR + '/frontend-es6')
 
+    /**
+     * Assembles the built client artifacts into the webapp frontend directories
+     */
     AssembleClientDependenciesTask() {
         dependsOn(TranspileDependenciesTask.NAME, InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME)
         onlyIf {
             VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty() || vaadin.supportLegacyBrowsers
+            !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty() || vaadin.productionMode
         }
         group = 'Vaadin'
         description = 'Copies built client dependencies into the right target directory'
+        project.afterEvaluate {
+            VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+            if (vaadin.productionMode) {
+                inputs.dir(sourceDirEs5)
+                inputs.dir(sourceDirEs6)
+                outputs.dirs(targetDirEs5, targetDirEs6)
+            } else {
+                inputs.dir(sourceDir)
+                outputs.dir(targetDir)
+            }
+        }
     }
 
     @TaskAction
     void run() {
-
         List<String> excludes = [
              '**/LICENSE*',
              '**/demo/**',
              '**/docs/**',
              '**/test*/**',
              '**/build/**',
+             '**/frontend-*/**',
              '**/.*',
              '**/*.md',
              '**/bower.json',
+             '**/polymer.json',
              '**/package.json',
              '**/package-lock.json',
              '**/yarn.lock'
         ]
 
-        project.copy { spec ->
-            spec.from(sourceDir,)
-                .exclude(excludes)
-                .into(new File(targetDir, 'frontend'))
-        }
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
 
-        project.copy { spec ->
-            spec.from(new File(sourceDir, 'build'))
-                .include('frontend*/**')
-                .exclude(excludes)
-                .into(targetDir)
+        if (vaadin.productionMode) {
+            project.copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDirEs5) }
+            project.copy { spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
+
+            project.copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDirEs6) }
+            project.copy { spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
+        } else {
+            project.copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDir) }
         }
     }
 }

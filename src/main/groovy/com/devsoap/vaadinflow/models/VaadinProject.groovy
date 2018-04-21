@@ -33,4 +33,6 @@ class VaadinProject {
     String applicationBaseTheme
 
     File rootDirectory
+
+    boolean productionMode
 }

@@ -56,14 +56,10 @@ class InstallBowerDependenciesTask extends DefaultTask {
         it
     }
 
-    @InputDirectory
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
 
     @OutputFile
     final File bowerJson = new File(workingDir, 'bower.json')
-
-    @InputFile
-    final File packageJsonOut = new File(workingDir, 'package.json')
 
     InstallBowerDependenciesTask() {
         dependsOn( InstallNpmDependenciesTask.NAME )
@@ -76,6 +72,7 @@ class InstallBowerDependenciesTask extends DefaultTask {
 
         npmExecRunner.workingDir = workingDir
 
+        inputs.file(new File(workingDir, 'package.json'))
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
         }
@@ -87,10 +84,8 @@ class InstallBowerDependenciesTask extends DefaultTask {
     @TaskAction
     void run() {
 
-        VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
-
-        // Create bower.json
         LOGGER.info('Creating bower.json...')
+        VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
         ClientPackage bowerModel = new ClientPackage(name: 'frontend', version: '1.0.0').with { model ->
             deps.bowerDependencies.each { String name, String version ->
                 model.dependencies[name] = version
@@ -99,8 +94,7 @@ class InstallBowerDependenciesTask extends DefaultTask {
         }
         bowerJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(bowerModel))
 
-        // Run bower install
-        LOGGER.info('Installing bower dependencies')
+        LOGGER.info('Installing bower dependencies ... ')
         npmExecRunner.arguments = ['run', BOWER_COMMAND, INSTALL_COMMAND, '--config.interactive=false' ]
         npmExecRunner.execute().assertNormalExitValue()
     }
