@@ -17,6 +17,7 @@ package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.creators.VaadinProjectCreator
 import com.devsoap.vaadinflow.creators.VaadinThemeCreator
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.VaadinProject
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
@@ -61,11 +62,13 @@ class CreateProjectTask extends DefaultTask {
             throw new GradleException("Wrong base theme value. Valid values are 'lumo' or 'material'")
         }
 
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
         VaadinProject vaadinProject = VaadinProject.builder()
                 .applicationName(applicationName ?: project.name.capitalize())
                 .applicationPackage(applicationPackage ?: "com.example.${project.name.toLowerCase()}")
                 .applicationBaseTheme(applicationBaseTheme ?: LUMO)
                 .rootDirectory(project.rootDir)
+                .productionMode(vaadin.productionMode)
                 .build()
         projectCreator.generate(vaadinProject)
         themeCreator.generateCssTheme(vaadinProject)

@@ -64,6 +64,7 @@ class ClientDependenciesTest extends FunctionalTest {
         then:
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
+            bowerComponentExists(frontend, 'paper-slider')
             File nodeModules = new File(frontend, 'bower_components')
             File sliderComponent = Paths.get(nodeModules.canonicalPath,  'paper-slider').toFile()
             sliderComponent.exists()
@@ -97,26 +98,43 @@ class ClientDependenciesTest extends FunctionalTest {
             // Validate that the dependency got downloaded and installed
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
-            File bowerComponents = new File(frontend, 'bower_components')
-            File sliderComponent = Paths.get(bowerComponents.canonicalPath, 'paper-slider').toFile()
-            sliderComponent.exists()
+            bowerComponentExists(frontend, 'paper-slider')
     }
 
-    void 'transpile dependencies'() {
+    void 'transpile dependencies in production mode'() {
         setup:
             buildFile << '''
-                    vaadin.supportLegacyBrowsers = true
+                    vaadin.productionMode = true
                     vaadin.autoconfigure()
                 '''.stripMargin()
             run 'vaadinCreateProject'
         when:
             run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
-            run 'jar'
+            run('jar')
         then:
             File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
+
             File frontend5 = new File(webapp, 'frontend-es5')
             frontend5.exists()
+            bowerComponentExists(frontend5, 'paper-slider')
+            bowerComponentExists(frontend5, 'vaadin-button')
+
             File frontend6 = new File(webapp, 'frontend-es6')
             frontend6.exists()
+            bowerComponentExists(frontend6, 'paper-slider')
+            bowerComponentExists(frontend6, 'vaadin-button')
+
+            File frontend = new File(webapp, 'frontend')
+            frontend.exists()
+            File cssFile = new File(frontend, testProjectDir.root.name.toLowerCase() + '-theme.css')
+            cssFile.exists()
+            !bowerComponentExists(frontend, 'paper-slider')
+            !bowerComponentExists(frontend, 'vaadin-button')
+    }
+
+    private static boolean bowerComponentExists(File frontend, String component) {
+        File componentFile = Paths.get(frontend.canonicalPath, 'bower_components', component).toFile()
+        File componentHTMLFile = new File(componentFile, "${component}.html")
+        componentFile.exists() && componentHTMLFile.exists()
     }
 }

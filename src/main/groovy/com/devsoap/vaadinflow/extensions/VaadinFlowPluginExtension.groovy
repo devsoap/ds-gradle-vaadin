@@ -40,7 +40,7 @@ class VaadinFlowPluginExtension {
     public static final String COLON = ':'
 
     private final Property<String> version
-    private final Property<Boolean> supportLegacyBrowsers
+    private final Property<Boolean> productionMode
 
     private final DependencyHandler dependencyHandler
     private final RepositoryHandler repositoryHandler
@@ -53,7 +53,7 @@ class VaadinFlowPluginExtension {
         dependencyHandler = project.dependencies
         repositoryHandler = project.repositories
         version = project.objects.property(String)
-        supportLegacyBrowsers = project.objects.property(Boolean)
+        productionMode = project.objects.property(Boolean)
     }
 
     /**
@@ -76,15 +76,15 @@ class VaadinFlowPluginExtension {
     /**
      * Should the plugin support legacy browsers by transpiling the sources to ES5
      */
-    boolean isSupportLegacyBrowsers() {
-        supportLegacyBrowsers.getOrElse(false)
+    boolean isProductionMode() {
+        productionMode.getOrElse(false)
     }
 
     /**
      * Should the plugin support legacy browsers by transpiling the sources to ES5
      */
-    void setSupportLegacyBrowsers(boolean enabled) {
-        supportLegacyBrowsers.set(enabled)
+    void setProductionMode(boolean enabled) {
+        productionMode.set(enabled)
     }
 
     /**

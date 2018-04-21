@@ -87,6 +87,7 @@ class FunctionalTest extends Specification {
                 .withArguments(['--stacktrace', '--info'] + (args as List))
                 .withPluginClasspath()
         config.run(runner)
+        println "Running gradle ${runner.arguments.join(' ')}"
         runner.build()
     }
 
@@ -104,6 +105,7 @@ class FunctionalTest extends Specification {
                 .withArguments(['--stacktrace', '--info'] + (args as List))
                 .withPluginClasspath()
         config.run(runner)
+        println "Running gradle ${runner.arguments.join(' ')}"
         runner.buildAndFail()
     }
 
