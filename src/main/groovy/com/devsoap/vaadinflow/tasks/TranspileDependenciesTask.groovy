@@ -129,9 +129,9 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private List<String> initBowerSources() {
+        List<String> sources = [bowerJson.name]
         File bowerComponentsDir = new File(workingDir, BOWER_COMPONENTS)
         LOGGER.info("Searching for bower components in $bowerComponentsDir")
-        List<String> sources = [bowerJson.name]
         bowerComponentsDir.eachDir { dir ->
             File src = Paths.get(dir.path, SRC).toFile()
             if (src.exists()) {

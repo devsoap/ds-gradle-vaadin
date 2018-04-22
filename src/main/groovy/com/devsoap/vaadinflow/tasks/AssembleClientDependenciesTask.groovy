@@ -78,13 +78,14 @@ class AssembleClientDependenciesTask extends DefaultTask {
              '**/test*/**',
              '**/build/**',
              '**/frontend-*/**',
+             '**/node_modules/**',
              '**/.*',
              '**/*.md',
              '**/bower.json',
              '**/polymer.json',
              '**/package.json',
              '**/package-lock.json',
-             '**/yarn.lock'
+             '**/yarn.lock',
         ]
 
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)

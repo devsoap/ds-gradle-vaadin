@@ -16,6 +16,7 @@
 package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.util.LogUtils
 import com.moowork.gradle.node.npm.NpmExecRunner
@@ -64,7 +65,9 @@ class InstallBowerDependenciesTask extends DefaultTask {
     InstallBowerDependenciesTask() {
         dependsOn( InstallNpmDependenciesTask.NAME )
         onlyIf {
-            !project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies.isEmpty()
+            VaadinFlowPluginExtension vaadin = project.extensions[VaadinFlowPluginExtension.NAME]
+            VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
+            !client.bowerDependencies.isEmpty() || vaadin.productionMode
         }
 
         description = 'Installs Vaadin bower client dependencies'
