@@ -75,10 +75,23 @@ class InstallYarnDependenciesTask extends DefaultTask {
      */
     @TaskAction
     void run() {
+
+        LOGGER.info('Installing yarn dependencies...')
         VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
         deps.yarnDependencies.each { String name, String version ->
+            LOGGER.info( "Found $name")
             yarnRunner.arguments = ['add', "$name@$version"]
             yarnRunner.execute().assertNormalExitValue()
+        }
+
+        LOGGER.info('Copying yarn dependencies into bower components')
+        File bowerComponents = new File(workingDir, 'bower_components')
+        project.fileTree(new File(workingDir, 'node_modules'))
+                .include('**/**/bower.json')
+                .each { File bowerJson ->
+            File componentDir = bowerJson.parentFile
+            LOGGER.info( "Copying yarn dependency $componentDir.name to $bowerComponents")
+            project.copy { spec -> spec.from(componentDir).into(new File(bowerComponents, componentDir.name)) }
         }
     }
 }

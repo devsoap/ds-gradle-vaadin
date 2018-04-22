@@ -41,11 +41,7 @@ class ClientDependenciesTest extends FunctionalTest {
         then:
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
-            File nodeModules = new File(frontend, 'node_modules')
-            File sliderComponent = Paths.get(nodeModules.canonicalPath, '@polymer', 'paper-slider').toFile()
-            sliderComponent.exists()
-            File sliderComponentHTML = new File(sliderComponent, 'paper-slider.html')
-            sliderComponentHTML.exists()
+            bowerComponentExists(frontend, 'paper-slider')
     }
 
     void 'add paper-slider to project as bower dependency'() {
@@ -65,11 +61,6 @@ class ClientDependenciesTest extends FunctionalTest {
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
             bowerComponentExists(frontend, 'paper-slider')
-            File nodeModules = new File(frontend, 'bower_components')
-            File sliderComponent = Paths.get(nodeModules.canonicalPath,  'paper-slider').toFile()
-            sliderComponent.exists()
-            File sliderComponentHTML = new File(sliderComponent, 'paper-slider.html')
-            sliderComponentHTML.exists()
     }
 
     void 'add paper-slider web component via task'() {
