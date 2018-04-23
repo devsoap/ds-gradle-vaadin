@@ -36,9 +36,6 @@ class AssembleClientDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinAssembleClient'
 
-    private static final String BOWER_COMPONENTS = 'bower_components'
-    private static final String COMPONENTS = 'components'
-
     final File sourceDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final File sourceDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es5')
     final File sourceDirEs6 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es6')
@@ -96,14 +93,11 @@ class AssembleClientDependenciesTask extends DefaultTask {
         if (vaadin.productionMode) {
             project.copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDirEs5) }
             project.copy { spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
-            new File(targetDirEs5, BOWER_COMPONENTS).renameTo(new File(targetDirEs5, COMPONENTS))
 
             project.copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDirEs6) }
-            project.copy { spec -> spec.from(sourceDirEs6).exclude(excludes).into(sourceDirEs6) }
-            new File(targetDirEs6, BOWER_COMPONENTS).renameTo(new File(targetDirEs6, COMPONENTS))
+            project.copy { spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
         } else {
             project.copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDir) }
-            new File(targetDir, BOWER_COMPONENTS).renameTo(new File(targetDir, COMPONENTS))
         }
     }
 }

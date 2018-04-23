@@ -34,7 +34,23 @@ class WebComponent {
 
     File rootDirectory
 
+    PackageManager packageManager
+
     String dependencyPackage
 
     String dependencyHtml
+
+    enum PackageManager {
+        YARN('node_modules'),
+        BOWER('bower_components')
+
+        private final String pkg
+        PackageManager(String pkg) {
+            this.pkg = pkg
+        }
+
+        String getPackage() {
+            pkg
+        }
+    }
 }

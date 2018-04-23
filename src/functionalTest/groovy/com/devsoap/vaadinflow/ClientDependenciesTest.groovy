@@ -41,7 +41,7 @@ class ClientDependenciesTest extends FunctionalTest {
         then:
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
-            componentExists(frontend, 'paper-slider')
+            bowerComponentExists(frontend, 'paper-slider')
     }
 
     void 'add paper-slider to project as bower dependency'() {
@@ -60,7 +60,7 @@ class ClientDependenciesTest extends FunctionalTest {
         then:
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
-            componentExists(frontend, 'paper-slider')
+            bowerComponentExists(frontend, 'paper-slider')
     }
 
     void 'add paper-slider web component via task'() {
@@ -83,13 +83,13 @@ class ClientDependenciesTest extends FunctionalTest {
             componentClass.exists()
             componentClass.text.contains('@Tag("example-web-component")')
             componentClass.text.contains(
-                    '@HtmlImport("frontend://components/paper-slider/paper-slider.html")')
+                    '@HtmlImport("frontend://bower_components/paper-slider/paper-slider.html")')
             componentClass.text.contains('public class ExampleWebComponent')
 
             // Validate that the dependency got downloaded and installed
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
-            componentExists(frontend, 'paper-slider')
+            bowerComponentExists(frontend, 'paper-slider')
     }
 
     void 'transpile dependencies in production mode'() {
@@ -107,24 +107,24 @@ class ClientDependenciesTest extends FunctionalTest {
 
             File frontend5 = new File(webapp, 'frontend-es5')
             frontend5.exists()
-            componentExists(frontend5, 'paper-slider')
-            componentExists(frontend5, 'vaadin-button')
+            bowerComponentExists(frontend5, 'paper-slider')
+            bowerComponentExists(frontend5, 'vaadin-button')
 
             File frontend6 = new File(webapp, 'frontend-es6')
             frontend6.exists()
-            componentExists(frontend6, 'paper-slider')
-            componentExists(frontend6, 'vaadin-button')
+            bowerComponentExists(frontend6, 'paper-slider')
+            bowerComponentExists(frontend6, 'vaadin-button')
 
             File frontend = new File(webapp, 'frontend')
             frontend.exists()
             File cssFile = new File(frontend, testProjectDir.root.name.toLowerCase() + '-theme.css')
             cssFile.exists()
-            !componentExists(frontend, 'paper-slider')
-            !componentExists(frontend, 'vaadin-button')
+            !bowerComponentExists(frontend, 'paper-slider')
+            !bowerComponentExists(frontend, 'vaadin-button')
     }
 
-    private static boolean componentExists(File frontend, String component) {
-        File componentFile = Paths.get(frontend.canonicalPath, 'components', component).toFile()
+    private static boolean bowerComponentExists(File frontend, String component) {
+        File componentFile = Paths.get(frontend.canonicalPath, 'bower_components', component).toFile()
         File componentHTMLFile = new File(componentFile, "${component}.html")
         componentFile.exists() && componentHTMLFile.exists()
     }
