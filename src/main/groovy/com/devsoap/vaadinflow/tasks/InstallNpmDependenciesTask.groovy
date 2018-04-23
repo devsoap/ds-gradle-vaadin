@@ -83,6 +83,10 @@ class InstallNpmDependenciesTask extends DefaultTask {
     @TaskAction
     void run() {
 
+        // Ensure working directory is empty
+        workingDir.deleteDir()
+        workingDir.mkdirs()
+
         // Create package.json
         npmExecRunner.arguments = ['init', '-y', '-f']
         npmExecRunner.execute().assertNormalExitValue()
