@@ -50,8 +50,7 @@ class WebComponentCreator {
                     'componentTag' : webComponent.componentTag,
                     'dependencyPackage': webComponent.dependencyPackage,
                     'dependencyHtml': webComponent.dependencyHtml,
-                    'componentName' : componentClassName,
-                    'packageManager' : webComponent.packageManager.package
+                    'componentName' : componentClassName
                 ]).build().write()
     }
 }

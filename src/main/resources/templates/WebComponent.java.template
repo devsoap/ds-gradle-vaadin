@@ -5,7 +5,7 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.HtmlImport;
 
 @Tag("${componentTag}")
-@HtmlImport("frontend://${packageManager}/${dependencyPackage}/${dependencyHtml}.html")
+@HtmlImport("frontend://components/${dependencyPackage}/${dependencyHtml}.html")
 public class ${componentName} extends Component {
 
     public ${componentName}() {
