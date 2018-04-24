@@ -59,9 +59,19 @@ class VaadinProjectCreator {
                 .targetFileName("${appClassName}View.java")
                 .substitutions([
                         'applicationPackage': vaadinProject.applicationPackage,
-                        'applicationName' : vaadinProject.applicationName,
+                        'applicationName' : appClassName,
                         'applicationBaseTheme' : vaadinProject.applicationBaseTheme,
                         'applicationTheme' : vaadinProject.applicationName.toLowerCase() + '-theme.css',
+                ])
+                .build().write()
+
+        TemplateWriter.builder()
+                .templateFileName('UI.java')
+                .targetDir(pkgDir)
+                .targetFileName("${appClassName}UI.java")
+                .substitutions([
+                        'applicationPackage': vaadinProject.applicationPackage,
+                        'applicationName' : appClassName
                 ])
                 .build().write()
     }

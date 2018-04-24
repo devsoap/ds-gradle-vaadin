@@ -1,0 +1,9 @@
+package ${applicationPackage};
+
+import com.vaadin.flow.component.dependency.HtmlImport;
+import com.vaadin.flow.component.UI;
+
+@HtmlImport("index.html")
+public class ${applicationName}UI extends UI {
+
+}

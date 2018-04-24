@@ -7,5 +7,5 @@ import javax.servlet.annotation.WebServlet;
 
 
 @WebServlet(urlPatterns = "/*", name = "${applicationName}Servlet", asyncSupported = true)
-@VaadinServletConfiguration(productionMode = ${productionMode})
+@VaadinServletConfiguration(ui = ${applicationName}UI.class, productionMode = ${productionMode})
 public class ${applicationName}Servlet extends VaadinServlet { }
