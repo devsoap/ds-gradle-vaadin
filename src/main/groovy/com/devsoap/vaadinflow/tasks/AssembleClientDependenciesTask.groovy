@@ -91,11 +91,16 @@ class AssembleClientDependenciesTask extends DefaultTask {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
 
         if (vaadin.productionMode) {
-            project.copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDirEs5) }
-            project.copy { spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
+            project.with {
+                String bowerComponentsGlob = '**/bower_components/**'
+                copy { spec -> spec.from(targetDir).exclude([bowerComponentsGlob]).into(targetDirEs5) }
+                copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDirEs5) }
+                copy { spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
 
-            project.copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDirEs6) }
-            project.copy { spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
+                copy { spec -> spec.from(targetDir).exclude([bowerComponentsGlob]).into(targetDirEs6) }
+                copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDirEs6) }
+                copy { spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
+            }
         } else {
             project.copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDir) }
         }
