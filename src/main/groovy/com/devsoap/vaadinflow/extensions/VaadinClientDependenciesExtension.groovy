@@ -15,7 +15,9 @@
  */
 package com.devsoap.vaadinflow.extensions
 
+import groovy.util.logging.Log
 import org.gradle.api.Project
+import org.gradle.api.provider.Property
 
 /**
  * Extension for configuring the client dependencies
@@ -23,6 +25,7 @@ import org.gradle.api.Project
  * @author John Ahlroos
  * @since 1.0
  */
+@Log('LOGGER')
 class VaadinClientDependenciesExtension {
 
     private static final String COLON = ':'
@@ -42,6 +45,8 @@ class VaadinClientDependenciesExtension {
 
     private final Project project
 
+    private final Property<Boolean> compileFromSources
+
     /**
      * Creates the extension
      *
@@ -50,6 +55,7 @@ class VaadinClientDependenciesExtension {
      */
     VaadinClientDependenciesExtension(Project project) {
         this.project = project
+        compileFromSources = project.objects.property(Boolean)
     }
 
     /**
@@ -126,5 +132,30 @@ class VaadinClientDependenciesExtension {
      */
     Map<String,String> getBowerDependencies() {
         Collections.unmodifiableMap(bowerDependencies)
+    }
+
+    /**
+     * Should the plugin compile the web components from sources.
+     *
+     * This property is only used to decide if the webjars should be unpacked and compiled
+     * using NPM for legacy browsers. When custom component sources exist in the project
+     * then this is always <code>true</code>.
+     */
+    boolean isCompileFromSources() {
+        compileFromSources.getOrElse(false)
+    }
+
+    /**
+     * Should the plugin compile the web components from sources.
+     *
+     * This property is only used to decide if the webjars should be unpacked and compiled
+     * using NPM for legacy browsers. When custom component sources exist in the project
+     * then this is always <code>true</code>.
+     */
+    void setCompileFromSources(boolean compile) {
+        compileFromSources.set(compile)
+        if (!project.extensions.getByType(VaadinFlowPluginExtension).productionMode) {
+            LOGGER.warning('compileFromSources has no effect without setting vaadin.productionMode to true')
+        }
     }
 }

@@ -34,9 +34,14 @@ class PolymerBuild {
 
     List<Build> builds = []
 
+    /**
+     * Represents a single build in the build process.
+     */
     static class Build {
 
         String name
+
+        boolean bundle = true
 
         BuildConfiguration js = new BuildConfiguration()
 
@@ -45,6 +50,9 @@ class PolymerBuild {
         BuildConfiguration html = new BuildConfiguration()
     }
 
+    /**
+     * Represents a jss/css/html build configuration.
+     */
     static class BuildConfiguration {
 
         boolean minify = true

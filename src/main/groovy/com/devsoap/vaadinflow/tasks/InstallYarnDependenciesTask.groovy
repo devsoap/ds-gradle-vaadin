@@ -16,6 +16,7 @@
 package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.util.LogUtils
 import com.moowork.gradle.node.npm.NpmSetupTask
 import com.moowork.gradle.node.yarn.YarnExecRunner
@@ -57,7 +58,8 @@ class InstallYarnDependenciesTask extends DefaultTask {
     InstallYarnDependenciesTask() {
         dependsOn( InstallNpmDependenciesTask.NAME, YarnSetupTask.NAME )
         onlyIf {
-            !project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies.isEmpty()
+            VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
+            !client.yarnDependencies.isEmpty()
         }
 
         description = 'Installs Vaadin yarn dependencies'

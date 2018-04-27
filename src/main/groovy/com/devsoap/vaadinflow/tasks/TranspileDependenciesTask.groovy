@@ -31,9 +31,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
-import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputDirectories
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -94,8 +92,11 @@ class TranspileDependenciesTask extends DefaultTask {
     TranspileDependenciesTask() {
         dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME)
         onlyIf {
-            VaadinFlowPluginExtension vaadin = project.extensions[VaadinFlowPluginExtension.NAME]
-            vaadin.productionMode
+            VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+            VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
+            boolean hasClientDependencies = !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty()
+            (vaadin.productionMode && hasClientDependencies) || client.compileFromSources
+
         }
         description = 'Compiles client modules to support legacy browsers'
         group = 'Vaadin'
@@ -113,8 +114,11 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Unpacking webjars...')
         unpackWebjars(workingDir, project)
 
+        LOGGER.info('Searching for HTML imports')
+        List<String> imports = initHTMLImports()
+
         LOGGER.info('Creating index.html...')
-        initHtml()
+        initHtml(imports)
 
         LOGGER.info('Searching for bower sources to transpile...')
         List<String> sources = initBowerSources()
@@ -131,15 +135,34 @@ class TranspileDependenciesTask extends DefaultTask {
     private List<String> initBowerSources() {
         List<String> sources = [bowerJson.name]
         File bowerComponentsDir = new File(workingDir, BOWER_COMPONENTS)
-        LOGGER.info("Searching for bower components in $bowerComponentsDir")
+        LOGGER.info("Searching for component sources in $bowerComponentsDir")
         bowerComponentsDir.eachDir { dir ->
             File src = Paths.get(dir.path, SRC).toFile()
             if (src.exists()) {
-                LOGGER.info("Found ${dir.name}")
                 sources.add("bower_components/${dir.name}/src/**/*")
             }
         }
+
+        sources.each { LOGGER.info("Found $it") }
+
         sources
+    }
+
+    private List<String> initHTMLImports() {
+        List<String> imports = []
+        File bowerComponentsDir = new File(workingDir, BOWER_COMPONENTS)
+        LOGGER.info("Searching for html imports in $bowerComponentsDir")
+        bowerComponentsDir.eachDir { dir ->
+            project.fileTree(dir)
+                    .include('**/*.html')
+                    .exclude('**/index.html', '**/demo/**', '**/test*/**', '**/src/**')
+                    .each { File htmlFile ->
+                imports.add((htmlFile.path - workingDir.path).substring(1))
+            }
+        }
+        imports.each { LOGGER.info("Found $it") }
+
+        imports
     }
 
     private void initPolymerJson(List<String> sources) {
@@ -154,12 +177,14 @@ class TranspileDependenciesTask extends DefaultTask {
         polymerJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(buildModel))
     }
 
-    private void initHtml() {
+    private void initHtml(List<String> imports) {
         if (!html.exists()) {
             html.createNewFile()
         }
 
-        // FIXME Add component sources here
+        html.withPrintWriter { writer ->
+            imports.each { writer.write("<link rel='import' href='$it' >\n") }
+        }
     }
 
     private static void unpackWebjars(File targetDir, Project project) {

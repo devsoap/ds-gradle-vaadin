@@ -65,9 +65,8 @@ class InstallBowerDependenciesTask extends DefaultTask {
     InstallBowerDependenciesTask() {
         dependsOn( InstallNpmDependenciesTask.NAME )
         onlyIf {
-            VaadinFlowPluginExtension vaadin = project.extensions[VaadinFlowPluginExtension.NAME]
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !client.bowerDependencies.isEmpty() || vaadin.productionMode
+            !client.bowerDependencies.isEmpty() || client.compileFromSources
         }
 
         description = 'Installs Vaadin bower client dependencies'

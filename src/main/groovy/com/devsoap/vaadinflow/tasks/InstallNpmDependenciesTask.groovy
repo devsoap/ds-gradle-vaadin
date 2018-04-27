@@ -69,9 +69,8 @@ class InstallNpmDependenciesTask extends DefaultTask {
     InstallNpmDependenciesTask() {
         dependsOn(NpmSetupTask.NAME)
         onlyIf {
-            VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty() || vaadin.productionMode
+            !client.yarnDependencies.isEmpty() || !client.bowerDependencies.isEmpty() || client.compileFromSources
         }
 
         description = 'Installs Vaadin npm client dependencies'

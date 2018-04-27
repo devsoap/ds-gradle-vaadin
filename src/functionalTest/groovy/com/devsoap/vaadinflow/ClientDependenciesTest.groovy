@@ -15,6 +15,9 @@
  */
 package com.devsoap.vaadinflow
 
+import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.TaskOutcome
+
 import java.nio.file.Paths
 
 /**
@@ -37,8 +40,13 @@ class ClientDependenciesTest extends FunctionalTest {
             """.stripMargin()
             run 'vaadinCreateProject'
         when:
-            run  'vaadinAssembleClient'
+            BuildResult result = run  'vaadinAssembleClient'
         then:
+            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
             bowerComponentExists(frontend, 'paper-slider')
@@ -56,8 +64,13 @@ class ClientDependenciesTest extends FunctionalTest {
             """.stripMargin()
              run 'vaadinCreateProject'
         when:
-             run 'vaadinAssembleClient'
+            BuildResult result = run 'vaadinAssembleClient'
         then:
+            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'src', 'main', 'webapp', 'frontend').toFile()
             bowerComponentExists(frontend, 'paper-slider')
@@ -71,8 +84,13 @@ class ClientDependenciesTest extends FunctionalTest {
             run 'vaadinCreateProject'
         when:
             run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
-            run 'jar'
+            BuildResult result = run 'jar'
         then:
+            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
 
             // Validate that the component was created
             File javaSourceDir = Paths.get(buildFile.parentFile.canonicalPath,
@@ -101,8 +119,14 @@ class ClientDependenciesTest extends FunctionalTest {
             run 'vaadinCreateProject'
         when:
             run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
-            run('jar')
+            BuildResult result = run('jar')
         then:
+            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
+
             File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
 
             File frontend5 = new File(webapp, 'frontend-es5')
@@ -120,6 +144,67 @@ class ClientDependenciesTest extends FunctionalTest {
             File cssFile = new File(frontend, testProjectDir.root.name.toLowerCase() + '-theme.css')
             cssFile.exists()
             !bowerComponentExists(frontend, 'paper-slider')
+            !bowerComponentExists(frontend, 'vaadin-button')
+    }
+
+    void 'no transpile when no client dependencies'() {
+        setup:
+        buildFile << '''
+                    vaadin.productionMode = true
+                    vaadin.autoconfigure()
+                '''.stripMargin()
+            run 'vaadinCreateProject'
+        when:
+            BuildResult result = run('jar')
+        then:
+            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SKIPPED
+
+            File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
+
+            File frontend5 = new File(webapp, 'frontend-es5')
+            !frontend5.exists()
+
+            File frontend6 = new File(webapp, 'frontend-es6')
+            !frontend6.exists()
+
+            File frontend = new File(webapp, 'frontend')
+            frontend.exists()
+            frontend.listFiles().length == 1 // Theme file remains here
+    }
+
+    void 'force transpile when no client dependencies'() {
+        setup:
+            buildFile << '''
+                        vaadin.productionMode = true
+                        vaadinClientDependencies.compileFromSources = true
+                        vaadin.autoconfigure()
+                    '''.stripMargin()
+            run 'vaadinCreateProject'
+        when:
+            BuildResult result = run('jar')
+        then:
+            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
+
+            File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
+
+            File frontend5 = new File(webapp, 'frontend-es5')
+            frontend5.exists()
+            bowerComponentExists(frontend5, 'vaadin-button')
+
+            File frontend6 = new File(webapp, 'frontend-es6')
+            frontend6.exists()
+            bowerComponentExists(frontend6, 'vaadin-button')
+
+            File frontend = new File(webapp, 'frontend')
+            frontend.exists()
             !bowerComponentExists(frontend, 'vaadin-button')
     }
 
