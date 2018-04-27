@@ -40,9 +40,9 @@ class AssembleClientDependenciesTask extends DefaultTask {
     final File sourceDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es5')
     final File sourceDirEs6 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es6')
 
-    final File targetDir = project.file(VaadinClientDependenciesExtension.WEBAPP_DIR + '/frontend')
-    final File targetDirEs5 = project.file(VaadinClientDependenciesExtension.WEBAPP_DIR + '/frontend-es5')
-    final File targetDirEs6 = project.file(VaadinClientDependenciesExtension.WEBAPP_DIR + '/frontend-es6')
+    final File targetDir = project.file(VaadinClientDependenciesExtension.FRONTEND_DIR)
+    final File targetDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_DIR + '-es5')
+    final File targetDirEs6 = project.file(VaadinClientDependenciesExtension.FRONTEND_DIR + '-es6')
 
     /**
      * Assembles the built client artifacts into the webapp frontend directories
@@ -50,15 +50,16 @@ class AssembleClientDependenciesTask extends DefaultTask {
     AssembleClientDependenciesTask() {
         dependsOn(TranspileDependenciesTask.NAME, InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME)
         onlyIf {
-            VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty() || vaadin.productionMode
+            boolean hasClientDependencies = !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty()
+            hasClientDependencies || client.compileFromSources
         }
         group = 'Vaadin'
         description = 'Copies built client dependencies into the right target directory'
         project.afterEvaluate {
             VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-            if (vaadin.productionMode) {
+            VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
+            if (vaadin.productionMode && client.compileFromSources) {
                 inputs.dir(sourceDirEs5)
                 inputs.dir(sourceDirEs6)
                 outputs.dirs(targetDirEs5, targetDirEs6)
@@ -89,8 +90,9 @@ class AssembleClientDependenciesTask extends DefaultTask {
         ]
 
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-
-        if (vaadin.productionMode) {
+        VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
+        boolean hasClientDependencies = !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty()
+        if ((vaadin.productionMode && hasClientDependencies) || client.compileFromSources) {
             project.with {
                 String bowerComponentsGlob = '**/bower_components/**'
                 copy { spec -> spec.from(targetDir).exclude([bowerComponentsGlob]).into(targetDirEs5) }
