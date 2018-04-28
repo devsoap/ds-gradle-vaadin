@@ -118,10 +118,14 @@ class ClientDependenciesTest extends FunctionalTest {
                 '''.stripMargin()
             run 'vaadinCreateProject'
         when:
-            run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
+            BuildResult createResult = run 'vaadinCreateWebComponent', '--dependency',
+                    'bower:PolymerElements/paper-slider'
             BuildResult result = run('jar')
         then:
-            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
+            createResult.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
+            createResult.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+
+            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.UP_TO_DATE
             result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
@@ -141,48 +145,19 @@ class ClientDependenciesTest extends FunctionalTest {
 
             File frontend = new File(webapp, 'frontend')
             frontend.exists()
+
             File cssFile = new File(frontend, testProjectDir.root.name.toLowerCase() + '-theme.css')
             cssFile.exists()
             !bowerComponentExists(frontend, 'paper-slider')
             !bowerComponentExists(frontend, 'vaadin-button')
     }
 
-    void 'no transpile when no client dependencies'() {
+    void 'transpile when no client dependencies in production mode'() {
         setup:
         buildFile << '''
                     vaadin.productionMode = true
                     vaadin.autoconfigure()
                 '''.stripMargin()
-            run 'vaadinCreateProject'
-        when:
-            BuildResult result = run('jar')
-        then:
-            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SKIPPED
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
-            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SKIPPED
-            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
-            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SKIPPED
-
-            File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
-
-            File frontend5 = new File(webapp, 'frontend-es5')
-            !frontend5.exists()
-
-            File frontend6 = new File(webapp, 'frontend-es6')
-            !frontend6.exists()
-
-            File frontend = new File(webapp, 'frontend')
-            frontend.exists()
-            frontend.listFiles().length == 1 // Theme file remains here
-    }
-
-    void 'force transpile when no client dependencies'() {
-        setup:
-            buildFile << '''
-                        vaadin.productionMode = true
-                        vaadinClientDependencies.compileFromSources = true
-                        vaadin.autoconfigure()
-                    '''.stripMargin()
             run 'vaadinCreateProject'
         when:
             BuildResult result = run('jar')
@@ -197,15 +172,13 @@ class ClientDependenciesTest extends FunctionalTest {
 
             File frontend5 = new File(webapp, 'frontend-es5')
             frontend5.exists()
-            bowerComponentExists(frontend5, 'vaadin-button')
 
             File frontend6 = new File(webapp, 'frontend-es6')
             frontend6.exists()
-            bowerComponentExists(frontend6, 'vaadin-button')
 
             File frontend = new File(webapp, 'frontend')
             frontend.exists()
-            !bowerComponentExists(frontend, 'vaadin-button')
+            frontend.listFiles().length == 1 // Theme file remains here
     }
 
     private static boolean bowerComponentExists(File frontend, String component) {

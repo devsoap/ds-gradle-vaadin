@@ -92,10 +92,8 @@ class TranspileDependenciesTask extends DefaultTask {
     TranspileDependenciesTask() {
         dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME)
         onlyIf {
-            VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            boolean hasClientDependencies = !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty()
-            (vaadin.productionMode && hasClientDependencies) || client.compileFromSources
+            client.compileFromSources
 
         }
         description = 'Compiles client modules to support legacy browsers'

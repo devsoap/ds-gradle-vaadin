@@ -89,10 +89,8 @@ class AssembleClientDependenciesTask extends DefaultTask {
              '**/yarn.lock',
         ]
 
-        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
         VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-        boolean hasClientDependencies = !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty()
-        if ((vaadin.productionMode && hasClientDependencies) || client.compileFromSources) {
+        if (client.compileFromSources) {
             project.with {
                 String bowerComponentsGlob = '**/bower_components/**'
                 copy { spec -> spec.from(targetDir).exclude([bowerComponentsGlob]).into(targetDirEs5) }

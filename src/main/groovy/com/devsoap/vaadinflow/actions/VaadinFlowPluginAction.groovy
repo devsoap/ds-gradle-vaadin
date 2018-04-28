@@ -17,6 +17,7 @@ package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.VaadinFlowPlugin
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
+import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.Project
@@ -31,12 +32,18 @@ import org.gradle.api.invocation.Gradle
 @Log('LOGGER')
 class VaadinFlowPluginAction extends PluginAction {
 
-    String pluginId = VaadinFlowPlugin.PLUGIN_ID
+    final String pluginId = VaadinFlowPlugin.PLUGIN_ID
 
     @Override
     void apply(Project project) {
         super.apply(project)
         project.plugins.apply('java')
+    }
+
+    @Override
+    protected void execute(Project project) {
+        super.execute(project)
+        project.tasks['processResources'].dependsOn(AssembleClientDependenciesTask.NAME)
     }
 
     @Override
