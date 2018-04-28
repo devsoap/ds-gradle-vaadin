@@ -85,6 +85,7 @@ class VaadinFlowPluginExtension {
      */
     void setProductionMode(boolean enabled) {
         productionMode.set(enabled)
+        project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources = enabled
     }
 
     /**

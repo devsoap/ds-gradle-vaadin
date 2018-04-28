@@ -33,7 +33,7 @@ import org.gradle.api.artifacts.dsl.DependencyHandler
 @Log('LOGGER')
 class NodePluginAction extends PluginAction {
 
-    String pluginId = 'com.moowork.node'
+    final String pluginId = 'com.moowork.node'
 
     @Override
     void apply(Project project) {

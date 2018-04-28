@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow
 
+import com.devsoap.vaadinflow.actions.GrettyPluginAction
 import com.devsoap.vaadinflow.actions.NodePluginAction
 import com.devsoap.vaadinflow.actions.PluginAction
 import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
@@ -51,6 +52,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
     VaadinFlowPlugin() {
         actions << new VaadinFlowPluginAction()
         actions << new NodePluginAction()
+        actions << new GrettyPluginAction()
     }
 
     @Override
@@ -58,8 +60,9 @@ class VaadinFlowPlugin implements Plugin<Project> {
         project.with {
             validateGradleVersion(it)
 
-            new VaadinFlowPluginAction().apply(it)
-            new NodePluginAction().apply(it)
+            actions.each { action ->
+                action.apply(project)
+            }
 
             extensions.with {
                 create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project)
@@ -75,8 +78,6 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 create(TranspileDependenciesTask.NAME, TranspileDependenciesTask)
                 create(AssembleClientDependenciesTask.NAME, AssembleClientDependenciesTask)
             }
-
-            tasks['processResources'].dependsOn(AssembleClientDependenciesTask.NAME)
 
             workaroundInvalidBomVersionRanges(it)
         }
