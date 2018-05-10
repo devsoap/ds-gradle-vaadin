@@ -23,6 +23,7 @@ import com.moowork.gradle.node.yarn.YarnExecRunner
 import com.moowork.gradle.node.yarn.YarnSetupTask
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -37,6 +38,7 @@ import java.util.logging.Level
  * @since 1.0
  */
 @Log('LOGGER')
+@CacheableTask
 class InstallYarnDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallYarnDependencies'
@@ -49,8 +51,10 @@ class InstallYarnDependenciesTask extends DefaultTask {
         it
     }
 
-    @OutputDirectory
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+
+    @OutputDirectory
+    final File bowerComponents = new File(workingDir, 'bower_components')
 
     /**
      * Creates an installation task
@@ -87,7 +91,6 @@ class InstallYarnDependenciesTask extends DefaultTask {
         }
 
         LOGGER.info('Copying yarn dependencies into bower components')
-        File bowerComponents = new File(workingDir, 'bower_components')
         project.fileTree(new File(workingDir, 'node_modules'))
                 .include('**/**/bower.json')
                 .each { File bowerJson ->

@@ -19,6 +19,7 @@ import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
@@ -32,6 +33,7 @@ import java.nio.file.Paths
  * @since 1.0
  */
 @Log('LOGGER')
+@CacheableTask
 class AssembleClientDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinAssembleClient'
@@ -54,8 +56,22 @@ class AssembleClientDependenciesTask extends DefaultTask {
             boolean hasClientDependencies = !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty()
             hasClientDependencies || client.compileFromSources
         }
+
         group = 'Vaadin'
         description = 'Copies built client dependencies into the right target directory'
+
+        inputs.property('bowerDependencies') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
+        }
+
+        inputs.property('yarnDependencies') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies
+        }
+
+        inputs.property('vaadinCompileFromSources') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
+        }
+
         project.afterEvaluate {
             VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
