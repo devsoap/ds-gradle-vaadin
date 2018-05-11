@@ -63,5 +63,8 @@ class NodePluginAction extends PluginAction {
         NodeExtension nodeExtension = project.extensions.getByType(NodeExtension)
         nodeExtension.download = true
         nodeExtension.nodeModulesDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+        nodeExtension.npmVersion = Versions.rawVersion('npm.version')
+        nodeExtension.yarnVersion = Versions.rawVersion('yarn.version')
+        nodeExtension.version = Versions.rawVersion('node.version')
     }
 }
