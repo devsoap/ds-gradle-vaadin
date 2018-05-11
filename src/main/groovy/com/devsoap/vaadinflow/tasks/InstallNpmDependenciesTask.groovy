@@ -28,13 +28,16 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.OutputDirectories
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecSpec
 
 import java.util.logging.Level
+import java.util.logging.Logger
 
 /**
  * Installs required NPM dependencies
@@ -43,6 +46,7 @@ import java.util.logging.Level
  * @since 1.0
  */
 @Log('LOGGER')
+@CacheableTask
 class InstallNpmDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallNpmDependencies'
@@ -63,18 +67,34 @@ class InstallNpmDependenciesTask extends DefaultTask {
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
 
+    @OutputDirectory
+    final File nodeModulesDir = new File(workingDir, 'node_modules')
+
     @OutputFile
     final File packageJson = new File(workingDir, PACKAGE_JSON_FILE)
 
     InstallNpmDependenciesTask() {
+        description = 'Installs Vaadin npm client dependencies'
+        group = 'Vaadin'
+
         dependsOn(NpmSetupTask.NAME)
+
         onlyIf {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
             !client.yarnDependencies.isEmpty() || !client.bowerDependencies.isEmpty() || client.compileFromSources
         }
 
-        description = 'Installs Vaadin npm client dependencies'
-        group = 'Vaadin'
+        inputs.property('bowerDependencies') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
+        }
+
+        inputs.property('yarnDependencies') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies
+        }
+
+        inputs.property('vaadinCompileFromSources') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
+        }
 
         npmExecRunner.workingDir = workingDir
     }
@@ -110,5 +130,8 @@ class InstallNpmDependenciesTask extends DefaultTask {
         npmExecRunner.execute().assertNormalExitValue()
         pkg.scripts[POLYMER_COMMAND] = POLYMER_COMMAND
         packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
+
+        LOGGER.info('Removing node_modules/.bin symlinks ...')
+        project.delete(new File(nodeModulesDir, '.bin'))
     }
 }

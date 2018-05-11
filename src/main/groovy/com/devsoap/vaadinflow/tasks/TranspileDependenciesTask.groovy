@@ -18,7 +18,6 @@ package com.devsoap.vaadinflow.tasks
 import static com.devsoap.vaadinflow.models.PolymerBuild.Build
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
-import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.models.PolymerBuild
 import com.devsoap.vaadinflow.util.LogUtils
@@ -31,6 +30,8 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
@@ -51,6 +52,7 @@ import java.util.logging.Level
  * @since 1.0
  */
 @Log('LOGGER')
+@CacheableTask
 class TranspileDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinTranspileDependencies'
@@ -77,6 +79,9 @@ class TranspileDependenciesTask extends DefaultTask {
     @InputFile
     final File bowerJson = new File(workingDir, BOWER_JSON_FILE)
 
+    @InputDirectory
+    final File bowerComponents = new File(workingDir, BOWER_COMPONENTS)
+
     @OutputFile
     final File polymerJson = new File(workingDir, 'polymer.json')
 
@@ -98,6 +103,11 @@ class TranspileDependenciesTask extends DefaultTask {
         }
         description = 'Compiles client modules to support legacy browsers'
         group = 'Vaadin'
+
+        inputs.property('vaadinCompileFromSources') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
+        }
+
         npmExecRunner.workingDir = workingDir
     }
 
@@ -110,7 +120,7 @@ class TranspileDependenciesTask extends DefaultTask {
         packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
 
         LOGGER.info('Unpacking webjars...')
-        unpackWebjars(workingDir, project)
+        unpackWebjars(project)
 
         LOGGER.info('Searching for HTML imports')
         List<String> imports = initHTMLImports()
@@ -185,8 +195,7 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
-    private static void unpackWebjars(File targetDir, Project project) {
-        File bowerComponents = new File(targetDir, BOWER_COMPONENTS)
+    private void unpackWebjars(Project project) {
         if (!bowerComponents.exists()) {
             bowerComponents.mkdirs()
         }
@@ -215,13 +224,11 @@ class TranspileDependenciesTask extends DefaultTask {
 
                                 // Unpack directory with bower.json
                                 if (bowerJsonPackage && componentRootPackage) {
-                                    TranspileDependenciesTask.LOGGER.info("Found bower.json in ${file.name}, " +
-                                            "unpacking ${bowerJsonPackage} ...")
+                                    LOGGER.info("Found bower.json in ${file.name}, unpacking ${bowerJsonPackage}...")
 
                                     File componentRoot = new File(bowerComponents, componentRootPackage)
                                     if (componentRoot.exists()) {
-                                        TranspileDependenciesTask.LOGGER.info("Skipped ${bowerJsonPackage}, " +
-                                                'directory already exists.')
+                                        LOGGER.info("Skipped ${bowerJsonPackage}, directory already exists.")
                                     } else {
                                         componentRoot.mkdirs()
                                         file.withInputStream { InputStream stream ->

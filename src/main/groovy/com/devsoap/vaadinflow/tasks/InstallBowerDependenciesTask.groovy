@@ -26,6 +26,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
@@ -42,6 +43,7 @@ import java.util.logging.Level
  * @since 1.0
  */
 @Log('LOGGER')
+@CacheableTask
 class InstallBowerDependenciesTask extends DefaultTask {
 
     private static final String BOWER_COMMAND = 'bower'
@@ -59,24 +61,33 @@ class InstallBowerDependenciesTask extends DefaultTask {
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
 
+    @InputFile
+    final File packageJson = new File(workingDir, 'package.json')
+
     @OutputFile
     final File bowerJson = new File(workingDir, 'bower.json')
 
+    @OutputDirectory
+    final File bowerComponents = new File(workingDir, 'bower_components')
+
     InstallBowerDependenciesTask() {
+        description = 'Installs Vaadin bower client dependencies'
+        group = 'Vaadin'
+
         dependsOn( InstallNpmDependenciesTask.NAME )
         onlyIf {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
             !client.bowerDependencies.isEmpty() || client.compileFromSources
         }
 
-        description = 'Installs Vaadin bower client dependencies'
-        group = 'Vaadin'
-
         npmExecRunner.workingDir = workingDir
 
-        inputs.file(new File(workingDir, 'package.json'))
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
+        }
+
+        inputs.property('vaadinCompileFromSources') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
         }
     }
 
