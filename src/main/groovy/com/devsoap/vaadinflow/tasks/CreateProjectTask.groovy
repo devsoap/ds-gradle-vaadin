@@ -70,7 +70,10 @@ class CreateProjectTask extends DefaultTask {
                 .rootDirectory(project.rootDir)
                 .productionMode(vaadin.productionMode)
                 .build()
+
         projectCreator.generate(vaadinProject)
+
+       // themeCreator.generateHtmlTheme(vaadinProject)
         themeCreator.generateCssTheme(vaadinProject)
     }
 }

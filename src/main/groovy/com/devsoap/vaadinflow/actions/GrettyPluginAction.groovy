@@ -16,7 +16,9 @@
 package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
+import groovy.util.logging.Log
 import org.gradle.api.Project
+import org.gradle.api.Task
 
 /**
  * Configures the Gretty plugin to be compatible
@@ -24,13 +26,28 @@ import org.gradle.api.Project
  * @author John Ahlroos
  * @since 1.0
  */
+@Log('LOGGER')
 class GrettyPluginAction extends PluginAction {
 
     final String pluginId = 'org.akhikhl.gretty'
 
+    private  static final String PREPARE_INPLACE_WEB_APP_FOLDER = 'prepareInplaceWebAppFolder'
+
     @Override
     protected void executeAfterEvaluate(Project project) {
         super.executeAfterEvaluate(project)
-        project.tasks['prepareInplaceWebAppFolder'].dependsOn(AssembleClientDependenciesTask.NAME)
+        project.tasks[PREPARE_INPLACE_WEB_APP_FOLDER].dependsOn(AssembleClientDependenciesTask.NAME)
+    }
+
+    @Override
+    protected void afterTaskExecuted(Task task) {
+        super.afterTaskExecuted(task)
+        if (task.name == PREPARE_INPLACE_WEB_APP_FOLDER) {
+            LOGGER.info('Copying generated web-app resources into extracted webapp')
+            task.project.copy { copy ->
+                    copy.from("${task.project.buildDir.canonicalPath}/webapp-gen")
+                            .into("${task.project.buildDir.canonicalPath}/inplaceWebapp")
+            }
+        }
     }
 }

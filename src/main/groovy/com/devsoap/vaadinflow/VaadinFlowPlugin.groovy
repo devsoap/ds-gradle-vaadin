@@ -19,9 +19,11 @@ import com.devsoap.vaadinflow.actions.GrettyPluginAction
 import com.devsoap.vaadinflow.actions.NodePluginAction
 import com.devsoap.vaadinflow.actions.PluginAction
 import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
+import com.devsoap.vaadinflow.actions.WarPluginAction
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
+import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
 import com.devsoap.vaadinflow.tasks.CreateProjectTask
 import com.devsoap.vaadinflow.tasks.CreateWebComponentTask
 import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
@@ -52,6 +54,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
     VaadinFlowPlugin() {
         actions << new VaadinFlowPluginAction()
         actions << new NodePluginAction()
+        actions << new WarPluginAction()
         actions << new GrettyPluginAction()
     }
 
@@ -77,6 +80,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 create(InstallBowerDependenciesTask.NAME, InstallBowerDependenciesTask)
                 create(TranspileDependenciesTask.NAME, TranspileDependenciesTask)
                 create(AssembleClientDependenciesTask.NAME, AssembleClientDependenciesTask)
+                create(ConvertCssToHtmlStyleTask.NAME, ConvertCssToHtmlStyleTask)
             }
 
             workaroundInvalidBomVersionRanges(it)

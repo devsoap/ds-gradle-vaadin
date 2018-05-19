@@ -145,16 +145,19 @@ class ClientDependenciesTest extends FunctionalTest {
 
             File frontend = new File(webapp, 'frontend')
             frontend.exists()
-
-            File cssFile = new File(frontend, testProjectDir.root.name.toLowerCase() + '-theme.css')
-            cssFile.exists()
             !bowerComponentExists(frontend, 'paper-slider')
             !bowerComponentExists(frontend, 'vaadin-button')
+
+            File styles = new File(frontend, 'styles')
+            styles.exists()
+
+            File cssFile = new File(styles, testProjectDir.root.name.toLowerCase() + '-theme.css')
+            cssFile.exists()
     }
 
     void 'transpile when no client dependencies in production mode'() {
         setup:
-        buildFile << '''
+            buildFile << '''
                     vaadin.productionMode = true
                     vaadin.autoconfigure()
                 '''.stripMargin()
@@ -178,7 +181,12 @@ class ClientDependenciesTest extends FunctionalTest {
 
             File frontend = new File(webapp, 'frontend')
             frontend.exists()
-            frontend.listFiles().length == 1 // Theme file remains here
+
+            File styles = new File(frontend, 'styles')
+            styles.exists()
+
+            File cssFile = new File(styles, testProjectDir.root.name.toLowerCase() + '-theme.css')
+            cssFile.exists()
     }
 
     private static boolean bowerComponentExists(File frontend, String component) {

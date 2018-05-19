@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow.actions
 import com.devsoap.vaadinflow.VaadinFlowPlugin
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
+import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.Project
@@ -34,6 +35,8 @@ class VaadinFlowPluginAction extends PluginAction {
 
     final String pluginId = VaadinFlowPlugin.PLUGIN_ID
 
+    private static final String PROCESS_RESOURCES = 'processResources'
+
     @Override
     void apply(Project project) {
         super.apply(project)
@@ -43,7 +46,8 @@ class VaadinFlowPluginAction extends PluginAction {
     @Override
     protected void execute(Project project) {
         super.execute(project)
-        project.tasks['processResources'].dependsOn(AssembleClientDependenciesTask.NAME)
+        project.tasks[PROCESS_RESOURCES].dependsOn(ConvertCssToHtmlStyleTask.NAME)
+        project.tasks[PROCESS_RESOURCES].dependsOn(AssembleClientDependenciesTask.NAME)
     }
 
     @Override

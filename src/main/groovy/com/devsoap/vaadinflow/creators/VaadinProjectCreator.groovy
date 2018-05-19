@@ -38,9 +38,12 @@ class VaadinProjectCreator {
     void generate(VaadinProject vaadinProject) {
 
         File root = vaadinProject.rootDirectory
-        File javaSourceDir = Paths.get(root.canonicalPath, 'src', 'main', 'java').toFile()
+        File sourceMain = Paths.get(root.canonicalPath, 'src', 'main').toFile()
+        File javaSourceDir = new File(sourceMain, 'java')
         File pkgDir = Paths.get(javaSourceDir.canonicalPath, vaadinProject.applicationPackage.split('\\.')).toFile()
         String appClassName = TemplateWriter.makeStringJavaCompatible(vaadinProject.applicationName)
+        File webappDir = new File(sourceMain, 'webapp')
+        File frontendDir = new File(webappDir, 'frontend')
 
         TemplateWriter.builder()
                 .templateFileName('Servlet.java')
@@ -60,8 +63,6 @@ class VaadinProjectCreator {
                 .substitutions([
                         'applicationPackage': vaadinProject.applicationPackage,
                         'applicationName' : appClassName,
-                        'applicationBaseTheme' : vaadinProject.applicationBaseTheme,
-                        'applicationTheme' : vaadinProject.applicationName.toLowerCase() + '-theme.css',
                 ])
                 .build().write()
 
@@ -71,8 +72,15 @@ class VaadinProjectCreator {
                 .targetFileName("${appClassName}UI.java")
                 .substitutions([
                         'applicationPackage': vaadinProject.applicationPackage,
-                        'applicationName' : appClassName
+                        'applicationName' : appClassName,
+                        'applicationTheme' : vaadinProject.applicationName.toLowerCase() + '-theme.html',
+                        'applicationBaseTheme' : vaadinProject.applicationBaseTheme
                 ])
+                .build().write()
+
+        TemplateWriter.builder()
+                .templateFileName('index.html')
+                .targetDir(frontendDir)
                 .build().write()
     }
 }

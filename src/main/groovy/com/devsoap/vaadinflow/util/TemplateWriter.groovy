@@ -52,18 +52,33 @@ class TemplateWriter {
         targetFileName = targetFileName ?: templateFileName
         substitutions = substitutions ?: [:]
 
-        writeTemplate()
+        writeTemplateFromString(generateTemplate())
     }
 
-    private File writeTemplate() {
+    /**
+     * Get template as String
+     *
+     * @return
+     *      the template result as a string
+     */
+    String toString() {
+        Objects.nonNull(templateFileName)
+        Objects.nonNull(targetDir)
+
+        targetFileName = targetFileName ?: templateFileName
+        substitutions = substitutions ?: [:]
+
+        generateTemplate()
+    }
+
+    private String generateTemplate() {
         URL templateUrl = TemplateWriter.classLoader.getResource("templates/${templateFileName}.template")
         if ( !templateUrl ) {
             throw new FileNotFoundException("Could not find template 'templates/${templateFileName}.template'")
         }
 
         TemplateEngine engine = new SimpleTemplateEngine()
-        String content = engine.createTemplate(templateUrl).make(substitutions.withDefault { null })
-        writeTemplateFromString(content)
+        engine.createTemplate(templateUrl).make(substitutions.withDefault { null })
     }
 
     private File writeTemplateFromString(String templateContent) {
