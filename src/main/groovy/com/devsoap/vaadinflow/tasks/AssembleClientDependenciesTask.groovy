@@ -48,7 +48,11 @@ class AssembleClientDependenciesTask extends DefaultTask {
      * Assembles the built client artifacts into the webapp frontend directories
      */
     AssembleClientDependenciesTask() {
-        dependsOn(TranspileDependenciesTask.NAME, InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME)
+        dependsOn(TranspileDependenciesTask.NAME,
+                InstallBowerDependenciesTask.NAME,
+                InstallYarnDependenciesTask.NAME,
+                ConvertCssToHtmlStyleTask.NAME
+        )
         onlyIf {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
             boolean hasClientDependencies = !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty()
@@ -65,7 +69,6 @@ class AssembleClientDependenciesTask extends DefaultTask {
                 outputs.dirs(targetDirEs5, targetDirEs6)
             } else {
                 inputs.dir(sourceDir)
-                outputs.dir(targetDir)
             }
         }
     }

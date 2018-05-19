@@ -17,6 +17,7 @@ package com.devsoap.vaadinflow.creators
 
 import com.devsoap.vaadinflow.models.VaadinProject
 import com.devsoap.vaadinflow.util.TemplateWriter
+import groovy.util.logging.Log
 
 import java.nio.file.Paths
 
@@ -26,6 +27,7 @@ import java.nio.file.Paths
  * @author John Ahlroos
  * @since 1.0
  */
+@Log('LOGGER')
 class VaadinThemeCreator {
 
     /**
@@ -35,17 +37,16 @@ class VaadinThemeCreator {
      *      the project model
      */
     void generateCssTheme(VaadinProject vaadinProject) {
-
-        File root = vaadinProject.rootDirectory
-        File webappDir = Paths.get(root.canonicalPath, 'src', 'main', 'webapp').toFile()
-        File frontendDir = new File(webappDir, 'frontend')
         String appClassName = TemplateWriter.makeStringJavaCompatible(vaadinProject.applicationName)
-
         TemplateWriter.builder()
                 .templateFileName('AppTheme.css')
-                .targetDir(frontendDir)
+                .targetDir(getStylesDir(vaadinProject))
                 .targetFileName("${appClassName.toLowerCase()}-theme.css")
                 .build().write()
+    }
 
+    private static File getStylesDir(VaadinProject vaadinProject) {
+        Paths.get(vaadinProject.rootDirectory.canonicalPath,
+                'src', 'main', 'webapp', 'frontend', 'styles').toFile()
     }
 }

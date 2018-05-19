@@ -42,12 +42,15 @@ class CreateProjectTest extends FunctionalTest {
                     "${testProjectDir.root.name.capitalize()}Servlet.java").toFile()
             File viewFile = Paths.get(pkg.canonicalPath,
                     "${testProjectDir.root.name.capitalize()}View.java").toFile()
+            File uiFile = Paths.get(pkg.canonicalPath,
+                "${testProjectDir.root.name.capitalize()}UI.java").toFile()
         when:
             BuildResult result = run'vaadinCreateProject'
         then:
             result.task(':vaadinCreateProject').outcome == SUCCESS
             servletFile.exists()
             viewFile.exists()
+            uiFile.exists()
     }
 
     @Unroll
@@ -59,6 +62,7 @@ class CreateProjectTest extends FunctionalTest {
             File pkg = Paths.get(javaSourceDir.canonicalPath, applicationPackage.split('\\.')).toFile()
             File servletFile = Paths.get(pkg.canonicalPath, "${applicationName}Servlet.java").toFile()
             File viewFile = Paths.get(pkg.canonicalPath, "${applicationName}View.java").toFile()
+            File uiFile = Paths.get(pkg.canonicalPath, "${applicationName}UI.java").toFile()
         when:
             BuildResult result = run'vaadinCreateProject',
                     "--name=$applicationName", "--package=$applicationPackage"
@@ -66,6 +70,7 @@ class CreateProjectTest extends FunctionalTest {
             result.task(':vaadinCreateProject').outcome == SUCCESS
             servletFile.exists()
             viewFile.exists()
+            uiFile.exists()
         where:
             applicationName = 'Foo'
             applicationPackage = 'bar.baz'
@@ -79,35 +84,14 @@ class CreateProjectTest extends FunctionalTest {
                 testProjectDir.root.name.toLowerCase()).toFile()
             File servletFile = Paths.get(pkg.canonicalPath, '123FooBarServlet.java').toFile()
             File viewFile = Paths.get(pkg.canonicalPath, '123FooBarView.java').toFile()
+            File uiFile = Paths.get(pkg.canonicalPath, '123FooBarUI.java').toFile()
         when:
             BuildResult result = run'vaadinCreateProject', '--name="*123-Foo bar"'
         then:
             result.task(':vaadinCreateProject').outcome == SUCCESS
             servletFile.exists()
             viewFile.exists()
-    }
-
-    void 'default theme is created'() {
-        setup:
-            File rootDir = testProjectDir.root
-            File webappDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'webapp').toFile()
-            File frontendDir = new File(webappDir, 'frontend')
-            File cssFile = new File(frontendDir, rootDir.name.toLowerCase() + '-theme.css')
-
-            File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
-            File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
-                testProjectDir.root.name.toLowerCase()).toFile()
-            File viewFile = Paths.get(pkg.canonicalPath,
-                "${testProjectDir.root.name.capitalize()}View.java").toFile()
-        when:
-            BuildResult result = run 'vaadinCreateProject'
-        then:
-            result.task(':vaadinCreateProject').outcome == SUCCESS
-            cssFile.exists()
-            cssFile.text.contains('This file contains the Application theme')
-            viewFile.exists()
-            viewFile.text.contains("@StyleSheet(\"frontend://${cssFile.name}\")")
-            viewFile.text.contains('@Theme(Lumo.class)')
+            uiFile.exists()
     }
 
     void 'Material base theme is used'() {
@@ -116,14 +100,14 @@ class CreateProjectTest extends FunctionalTest {
             File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
             File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
                     testProjectDir.root.name.toLowerCase()).toFile()
-            File viewFile = Paths.get(pkg.canonicalPath,
-                    "${testProjectDir.root.name.capitalize()}View.java").toFile()
+            File uiFile = Paths.get(pkg.canonicalPath,
+                    "${testProjectDir.root.name.capitalize()}UI.java").toFile()
         when:
             BuildResult result = run 'vaadinCreateProject', '--baseTheme=Material'
         then:
             result.task(':vaadinCreateProject').outcome == SUCCESS
-            viewFile.exists()
-            viewFile.text.contains('@Theme(Material.class)')
+            uiFile.exists()
+            uiFile.text.contains('@Theme(Material.class)')
     }
 
     @Unroll
