@@ -153,6 +153,8 @@ groovydoc {
  *
  ***********************************************************************************************************************/
 task functionalTest(type: Test) {
+    group = 'Verification'
+    systemProperty 'spock.configuration', "${findProperty('TEST_CATEGORY') ?: 'AllTests' }Config.groovy"
     testClassesDirs = sourceSets.functionalTest.output.classesDirs
     classpath = sourceSets.functionalTest.runtimeClasspath
 }

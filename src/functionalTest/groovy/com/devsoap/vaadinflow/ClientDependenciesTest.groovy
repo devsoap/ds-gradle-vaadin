@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow
 
+import com.devsoap.spock.Client
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 
@@ -26,6 +27,7 @@ import java.nio.file.Paths
  * @author John Ahlroos
  * @since 1.0
  */
+@Client
 class ClientDependenciesTest extends FunctionalTest {
 
     void 'add paper-slider to project as yarn dependency'() {
