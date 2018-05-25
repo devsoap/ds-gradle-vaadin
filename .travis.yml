@@ -1,7 +1,10 @@
 language: groovy
 jdk:
   - oraclejdk8
-script: "./gradlew --stacktrace --info check"
+script: "./gradlew --stacktrace --info check -PTEST_CATEGORY=$TEST_CATEGORY"
+env:
+  - TEST_CATEGORY=UncategorizedTests
+  - TEST_CATEGORY=ClientTests
 branches:
   only:
     - "master"
