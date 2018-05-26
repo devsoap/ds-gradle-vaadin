@@ -89,6 +89,9 @@ class TranspileDependenciesTask extends DefaultTask {
     @OutputDirectory
     final File es6dir = new File(workingDir, 'frontend-es6')
 
+    @OutputFile
+    final File manifestJson = new File(workingDir, 'vaadin-flow-bundle-manifest.json')
+
     TranspileDependenciesTask() {
         dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME)
         onlyIf {
@@ -128,6 +131,11 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Transpiling...')
         npmExecRunner.arguments = ['run', POLYMER_COMMAND, 'build']
         npmExecRunner.execute().assertNormalExitValue()
+
+        // Generate manifest
+        // FIXME As a workaround for #60 generate an empty file. In the future we should make this configurable
+        LOGGER.info('Creating manifest...')
+        manifestJson.text = '{}'
     }
 
     private List<String> initBowerSources() {
