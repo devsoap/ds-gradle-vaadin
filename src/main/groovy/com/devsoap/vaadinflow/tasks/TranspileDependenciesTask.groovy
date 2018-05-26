@@ -18,7 +18,6 @@ package com.devsoap.vaadinflow.tasks
 import static com.devsoap.vaadinflow.models.PolymerBuild.Build
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
-import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.models.PolymerBuild
 import com.devsoap.vaadinflow.util.LogUtils
@@ -31,6 +30,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
@@ -70,6 +70,11 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+    final File webappGenDir = new File(project.buildDir, 'webapp-gen')
+    final File webappGenFrontendDir = new File(webappGenDir, 'frontend')
+
+    @InputDirectory
+    final File webappGenFrontendStylesDir = new File(webappGenFrontendDir, 'styles')
 
     @InputFile
     final File packageJson = new File(workingDir, 'package.json')
@@ -93,7 +98,7 @@ class TranspileDependenciesTask extends DefaultTask {
     final File manifestJson = new File(workingDir, 'vaadin-flow-bundle-manifest.json')
 
     TranspileDependenciesTask() {
-        dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME)
+       // dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME)
         onlyIf {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
             client.compileFromSources
@@ -115,6 +120,9 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Unpacking webjars...')
         unpackWebjars(workingDir, project)
 
+        LOGGER.info( 'Copying generated styles....')
+        project.copy { spec -> spec.from(webappGenFrontendDir).include('**/styles/**').into(workingDir) }
+
         LOGGER.info('Searching for HTML imports')
         List<String> imports = initHTMLImports()
 
@@ -133,7 +141,7 @@ class TranspileDependenciesTask extends DefaultTask {
         npmExecRunner.execute().assertNormalExitValue()
 
         // Generate manifest
-        // FIXME As a workaround for #60 generate an empty file. In the future we should make this configurable
+        // FIXME As a workaround for #60 generate an empty file. In the future we should make this configurable (#63)
         LOGGER.info('Creating manifest...')
         manifestJson.text = '{}'
     }
@@ -157,15 +165,27 @@ class TranspileDependenciesTask extends DefaultTask {
     private List<String> initHTMLImports() {
         List<String> imports = []
         File bowerComponentsDir = new File(workingDir, BOWER_COMPONENTS)
+        String htmlIncludeGlob = '**/*.html'
+
         LOGGER.info("Searching for html imports in $bowerComponentsDir")
         bowerComponentsDir.eachDir { dir ->
             project.fileTree(dir)
-                    .include('**/*.html')
+                    .include(htmlIncludeGlob)
                     .exclude('**/index.html', '**/demo/**', '**/test*/**', '**/src/**')
                     .each { File htmlFile ->
                 imports.add((htmlFile.path - workingDir.path).substring(1))
             }
         }
+
+        LOGGER.info("Searching for html imports in $webappGenFrontendStylesDir")
+        webappGenFrontendDir.eachDir { dir ->
+            project.fileTree(dir)
+                    .include(htmlIncludeGlob)
+                    .each { File htmlFile ->
+                imports.add((htmlFile.path - webappGenFrontendDir.path).substring(1))
+            }
+        }
+
         imports.each { LOGGER.info("Found $it") }
 
         imports
