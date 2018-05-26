@@ -50,7 +50,7 @@ class ClientDependenciesTest extends FunctionalTest {
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
-                    'src', 'main', 'webapp', 'frontend').toFile()
+                    'build', 'webapp-gen', 'frontend').toFile()
             bowerComponentExists(frontend, 'paper-slider')
     }
 
@@ -74,7 +74,7 @@ class ClientDependenciesTest extends FunctionalTest {
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
-                    'src', 'main', 'webapp', 'frontend').toFile()
+                'build', 'webapp-gen', 'frontend').toFile()
             bowerComponentExists(frontend, 'paper-slider')
     }
 
@@ -108,7 +108,7 @@ class ClientDependenciesTest extends FunctionalTest {
 
             // Validate that the dependency got downloaded and installed
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
-                    'src', 'main', 'webapp', 'frontend').toFile()
+                'build', 'webapp-gen', 'frontend').toFile()
             bowerComponentExists(frontend, 'paper-slider')
     }
 
@@ -133,14 +133,15 @@ class ClientDependenciesTest extends FunctionalTest {
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
 
+            File webappGen = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'webapp-gen').toFile()
             File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
 
-            File frontend5 = new File(webapp, 'frontend-es5')
+            File frontend5 = new File(webappGen, 'frontend-es5')
             frontend5.exists()
             bowerComponentExists(frontend5, 'paper-slider')
             bowerComponentExists(frontend5, 'vaadin-button')
 
-            File frontend6 = new File(webapp, 'frontend-es6')
+            File frontend6 = new File(webappGen, 'frontend-es6')
             frontend6.exists()
             bowerComponentExists(frontend6, 'paper-slider')
             bowerComponentExists(frontend6, 'vaadin-button')
@@ -173,12 +174,13 @@ class ClientDependenciesTest extends FunctionalTest {
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
 
+            File webappGen = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'webapp-gen').toFile()
             File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
 
-            File frontend5 = new File(webapp, 'frontend-es5')
+            File frontend5 = new File(webappGen, 'frontend-es5')
             frontend5.exists()
 
-            File frontend6 = new File(webapp, 'frontend-es6')
+            File frontend6 = new File(webappGen, 'frontend-es6')
             frontend6.exists()
 
             File frontend = new File(webapp, 'frontend')

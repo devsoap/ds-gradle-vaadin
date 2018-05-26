@@ -19,11 +19,7 @@ import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-
-import java.nio.file.Paths
 
 /**
  * Assembles the files into the frontend directory
@@ -36,13 +32,15 @@ class AssembleClientDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinAssembleClient'
 
-    final File sourceDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+    final File frontendDir = project.file(VaadinClientDependenciesExtension.FRONTEND_DIR)
+    final File frontendBuildDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final File sourceDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es5')
     final File sourceDirEs6 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es6')
 
-    final File targetDir = project.file(VaadinClientDependenciesExtension.FRONTEND_DIR)
-    final File targetDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_DIR + '-es5')
-    final File targetDirEs6 = project.file(VaadinClientDependenciesExtension.FRONTEND_DIR + '-es6')
+    final File webAppGenDir = new File(project.buildDir, 'webapp-gen')
+    final File webAppGenFrontendDir = new File(webAppGenDir, 'frontend')
+    final File targetDirEs5 = new File(webAppGenDir, 'frontend-es5')
+    final File targetDirEs6 = new File(webAppGenDir, 'frontend-es6')
 
     /**
      * Assembles the built client artifacts into the webapp frontend directories
@@ -68,7 +66,7 @@ class AssembleClientDependenciesTask extends DefaultTask {
                 inputs.dir(sourceDirEs6)
                 outputs.dirs(targetDirEs5, targetDirEs6)
             } else {
-                inputs.dir(sourceDir)
+                inputs.dir(frontendBuildDir)
             }
         }
     }
@@ -96,16 +94,16 @@ class AssembleClientDependenciesTask extends DefaultTask {
         if (client.compileFromSources) {
             project.with {
                 String bowerComponentsGlob = '**/bower_components/**'
-                copy { spec -> spec.from(targetDir).exclude([bowerComponentsGlob]).into(targetDirEs5) }
-                copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDirEs5) }
+                copy { spec -> spec.from(frontendDir).exclude([bowerComponentsGlob]).into(targetDirEs5) }
+                copy { spec -> spec.from(frontendBuildDir).exclude(excludes).into(targetDirEs5) }
                 copy { spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
 
-                copy { spec -> spec.from(targetDir).exclude([bowerComponentsGlob]).into(targetDirEs6) }
-                copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDirEs6) }
+                copy { spec -> spec.from(frontendDir).exclude([bowerComponentsGlob]).into(targetDirEs6) }
+                copy { spec -> spec.from(frontendBuildDir).exclude(excludes).into(targetDirEs6) }
                 copy { spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
             }
         } else {
-            project.copy { spec -> spec.from(sourceDir).exclude(excludes).into(targetDir) }
+            project.copy { spec -> spec.from(frontendBuildDir).exclude(excludes).into(webAppGenFrontendDir) }
         }
     }
 }
