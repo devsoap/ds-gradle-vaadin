@@ -157,6 +157,11 @@ task functionalTest(type: Test) {
     systemProperty 'spock.configuration', "${findProperty('TEST_CATEGORY') ?: 'AllTests' }Config.groovy"
     testClassesDirs = sourceSets.functionalTest.output.classesDirs
     classpath = sourceSets.functionalTest.runtimeClasspath
+    maxParallelForks = 5
+    testLogging {
+        exceptionFormat = 'full'
+        showStandardStreams = true
+    }
 }
 check.dependsOn functionalTest
 
