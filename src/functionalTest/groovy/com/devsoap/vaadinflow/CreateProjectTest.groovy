@@ -20,6 +20,7 @@ import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 import spock.lang.Unroll
 
+import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.BuildResult
 
 import java.nio.file.Paths
@@ -51,6 +52,18 @@ class CreateProjectTest extends FunctionalTest {
             servletFile.exists()
             viewFile.exists()
             uiFile.exists()
+    }
+
+    void 'default project compiles'() {
+        setup:
+            buildFile << '''
+                vaadin.autoconfigure()
+            '''.stripIndent()
+        when:
+            run'vaadinCreateProject'
+            BuildResult result = run'jar'
+        then:
+            result.task(':jar').outcome == TaskOutcome.SUCCESS
     }
 
     @Unroll

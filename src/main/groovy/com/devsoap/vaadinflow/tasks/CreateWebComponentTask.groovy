@@ -18,7 +18,7 @@ package com.devsoap.vaadinflow.tasks
 import static com.devsoap.vaadinflow.models.WebComponent.PackageManager.BOWER
 import static com.devsoap.vaadinflow.models.WebComponent.PackageManager.YARN
 
-import com.devsoap.vaadinflow.creators.WebComponentCreator
+import com.devsoap.vaadinflow.creators.ComponentCreator
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.models.WebComponent
 import org.gradle.api.DefaultTask
@@ -58,7 +58,7 @@ class CreateWebComponentTask extends DefaultTask {
     @Option(option = 'dependency', description = 'Component dependency (prefix with bower: or yarn:')
     String componentDependency
 
-    private final WebComponentCreator webComponentCreator = new WebComponentCreator()
+    private final ComponentCreator webComponentCreator = new ComponentCreator()
 
     CreateWebComponentTask() {
         description = 'Creates a new Vaadin web component'
