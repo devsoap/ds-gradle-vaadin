@@ -24,6 +24,7 @@ import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
 import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
+import com.devsoap.vaadinflow.tasks.CreateCompositeTask
 import com.devsoap.vaadinflow.tasks.CreateProjectTask
 import com.devsoap.vaadinflow.tasks.CreateWebComponentTask
 import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
@@ -81,6 +82,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 create(TranspileDependenciesTask.NAME, TranspileDependenciesTask)
                 create(AssembleClientDependenciesTask.NAME, AssembleClientDependenciesTask)
                 create(ConvertCssToHtmlStyleTask.NAME, ConvertCssToHtmlStyleTask)
+                create(CreateCompositeTask.NAME, CreateCompositeTask)
             }
 
             workaroundInvalidBomVersionRanges(it)

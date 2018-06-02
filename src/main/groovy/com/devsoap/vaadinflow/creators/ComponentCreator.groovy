@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.creators
 
+import com.devsoap.vaadinflow.models.Composite
 import com.devsoap.vaadinflow.models.WebComponent
 import com.devsoap.vaadinflow.util.TemplateWriter
 
@@ -26,10 +27,12 @@ import java.nio.file.Paths
  * @author John Ahlroos
  * @since 1.0
  */
-class WebComponentCreator {
+class ComponentCreator {
+
+    private static final String DOT_REGEX = '\\.'
 
     /**
-     * Generates the component
+     * Creates a new Web component from a template
      *
      * @param webComponent
      *      the model of the component
@@ -37,8 +40,8 @@ class WebComponentCreator {
     void generate(WebComponent webComponent) {
 
         File root = webComponent.rootDirectory
-        File javaSourceDir = Paths.get(root.canonicalPath, 'src', 'main', 'java').toFile()
-        File pkgDir = Paths.get(javaSourceDir.canonicalPath, webComponent.componentPackage.split('\\.')).toFile()
+        File javaSourceDir = getJavaSourceDirectory(root)
+        File pkgDir = Paths.get(javaSourceDir.canonicalPath, webComponent.componentPackage.split(DOT_REGEX)).toFile()
         String componentClassName = TemplateWriter.makeStringJavaCompatible(webComponent.componentName)
 
         TemplateWriter.builder()
@@ -53,5 +56,33 @@ class WebComponentCreator {
                     'componentName' : componentClassName,
                     'packageManager' : webComponent.packageManager.package
                 ]).build().write()
+    }
+
+    /**
+     * Create a new Composite component from a template
+     *
+     * @param composite
+     *      the mode of the composite to create
+     */
+    void generate(Composite composite) {
+
+        File root = composite.rootDirectory
+        File javaSourceDir = getJavaSourceDirectory(root)
+        File pkgDir = Paths.get(javaSourceDir.canonicalPath, composite.componentPackage.split(DOT_REGEX)).toFile()
+        String componentClassName = TemplateWriter.makeStringJavaCompatible(composite.componentName)
+
+        TemplateWriter.builder()
+                .targetDir(pkgDir)
+                .templateFileName('Composite.java')
+                .targetFileName("${componentClassName}.java")
+                .substitutions([
+                'componentPackage'  : composite.componentPackage,
+                'componentBaseClass': composite.componentBaseClass,
+                'componentName'     : componentClassName,
+        ]).build().write()
+    }
+
+    private static File getJavaSourceDirectory(File root) {
+        Paths.get(root.canonicalPath, 'src', 'main', 'java').toFile()
     }
 }
