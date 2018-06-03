@@ -46,13 +46,11 @@ class CreateCompositeTask extends DefaultTask {
         componentPackage = componentPackage ?: 'com.example.' + project.name.toLowerCase()
         baseClass = baseClass ?: 'com.vaadin.flow.component.html.Div'
 
-        Composite composite = Composite.builder()
-                .rootDirectory(project.rootDir)
-                .componentBaseClass(baseClass)
-                .componentPackage(componentPackage)
-                .componentName(componentName)
-                .build()
-
-        compositeCreator.generate(composite)
+        compositeCreator.generate new Composite(
+                rootDirectory: project.rootDir,
+                componentBaseClass: baseClass,
+                componentPackage: componentPackage,
+                componentName: componentName
+        )
     }
 }

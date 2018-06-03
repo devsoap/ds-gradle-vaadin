@@ -16,30 +16,15 @@
 package com.devsoap.vaadinflow.models
 
 /**
- * TemplateModel for representing a client package in bower.json
+ * A model for representing a Java/Groovy/Kotlin class
  *
  * @author John Ahlroos
  * @since 1.0
  */
-class ClientPackage {
+trait ClassModel {
 
-    String name = ''
+    String componentName
 
-    String version = ''
+    String componentPackage
 
-    String main = ''
-
-    String author = ''
-
-    String license = ''
-
-    String description = ''
-
-    List<String> keywords = []
-
-    Map<String, String> scripts = [:]
-
-    Map<String, String> devDependencies = [:]
-
-    Map<String, String> dependencies = [:]
 }

@@ -58,7 +58,7 @@ class ComponentTests extends FunctionalTest {
     }
 
     @Unroll
-    void '#compositeName project is created in #compositePackage package'(String compositeName,
+    void '#compositeName composite is created in #compositePackage package'(String compositeName,
                                                                           String compositePackage) {
         setup:
             File rootDir = testProjectDir.root
@@ -80,4 +80,57 @@ class ComponentTests extends FunctionalTest {
             compositeName = 'MyComposite'
             compositePackage = 'com.hello.world'
     }
+
+    void 'default component is created'() {
+        setup:
+            File rootDir = testProjectDir.root
+            File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
+            File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
+                    testProjectDir.root.name.toLowerCase()).toFile()
+            File componentFile = Paths.get(pkg.canonicalPath, 'ExampleTextField.java').toFile()
+        when:
+            BuildResult result = run 'vaadinCreateComponent'
+        then:
+            result.task(':vaadinCreateComponent').outcome == TaskOutcome.SUCCESS
+            componentFile.exists()
+            componentFile.text.contains('@Tag("input")')
+            componentFile.text.contains('public class ExampleTextField extends Component')
+    }
+
+    void 'default component compiles'() {
+        setup:
+            buildFile << '''
+                vaadin.autoconfigure()
+            '''.stripIndent()
+        when:
+            run 'vaadinCreateComponent'
+            BuildResult result = run 'jar'
+        then:
+            result.task(':jar').outcome == TaskOutcome.SUCCESS
+    }
+
+    @Unroll
+    void '#componentName component is created in #componentPackage package'(String componentName,
+                                                                            String componentPackage) {
+        setup:
+            File rootDir = testProjectDir.root
+            File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
+            File pkg = Paths.get(javaSourceDir.canonicalPath, componentPackage.split('\\.')).toFile()
+            File componentFile = Paths.get(pkg.canonicalPath, 'MyComponent.java').toFile()
+            String tag = 'textarea'
+        when:
+            BuildResult result = run 'vaadinCreateComponent',
+                    "--name=$componentName",
+                    "--package=$componentPackage",
+                    "--tag=$tag"
+        then:
+            result.task(':vaadinCreateComponent').outcome == TaskOutcome.SUCCESS
+            componentFile.exists()
+            componentFile.text.contains('@Tag("textarea")')
+            componentFile.text.contains('public class MyComponent extends Component')
+        where:
+            componentName = 'MyComponent'
+            componentPackage = 'com.hello.world'
+    }
+
 }

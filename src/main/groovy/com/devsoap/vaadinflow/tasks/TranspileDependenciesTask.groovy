@@ -192,14 +192,15 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private void initPolymerJson(List<String> sources) {
-        PolymerBuild buildModel = PolymerBuild.builder()
-                .entrypoint(html.name)
-                .sources(sources)
-                .extraDependencies(['bower_components/webcomponentsjs/webcomponents-lite.js'])
-                .builds([
-                new Build(name: es5dir.name).with { js.compile = true; it },
-                new Build(name: es6dir.name)
-        ]).build()
+        PolymerBuild buildModel = new PolymerBuild(
+                entrypoint: html.name,
+                sources: sources,
+                extraDependencies : ['bower_components/webcomponentsjs/webcomponents-lite.js'],
+                builds: [
+                    new Build(name: es5dir.name).with { js.compile = true; it },
+                    new Build(name: es6dir.name)
+                ]
+        )
         polymerJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(buildModel))
     }
 

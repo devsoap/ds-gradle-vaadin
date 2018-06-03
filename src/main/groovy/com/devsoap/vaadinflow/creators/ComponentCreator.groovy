@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.creators
 
+import com.devsoap.vaadinflow.models.Component
 import com.devsoap.vaadinflow.models.Composite
 import com.devsoap.vaadinflow.models.WebComponent
 import com.devsoap.vaadinflow.util.TemplateWriter
@@ -62,7 +63,7 @@ class ComponentCreator {
      * Create a new Composite component from a template
      *
      * @param composite
-     *      the mode of the composite to create
+     *      the model of the composite to create
      */
     void generate(Composite composite) {
 
@@ -79,6 +80,30 @@ class ComponentCreator {
                 'componentPackage'  : composite.componentPackage,
                 'componentBaseClass': composite.componentBaseClass,
                 'componentName'     : componentClassName,
+        ]).build().write()
+    }
+
+    /**
+     * Create a plain Vaadin component
+     *
+     * @param component
+     *      the model of the component to create
+     */
+    void generate(Component component) {
+
+        File root = component.rootDirectory
+        File javaSourceDir = getJavaSourceDirectory(root)
+        File pkgDir = Paths.get(javaSourceDir.canonicalPath, component.componentPackage.split(DOT_REGEX)).toFile()
+        String componentClassName = TemplateWriter.makeStringJavaCompatible(component.componentName)
+
+        TemplateWriter.builder()
+                .targetDir(pkgDir)
+                .templateFileName('Component.java')
+                .targetFileName("${componentClassName}.java")
+                .substitutions([
+                'componentPackage' : component.componentPackage,
+                'componentTag' : component.componentTag,
+                'componentName' : componentClassName,
         ]).build().write()
     }
 

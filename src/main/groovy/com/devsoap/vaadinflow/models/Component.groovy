@@ -16,30 +16,12 @@
 package com.devsoap.vaadinflow.models
 
 /**
- * TemplateModel for representing a client package in bower.json
+ * TemplateModel for representing a plain Vaadin component
  *
  * @author John Ahlroos
  * @since 1.0
  */
-class ClientPackage {
+class Component implements TemplateModel, ClassModel {
 
-    String name = ''
-
-    String version = ''
-
-    String main = ''
-
-    String author = ''
-
-    String license = ''
-
-    String description = ''
-
-    List<String> keywords = []
-
-    Map<String, String> scripts = [:]
-
-    Map<String, String> devDependencies = [:]
-
-    Map<String, String> dependencies = [:]
+    String componentTag
 }
