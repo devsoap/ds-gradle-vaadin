@@ -15,24 +15,13 @@
  */
 package com.devsoap.vaadinflow.models
 
-import groovy.transform.builder.Builder
-
 /**
- * Model for representing a Web Component
+ * TemplateModel for representing a Web Component
  *
  * @author John Ahlroos
  * @since 1.0
  */
-@Builder
-class WebComponent {
-
-    String componentName
-
-    String componentPackage
-
-    String componentTag
-
-    File rootDirectory
+class WebComponent extends Component {
 
     PackageManager packageManager
 

@@ -103,18 +103,15 @@ class CreateWebComponentTask extends DefaultTask {
             throw new GradleException("Dependency needs too start with either $YARN_PREFIX or $BOWER_PREFIX")
         }
 
-        WebComponent component = WebComponent
-                .builder()
-                .componentName(componentName)
-                .componentPackage(componentPackage)
-                .componentTag(componentTag)
-                .dependencyPackage(dependencyPackage)
-                .dependencyHtml(dependencyHtml)
-                .rootDirectory(project.rootDir)
-                .packageManager(componentDependency.startsWith('yarn') ? YARN : BOWER )
-                .build()
-
-        webComponentCreator.generate(component)
+        webComponentCreator.generate new WebComponent(
+                componentName : componentName,
+                componentPackage : componentPackage,
+                componentTag : componentTag,
+                dependencyPackage : dependencyPackage,
+                dependencyHtml : dependencyHtml,
+                rootDirectory : project.rootDir,
+                packageManager : componentDependency.startsWith('yarn') ? YARN : BOWER
+        )
     }
 
 }

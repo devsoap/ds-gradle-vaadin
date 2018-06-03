@@ -15,22 +15,14 @@
  */
 package com.devsoap.vaadinflow.models
 
-import groovy.transform.builder.Builder
-
 /**
- * Model for representing a Composite component
+ * TemplateModel for representing a Composite component
  *
  * @author John Ahlroos
  * @since 1.0
  */
-@Builder
-class Composite {
-
-    String componentName
-
-    String componentPackage
+class Composite implements TemplateModel, ClassModel {
 
     String componentBaseClass
 
-    File rootDirectory
 }

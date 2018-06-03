@@ -16,30 +16,13 @@
 package com.devsoap.vaadinflow.models
 
 /**
- * TemplateModel for representing a client package in bower.json
+ * A model for generating template based files
  *
  * @author John Ahlroos
  * @since 1.0
  */
-class ClientPackage {
 
-    String name = ''
+trait TemplateModel {
 
-    String version = ''
-
-    String main = ''
-
-    String author = ''
-
-    String license = ''
-
-    String description = ''
-
-    List<String> keywords = []
-
-    Map<String, String> scripts = [:]
-
-    Map<String, String> devDependencies = [:]
-
-    Map<String, String> dependencies = [:]
+    File rootDirectory
 }

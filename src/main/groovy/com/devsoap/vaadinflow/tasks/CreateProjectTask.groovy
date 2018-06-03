@@ -63,17 +63,17 @@ class CreateProjectTask extends DefaultTask {
         }
 
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        VaadinProject vaadinProject = VaadinProject.builder()
-                .applicationName(applicationName ?: project.name.capitalize())
-                .applicationPackage(applicationPackage ?: "com.example.${project.name.toLowerCase()}")
-                .applicationBaseTheme(applicationBaseTheme ?: LUMO)
-                .rootDirectory(project.rootDir)
-                .productionMode(vaadin.productionMode)
-                .build()
+
+        VaadinProject vaadinProject = new VaadinProject(
+                applicationName: applicationName ?: project.name.capitalize(),
+                applicationPackage : applicationPackage ?: "com.example.${project.name.toLowerCase()}",
+                applicationBaseTheme :applicationBaseTheme ?: LUMO,
+                rootDirectory :project.rootDir,
+                productionMode : vaadin.productionMode
+        )
 
         projectCreator.generate(vaadinProject)
 
-       // themeCreator.generateHtmlTheme(vaadinProject)
         themeCreator.generateCssTheme(vaadinProject)
     }
 }

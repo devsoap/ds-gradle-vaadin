@@ -15,15 +15,12 @@
  */
 package com.devsoap.vaadinflow.models
 
-import groovy.transform.builder.Builder
-
 /**
- * Model for representing a polymer build (polymer.json)
+ * TemplateModel for representing a polymer build (polymer.json)
  *
  * @author John Ahlroos
  * @since 1.0
  */
-@Builder
 class PolymerBuild {
 
     String entrypoint

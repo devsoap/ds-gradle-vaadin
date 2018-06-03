@@ -15,15 +15,12 @@
  */
 package com.devsoap.vaadinflow.models
 
-import groovy.transform.builder.Builder
-
 /**
- * Model for representing a Vaadin Project
+ * TemplateModel for representing a Vaadin Project
  *
  * @author John Ahlroos
  * @since 1.0
  */
-@Builder
 class VaadinProject {
 
     String applicationName
