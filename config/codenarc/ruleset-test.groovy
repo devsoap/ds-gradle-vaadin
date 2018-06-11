@@ -195,19 +195,6 @@ ruleset {
     RequiredString
     StatelessClass
 
-    // rulesets/grails.xml
-    GrailsDomainHasEquals
-    GrailsDomainHasToString
-    GrailsDomainReservedSqlKeywordName
-    GrailsDomainWithServiceReference
-    GrailsDuplicateConstraint
-    GrailsDuplicateMapping
-    GrailsMassAssignment
-    GrailsPublicControllerMethod
-    GrailsServletContextReference
-    GrailsSessionReference   // DEPRECATED
-    GrailsStatelessService
-
     // rulesets/groovyism.xml
     AssignCollectionSort
     AssignCollectionUnique
