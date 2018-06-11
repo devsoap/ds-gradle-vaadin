@@ -21,7 +21,6 @@ package com.devsoap.vaadinflow.models
  * @author John Ahlroos
  * @since 1.0
  */
-
 trait TemplateModel {
 
     File rootDirectory

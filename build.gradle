@@ -166,7 +166,7 @@ task functionalTest(type: Test) {
 check.dependsOn functionalTest
 
 codenarc{
-    toolVersion = '0.27.0'
+    toolVersion = '1.1'
     configFile = rootProject.file('config/codenarc/ruleset.groovy')
     maxPriority1Violations = 0
     maxPriority2Violations = 0
