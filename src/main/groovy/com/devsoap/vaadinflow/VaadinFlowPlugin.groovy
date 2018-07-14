@@ -86,30 +86,6 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 create(CreateCompositeTask.NAME, CreateCompositeTask)
                 create(CreateComponentTask.NAME, CreateComponentTask)
             }
-
-            workaroundInvalidBomVersionRanges(it)
-        }
-    }
-
-    /**
-     * Looks like vaadins BOM is using invalid version ranges which do not account for alpha/beta releases.
-     * Workaround it here by using the '+' notation.
-     *
-     * FIXME This is a ugly hack that should be removed once Vaadin gets its BOMs fixed.
-     *
-     * @param project
-     *      the project
-     */
-    private static void workaroundInvalidBomVersionRanges(Project project) {
-        project.configurations.all {
-            it.resolutionStrategy.eachDependency { dep ->
-                if (dep.requested.group == 'org.webjars.bowergithub.vaadin' && dep.requested.version.startsWith('[')) {
-                    // Convert version range [1.2.3,4) -> 3+
-                    int maxVersion = Integer.parseInt(dep.requested.version.split(',')[1] - ')')
-                    String baseVersion = (maxVersion - 1) + '+'
-                    dep.useVersion(baseVersion)
-                }
-            }
         }
     }
 
