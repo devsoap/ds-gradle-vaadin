@@ -98,7 +98,7 @@ class TranspileDependenciesTask extends DefaultTask {
     final File manifestJson = new File(workingDir, 'vaadin-flow-bundle-manifest.json')
 
     TranspileDependenciesTask() {
-       // dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME)
+        dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME)
         onlyIf {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
             client.compileFromSources
