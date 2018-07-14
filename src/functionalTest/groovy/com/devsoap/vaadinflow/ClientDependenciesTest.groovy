@@ -193,6 +193,32 @@ class ClientDependenciesTest extends FunctionalTest {
             cssFile.exists()
     }
 
+    void 'transpile with manually configured dependencies'() {
+        setup:
+            buildFile << '''
+                vaadin.productionMode = true
+
+                repositories {
+                  vaadin.repositories()
+                }
+
+                dependencies {
+                  implementation vaadin.bom()
+                  implementation vaadin.core()
+                  implementation vaadin.servletApi()
+                }
+
+                '''.stripMargin()
+            run 'vaadinCreateProject'
+        when:
+            BuildResult result = run('build')
+        then:
+            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
+    }
+
     private static boolean bowerComponentExists(File frontend, String component) {
         File componentFile = Paths.get(frontend.canonicalPath, 'bower_components', component).toFile()
         File componentHTMLFile = new File(componentFile, "${component}.html")

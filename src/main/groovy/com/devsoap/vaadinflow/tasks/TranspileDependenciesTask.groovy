@@ -221,10 +221,12 @@ class TranspileDependenciesTask extends DefaultTask {
         }
 
         project.configurations.all.each { Configuration conf ->
-            if (conf.canBeResolved && ['compile', 'implementation'].contains(conf.name)) {
-                conf.allDependencies.each { Dependency dependency ->
+            if (['compile', 'implementation'].contains(conf.name)) {
+                Configuration cc = conf.copy() // Work on copies which are resolvable
+                cc.canBeResolved = true
+                cc.allDependencies.each { Dependency dependency ->
                     if (!(dependency instanceof ProjectDependency)) {
-                        conf.files(dependency).each { File file ->
+                        cc.files(dependency).each { File file ->
                             if (file.file && file.name.endsWith('.jar')) {
 
                                 // Find bower.json
