@@ -37,7 +37,9 @@ class VaadinFlowPluginExtension {
     static final String NAME = VAADIN
     static final String GROUP = 'com.vaadin'
     static final String VAADIN = 'vaadin'
-    public static final String COLON = ':'
+
+    private static final String COLON = ':'
+    private static final String COMPILE = 'compile'
 
     private final Property<String> version
     private final Property<Boolean> productionMode
@@ -94,9 +96,8 @@ class VaadinFlowPluginExtension {
     void autoconfigure() {
         repositoryHandler.jcenter()
         repositoryHandler.addAll(repositories())
-        dependencyHandler.add('implementation', platform())
-        // Add to compile as well for backwards compatibility with 3rd party plugins
-        dependencyHandler.add('compile', platform())
+        dependencyHandler.add(COMPILE, bom())
+        dependencyHandler.add(COMPILE, platform())
         dependencyHandler.add('compileOnly', servletApi())
         dependencyHandler.add('runtime', slf4j())
     }
