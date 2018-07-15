@@ -36,6 +36,7 @@ import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Dependency
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.util.VersionNumber
@@ -85,6 +86,21 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 create(ConvertCssToHtmlStyleTask.NAME, ConvertCssToHtmlStyleTask)
                 create(CreateCompositeTask.NAME, CreateCompositeTask)
                 create(CreateComponentTask.NAME, CreateComponentTask)
+            }
+
+            afterEvaluate {
+                disableStatistics(project)
+            }
+        }
+    }
+
+    private static void disableStatistics(Project project) {
+        VaadinFlowPluginExtension vaadin = project.extensions[VaadinFlowPluginExtension.NAME]
+        if (!vaadin.submitStatistics) {
+            Dependency statistics = vaadin.disableStatistics()
+            project.configurations['compile'].dependencies.add(statistics)
+            project.configurations.all { config ->
+                config.resolutionStrategy.force("${statistics.group}:${statistics.name}:${statistics.version}")
             }
         }
     }
