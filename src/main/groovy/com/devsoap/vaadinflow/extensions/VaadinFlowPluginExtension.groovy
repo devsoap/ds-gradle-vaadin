@@ -43,12 +43,14 @@ class VaadinFlowPluginExtension {
 
     private final Property<String> version
     private final Property<Boolean> productionMode
+    private final Property<Boolean> submitStatistics
 
     private final DependencyHandler dependencyHandler
     private final RepositoryHandler repositoryHandler
     private final Project project
 
     private boolean dependencyApplied = false
+    private boolean statisticsApplied = false
 
     VaadinFlowPluginExtension(Project project) {
         this.project = project
@@ -56,6 +58,7 @@ class VaadinFlowPluginExtension {
         repositoryHandler = project.repositories
         version = project.objects.property(String)
         productionMode = project.objects.property(Boolean)
+        submitStatistics = project.objects.property(Boolean)
     }
 
     /**
@@ -88,6 +91,28 @@ class VaadinFlowPluginExtension {
     void setProductionMode(boolean enabled) {
         productionMode.set(enabled)
         project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources = enabled
+    }
+
+    /**
+     * Should the plugin allow submitting statistics information to Vaadin Ltd.
+     */
+    boolean isSubmitStatistics() {
+        submitStatistics.getOrElse(false)
+    }
+
+    /**
+     * Has the submit statistics property not been set
+     */
+    boolean isSubmitStatisticsUnset() {
+        !statisticsApplied
+    }
+
+    /**
+     * Should the plugin allow submitting statistics information to Vaadin Ltd.
+     */
+    void setSubmitStatistics(boolean enabled) {
+        statisticsApplied = true
+        submitStatistics.set(enabled)
     }
 
     /**
@@ -178,11 +203,18 @@ class VaadinFlowPluginExtension {
 
     /**
      * Returns the SLF4J simple implementation
-     * @return
      */
     Dependency slf4j() {
         String version = Versions.rawVersion('slf4j.simple.version')
         dependencyHandler.create("org.slf4j:slf4j-simple:$version")
+    }
+
+    /**
+     * Returns the opt-out statistics module
+     */
+    Dependency disableStatistics() {
+        String version = Versions.rawVersion('vaadin.statistics.version')
+        dependencyHandler.create("org.webjars.bowergithub.vaadin:vaadin-usage-statistics:$version")
     }
 
     /**
