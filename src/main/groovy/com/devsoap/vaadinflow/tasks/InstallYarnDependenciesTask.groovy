@@ -17,14 +17,20 @@ package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
+import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.util.LogUtils
+import com.devsoap.vaadinflow.util.Versions
 import com.moowork.gradle.node.npm.NpmSetupTask
 import com.moowork.gradle.node.yarn.YarnExecRunner
 import com.moowork.gradle.node.yarn.YarnSetupTask
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecSpec
 
@@ -41,6 +47,9 @@ class InstallYarnDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallYarnDependencies'
 
+    private static final String POLYMER_COMMAND = 'polymer'
+    private static final String BOWER_COMMAND = 'bower'
+
     final YarnExecRunner yarnRunner = new YarnExecRunner(project).with {
         execOverrides = { ExecSpec spec ->
             spec.standardOutput = LogUtils.getLogOutputStream(Level.FINE)
@@ -52,14 +61,17 @@ class InstallYarnDependenciesTask extends DefaultTask {
     @OutputDirectory
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
 
+    @OutputFile
+    final File packageJson = new File(workingDir, 'package.json')
+
     /**
      * Creates an installation task
      */
     InstallYarnDependenciesTask() {
-        dependsOn( InstallNpmDependenciesTask.NAME, YarnSetupTask.NAME )
+        dependsOn( YarnSetupTask.NAME )
         onlyIf {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !client.yarnDependencies.isEmpty()
+            !client.yarnDependencies.isEmpty() || !client.bowerDependencies.isEmpty() || client.compileFromSources
         }
 
         description = 'Installs Vaadin yarn dependencies'
@@ -77,6 +89,37 @@ class InstallYarnDependenciesTask extends DefaultTask {
      */
     @TaskAction
     void run() {
+        VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
+
+        // Ensure working directory is empty
+        workingDir.deleteDir()
+        workingDir.mkdirs()
+
+        // Create package.json
+        LOGGER.info('Creating package.json ...')
+        yarnRunner.arguments = ['init', '-y']
+        yarnRunner.execute().assertNormalExitValue()
+
+        // Set proper defaults for package.json
+        ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
+        pkg.main = ''
+        pkg.version = '1.0.0'
+        pkg.name = 'frontend'
+
+        pkg.devDependencies['polymer-cli'] = Versions.rawVersion('polymer.cli.version')
+        pkg.scripts[POLYMER_COMMAND] = POLYMER_COMMAND
+
+        if(!client.bowerDependencies.isEmpty()) {
+            pkg.devDependencies['bower'] = 'latest'
+            pkg.scripts[BOWER_COMMAND] = BOWER_COMMAND
+        }
+
+        packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
+
+        // Install polymer-build
+        LOGGER.info('Installing development dependencies ...')
+        yarnRunner.arguments = ['install']
+        yarnRunner.execute().assertNormalExitValue()
 
         LOGGER.info('Installing yarn dependencies...')
         VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
@@ -84,16 +127,6 @@ class InstallYarnDependenciesTask extends DefaultTask {
             LOGGER.info( "Found $name")
             yarnRunner.arguments = ['add', "$name@$version"]
             yarnRunner.execute().assertNormalExitValue()
-        }
-
-        LOGGER.info('Copying yarn dependencies into bower components')
-        File bowerComponents = new File(workingDir, 'bower_components')
-        project.fileTree(new File(workingDir, 'node_modules'))
-                .include('**/**/bower.json')
-                .each { File bowerJson ->
-            File componentDir = bowerJson.parentFile
-            LOGGER.info( "Copying yarn dependency $componentDir.name to $bowerComponents")
-            project.copy { spec -> spec.from(componentDir).into(new File(bowerComponents, componentDir.name)) }
         }
     }
 }

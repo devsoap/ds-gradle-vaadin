@@ -56,6 +56,7 @@ class AssembleClientDependenciesTask extends DefaultTask {
             boolean hasClientDependencies = !client.bowerDependencies.isEmpty() || !client.yarnDependencies.isEmpty()
             hasClientDependencies || client.compileFromSources
         }
+
         group = 'Vaadin'
         description = 'Copies built client dependencies into the right target directory'
         project.afterEvaluate {
@@ -80,7 +81,6 @@ class AssembleClientDependenciesTask extends DefaultTask {
              '**/test*/**',
              '**/build/**',
              '**/frontend-*/**',
-             '**/node_modules/**',
              '**/.*',
              '**/*.md',
              '**/bower.json',
@@ -90,17 +90,21 @@ class AssembleClientDependenciesTask extends DefaultTask {
              '**/yarn.lock',
         ]
 
+        List<String> frontendIncludes = [
+             'vaadin-flow-bundle-manifest.json',
+             'styles/**'
+        ]
+
         VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
         if (client.compileFromSources) {
             project.with {
-                String bowerComponentsGlob = '**/bower_components/**'
-                copy { spec -> spec.from(frontendDir).exclude([bowerComponentsGlob]).into(targetDirEs5) }
-                copy { spec -> spec.from(frontendBuildDir).exclude(excludes).into(targetDirEs5) }
-                copy { spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
+                copy { spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs5) }
+                copy { spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs5) }
+                copy { spec -> spec.from(sourceDirEs5).into(targetDirEs5) }
 
-                copy { spec -> spec.from(frontendDir).exclude([bowerComponentsGlob]).into(targetDirEs6) }
-                copy { spec -> spec.from(frontendBuildDir).exclude(excludes).into(targetDirEs6) }
-                copy { spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
+                copy { spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs6) }
+                copy { spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs6) }
+                copy { spec -> spec.from(sourceDirEs6).into(targetDirEs6) }
             }
         } else {
             project.copy { spec -> spec.from(frontendBuildDir).exclude(excludes).into(webAppGenFrontendDir) }
