@@ -38,7 +38,7 @@ class PolymerBuild {
 
         String name
 
-        boolean bundle = true
+        boolean bundle = false
 
         BuildConfiguration js = new BuildConfiguration()
 

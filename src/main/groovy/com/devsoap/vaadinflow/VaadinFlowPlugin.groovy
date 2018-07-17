@@ -29,7 +29,6 @@ import com.devsoap.vaadinflow.tasks.CreateCompositeTask
 import com.devsoap.vaadinflow.tasks.CreateProjectTask
 import com.devsoap.vaadinflow.tasks.CreateWebComponentTask
 import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
-import com.devsoap.vaadinflow.tasks.InstallNpmDependenciesTask
 import com.devsoap.vaadinflow.tasks.InstallYarnDependenciesTask
 import com.devsoap.vaadinflow.tasks.TranspileDependenciesTask
 import com.devsoap.vaadinflow.util.Versions
@@ -78,7 +77,6 @@ class VaadinFlowPlugin implements Plugin<Project> {
             tasks.with {
                 create(CreateProjectTask.NAME, CreateProjectTask)
                 create(CreateWebComponentTask.NAME, CreateWebComponentTask)
-                create(InstallNpmDependenciesTask.NAME, InstallNpmDependenciesTask)
                 create(InstallYarnDependenciesTask.NAME, InstallYarnDependenciesTask)
                 create(InstallBowerDependenciesTask.NAME, InstallBowerDependenciesTask)
                 create(TranspileDependenciesTask.NAME, TranspileDependenciesTask)
@@ -88,8 +86,40 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 create(CreateComponentTask.NAME, CreateComponentTask)
             }
 
+            workaroundInvalidBomVersionRanges(it)
+
             afterEvaluate {
                 disableStatistics(project)
+            }
+        }
+    }
+
+    /**
+     * Looks like vaadins BOM is using invalid version ranges which do not account for alpha/beta releases.
+     * Workaround it here by using the '+' notation.
+     *
+     * FIXME This is a ugly hack that should be removed once Vaadin gets its BOMs fixed.
+     *
+     * @param project
+     *      the project
+     */
+    private static void workaroundInvalidBomVersionRanges(Project project) {
+        project.configurations.all {
+            it.resolutionStrategy.eachDependency { dep ->
+                if (dep.requested.group == 'org.webjars.bowergithub.vaadin'
+                        && dep.requested.name != 'vaadin-usage-statistics'
+                        && dep.requested.version.startsWith('[')) {
+                    dep.because("Dependency is using a unsupported range")
+                    dep.useVersion("latest.release")
+                }
+                if(dep.requested.group == 'org.webjars.bowergithub.vaadin' && dep.requested.name == 'vaadin-lumo-styles') {
+                    // Do not pull in lumo-styles Polymer 3 alpha/beta components
+                    dep.useVersion("1.0.0")
+                }
+                if(dep.requested.group == 'org.webjars.bowergithub.webcomponents' && dep.requested.name == 'shadycss') {
+                    // Lock shadycss (used by lumo-styles) as 1.3.x does no longer support bower
+                    dep.useVersion("1.2.1")
+                }
             }
         }
     }
@@ -98,7 +128,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
         VaadinFlowPluginExtension vaadin = project.extensions[VaadinFlowPluginExtension.NAME]
         if (!vaadin.submitStatistics) {
             Dependency statistics = vaadin.disableStatistics()
-            project.configurations['compile'].dependencies.add(statistics)
+            project.configurations['implementation'].dependencies.add(statistics)
             project.configurations.all { config ->
                 config.resolutionStrategy.force("${statistics.group}:${statistics.name}:${statistics.version}")
             }

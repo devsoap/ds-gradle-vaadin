@@ -21,6 +21,7 @@ import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.util.LogUtils
 import com.moowork.gradle.node.npm.NpmExecRunner
 import com.moowork.gradle.node.npm.NpmSetupTask
+import com.moowork.gradle.node.yarn.YarnExecRunner
 import com.sun.security.ntlm.Client
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
@@ -49,7 +50,7 @@ class InstallBowerDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallBowerDependencies'
 
-    final NpmExecRunner npmExecRunner = new NpmExecRunner(project).with {
+    final YarnExecRunner yarnRunner = new YarnExecRunner(project).with {
         execOverrides = { ExecSpec spec ->
             spec.standardOutput = LogUtils.getLogOutputStream(Level.FINE)
             spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
@@ -63,16 +64,16 @@ class InstallBowerDependenciesTask extends DefaultTask {
     final File bowerJson = new File(workingDir, 'bower.json')
 
     InstallBowerDependenciesTask() {
-        dependsOn( InstallNpmDependenciesTask.NAME )
+        dependsOn( InstallYarnDependenciesTask.NAME )
         onlyIf {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !client.bowerDependencies.isEmpty() || client.compileFromSources
+            !client.bowerDependencies.isEmpty()
         }
 
         description = 'Installs Vaadin bower client dependencies'
         group = 'Vaadin'
 
-        npmExecRunner.workingDir = workingDir
+        yarnRunner.workingDir = workingDir
 
         inputs.file(new File(workingDir, 'package.json'))
         inputs.property('bowerDependencies') {
@@ -97,7 +98,7 @@ class InstallBowerDependenciesTask extends DefaultTask {
         bowerJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(bowerModel))
 
         LOGGER.info('Installing bower dependencies ... ')
-        npmExecRunner.arguments = ['run', BOWER_COMMAND, INSTALL_COMMAND, '--config.interactive=false' ]
-        npmExecRunner.execute().assertNormalExitValue()
+        yarnRunner.arguments = ['run', BOWER_COMMAND, INSTALL_COMMAND, '--config.interactive=false' ]
+        yarnRunner.execute().assertNormalExitValue()
     }
 }
