@@ -17,8 +17,6 @@ package com.devsoap.vaadinflow.tasks
 
 import com.moowork.gradle.node.yarn.YarnExecRunner
 
-import static com.devsoap.vaadinflow.models.PolymerBuild.Build
-
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.models.PolymerBuild
@@ -94,6 +92,9 @@ class TranspileDependenciesTask extends DefaultTask {
     @OutputDirectory
     final File es6dir = new File(workingDir, 'frontend-es6')
 
+    @OutputDirectory
+    final File compilationResultDir = new File(workingDir, 'build')
+
     @OutputFile
     final File manifestJson = new File(workingDir, 'vaadin-flow-bundle-manifest.json')
 
@@ -133,10 +134,6 @@ class TranspileDependenciesTask extends DefaultTask {
         List<String> sources = initModuleSources(imports)
         initPolymerJson(sources)
 
-        LOGGER.info('Transpiling...')
-        yarnRunner.arguments = ['run', POLYMER_COMMAND, 'build', '--npm']
-        yarnRunner.execute().assertNormalExitValue()
-
         LOGGER.info("Creating ${manifestJson.name}...")
         YarnExecRunner yarnBundleRunner = new YarnExecRunner(project).with {
             execOverrides = { ExecSpec spec ->
@@ -146,8 +143,21 @@ class TranspileDependenciesTask extends DefaultTask {
             it
         }
         yarnBundleRunner.workingDir = workingDir
-        yarnBundleRunner.arguments = ['run', 'polymer-bundler', "--manifest-out=${manifestJson.canonicalPath}", html.name]
+        yarnBundleRunner.arguments = ['run', 'polymer-bundler',
+                                      "--manifest-out=${manifestJson.canonicalPath}", html.name]
         yarnBundleRunner.execute().assertNormalExitValue()
+
+        LOGGER.info('Transpiling...')
+        yarnRunner.arguments = ['run', POLYMER_COMMAND, 'build', '--npm', "--component-dir='node_modules'"]
+        yarnRunner.execute().assertNormalExitValue()
+
+        LOGGER.info("Linking $BOWER_COMPONENTS to $NODE_MODULES...")
+        File es5ResultDir = new File(compilationResultDir, es5dir.name)
+        Files.createSymbolicLink(Paths.get(new File(es5ResultDir, BOWER_COMPONENTS).toURI()),
+                Paths.get(new File(es5ResultDir, NODE_MODULES).toURI()))
+        File es6ResultDir = new File(compilationResultDir, es6dir.name)
+        Files.createSymbolicLink(Paths.get(new File(es6ResultDir, BOWER_COMPONENTS).toURI()),
+                Paths.get(new File(es6ResultDir, NODE_MODULES).toURI()))
     }
 
     private static List<String> initModuleSources(List<String> imports) {
@@ -179,9 +189,11 @@ class TranspileDependenciesTask extends DefaultTask {
                     '**/test*/**',
                     '**/src/**',
                     '**/lib/**',
-                    '**/templates/**')
+                    '**/templates/**',
+                    '**/polymer-cli/**')
                     .each { File htmlFile ->
-                if(new File(htmlFile.parentFile, 'src').exists()){
+
+                if(new File(htmlFile.parentFile, 'bower.json').exists()){
                     String path = (htmlFile.path - workingDir.path).substring(1)
                     imports.add(path)
                 }
@@ -207,10 +219,13 @@ class TranspileDependenciesTask extends DefaultTask {
         PolymerBuild buildModel = new PolymerBuild(
                 entrypoint: html.name,
                 sources: sources,
-                extraDependencies : ['node_modules/webcomponentsjs/webcomponents-lite.js'],
+                extraDependencies : [
+                    'node_modules/webcomponentsjs/webcomponents-lite.js',
+                    manifestJson.name
+                ],
                 builds: [
-                    new Build(name: es5dir.name).with { js.compile = true; it },
-                    new Build(name: es6dir.name)
+                    new PolymerBuild.CustomBuild(name: es5dir.name).with { js.compile = true; it },
+                    new PolymerBuild.CustomBuild(name: es6dir.name)
                 ]
         )
         polymerJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(buildModel))

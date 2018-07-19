@@ -34,17 +34,18 @@ class PolymerBuild {
     /**
      * Represents a single build in the build process.
      */
-    static class Build {
+    interface Build {}
 
+    static class CustomBuild implements Build {
         String name
-
         boolean bundle = false
-
         BuildConfiguration js = new BuildConfiguration()
-
         BuildConfiguration css = new BuildConfiguration()
-
         BuildConfiguration html = new BuildConfiguration()
+    }
+
+    static class BuildPreset implements Build {
+        String preset
     }
 
     /**
@@ -56,4 +57,8 @@ class PolymerBuild {
 
         boolean compile = false
     }
+
+    static final BuildPreset ES5_BUNDLED = new BuildPreset(preset: 'es5-bundled')
+    static final BuildPreset ES6_BUNDLED = new BuildPreset(preset: 'es6-bundled')
+    static final BuildPreset ES6_UNBUNDLED = new BuildPreset(preset: 'es6-unbundled')
 }
