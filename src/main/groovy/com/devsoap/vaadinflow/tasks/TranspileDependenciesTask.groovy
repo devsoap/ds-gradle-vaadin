@@ -16,7 +16,6 @@
 package com.devsoap.vaadinflow.tasks
 
 import com.moowork.gradle.node.yarn.YarnExecRunner
-import org.gradle.util.GFileUtils
 
 import static com.devsoap.vaadinflow.models.PolymerBuild.Build
 
@@ -87,7 +86,7 @@ class TranspileDependenciesTask extends DefaultTask {
     final File polymerJson = new File(workingDir, 'polymer.json')
 
     @OutputFile
-    final File html = new File(workingDir, 'index.html')
+    final File html = new File(workingDir, 'vaadin-flow-bundle.html')
 
     @OutputDirectory
     final File es5dir = new File(workingDir, 'frontend-es5')
@@ -127,35 +126,41 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Searching for HTML imports')
         List<String> imports = initHTMLImports()
 
-        LOGGER.info('Creating index.html...')
+        LOGGER.info("Creating ${html.name}...")
         initHtml(imports)
 
-        LOGGER.info('Creating polymer.json...')
+        LOGGER.info("Creating ${polymerJson.name}...")
         List<String> sources = initModuleSources(imports)
         initPolymerJson(sources)
 
-        // Run polymer build
         LOGGER.info('Transpiling...')
         yarnRunner.arguments = ['run', POLYMER_COMMAND, 'build', '--npm']
         yarnRunner.execute().assertNormalExitValue()
 
-        // Generate manifest
-        // FIXME As a workaround for #60 generate an empty file. In the future we should make this configurable (#63)
-        LOGGER.info('Creating manifest...')
-        manifestJson.text = '{}'
+        LOGGER.info("Creating ${manifestJson.name}...")
+        YarnExecRunner yarnBundleRunner = new YarnExecRunner(project).with {
+            execOverrides = { ExecSpec spec ->
+                spec.standardOutput = new ByteArrayOutputStream()
+                spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
+            }
+            it
+        }
+        yarnBundleRunner.workingDir = workingDir
+        yarnBundleRunner.arguments = ['run', 'polymer-bundler', "--manifest-out=${manifestJson.canonicalPath}", html.name]
+        yarnBundleRunner.execute().assertNormalExitValue()
     }
 
     private static List<String> initModuleSources(List<String> imports) {
-        List<String> sources = imports.collect { htmlPath ->
+        Set<String> sources = imports.collect { htmlPath ->
             String path = htmlPath.split(/\//).dropRight(1).join('/')
-            if(path.startsWith(BOWER_COMPONENTS) || path.startsWith(NODE_MODULES)) {
+            if(path.startsWith(NODE_MODULES)) {
                 path += '/src/**/*'
             } else {
                 path += '/**/*'
             }
             path
         }
-        sources
+        Collections.unmodifiableList(new ArrayList(sources))
     }
 
     private List<String> initHTMLImports() {
@@ -176,10 +181,10 @@ class TranspileDependenciesTask extends DefaultTask {
                     '**/lib/**',
                     '**/templates/**')
                     .each { File htmlFile ->
-
-
-                String path = (htmlFile.path - workingDir.path).substring(1)
-                imports.add(path)
+                if(new File(htmlFile.parentFile, 'src').exists()){
+                    String path = (htmlFile.path - workingDir.path).substring(1)
+                    imports.add(path)
+                }
             }
         }
 

@@ -16,19 +16,15 @@
 package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
-import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.util.LogUtils
 import com.devsoap.vaadinflow.util.Versions
-import com.moowork.gradle.node.npm.NpmSetupTask
 import com.moowork.gradle.node.yarn.YarnExecRunner
 import com.moowork.gradle.node.yarn.YarnSetupTask
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -49,6 +45,7 @@ class InstallYarnDependenciesTask extends DefaultTask {
 
     private static final String POLYMER_COMMAND = 'polymer'
     private static final String BOWER_COMMAND = 'bower'
+    public static final String POLYMER_BUNDLER_COMMAND = 'polymer-bundler'
 
     final YarnExecRunner yarnRunner = new YarnExecRunner(project).with {
         execOverrides = { ExecSpec spec ->
@@ -109,6 +106,9 @@ class InstallYarnDependenciesTask extends DefaultTask {
         pkg.devDependencies['polymer-cli'] = Versions.rawVersion('polymer.cli.version')
         pkg.scripts[POLYMER_COMMAND] = POLYMER_COMMAND
 
+        pkg.devDependencies[POLYMER_BUNDLER_COMMAND] = Versions.rawVersion('polymer.bundler.version')
+        pkg.scripts[POLYMER_BUNDLER_COMMAND] = POLYMER_BUNDLER_COMMAND
+
         if(!client.bowerDependencies.isEmpty()) {
             pkg.devDependencies['bower'] = 'latest'
             pkg.scripts[BOWER_COMMAND] = BOWER_COMMAND
@@ -116,7 +116,6 @@ class InstallYarnDependenciesTask extends DefaultTask {
 
         packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
 
-        // Install polymer-build
         LOGGER.info('Installing development dependencies ...')
         yarnRunner.arguments = ['install']
         yarnRunner.execute().assertNormalExitValue()
