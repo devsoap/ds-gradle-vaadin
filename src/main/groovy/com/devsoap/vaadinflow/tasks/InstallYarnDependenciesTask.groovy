@@ -55,7 +55,6 @@ class InstallYarnDependenciesTask extends DefaultTask {
         it
     }
 
-    @OutputDirectory
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
 
     @OutputFile
@@ -88,9 +87,17 @@ class InstallYarnDependenciesTask extends DefaultTask {
     void run() {
         VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
 
-        // Ensure working directory is empty
-        workingDir.deleteDir()
+        // Ensure working directory is clean (keep node_modules and bower_components for to prevent re-downloads)
         workingDir.mkdirs()
+        workingDir.eachFile {
+            if(it.name != 'node_modules' && it.name != 'bower_components') {
+                if(it.directory) {
+                    it.deleteDir()
+                } else {
+                    it.delete()
+                }
+            }
+        }
 
         // Create package.json
         LOGGER.info('Creating package.json ...')
@@ -110,7 +117,7 @@ class InstallYarnDependenciesTask extends DefaultTask {
         pkg.scripts[POLYMER_BUNDLER_COMMAND] = POLYMER_BUNDLER_COMMAND
 
         if(!client.bowerDependencies.isEmpty()) {
-            pkg.devDependencies['bower'] = 'latest'
+            pkg.devDependencies[BOWER_COMMAND] = 'latest'
             pkg.scripts[BOWER_COMMAND] = BOWER_COMMAND
         }
 
