@@ -193,7 +193,7 @@ class TranspileDependenciesTask extends DefaultTask {
                     '**/polymer-cli/**')
                     .each { File htmlFile ->
 
-                if(new File(htmlFile.parentFile, 'bower.json').exists()){
+                if(new File(dir, 'bower.json').exists()){
                     String path = (htmlFile.path - workingDir.path).substring(1)
                     imports.add(path)
                 }
@@ -216,13 +216,21 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private void initPolymerJson(List<String> sources) {
+
+        List<String> extraDependencies = [manifestJson.name]
+
+        File nodeModules = new File(workingDir, NODE_MODULES)
+        File webcomponentsjs = new File(nodeModules, 'webcomponentsjs')
+        webcomponentsjs.eachFile {
+            if(it.name.endsWith('.js') || it.name.endsWith('.js.map')) {
+                extraDependencies.add("node_modules/webcomponentsjs/$it.name")
+            }
+        }
+
         PolymerBuild buildModel = new PolymerBuild(
                 entrypoint: html.name,
                 sources: sources,
-                extraDependencies : [
-                    'node_modules/webcomponentsjs/webcomponents-lite.js',
-                    manifestJson.name
-                ],
+                extraDependencies : extraDependencies,
                 builds: [
                     new PolymerBuild.CustomBuild(name: es5dir.name).with { js.compile = true; it },
                     new PolymerBuild.CustomBuild(name: es6dir.name)
