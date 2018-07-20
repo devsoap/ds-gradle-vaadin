@@ -38,7 +38,7 @@ class PolymerBuild {
 
     static class CustomBuild implements Build {
         String name
-        boolean bundle = false
+        boolean bundle = true
         BuildConfiguration js = new BuildConfiguration()
         BuildConfiguration css = new BuildConfiguration()
         BuildConfiguration html = new BuildConfiguration()

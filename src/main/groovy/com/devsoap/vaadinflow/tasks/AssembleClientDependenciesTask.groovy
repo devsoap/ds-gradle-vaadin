@@ -83,11 +83,8 @@ class AssembleClientDependenciesTask extends DefaultTask {
              '**/frontend-*/**',
              '**/.*',
              '**/*.md',
-             '**/bower.json',
-             '**/polymer.json',
-             '**/package.json',
-             '**/package-lock.json',
-             '**/yarn.lock',
+             '**/*.json',
+             '**/yarn.lock'
         ]
 
         List<String> frontendIncludes = [
@@ -100,11 +97,11 @@ class AssembleClientDependenciesTask extends DefaultTask {
             project.with {
                 copy { spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs5) }
                 copy { spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs5) }
-                copy { spec -> spec.from(sourceDirEs5).into(targetDirEs5) }
+                copy { spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
 
                 copy { spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs6) }
                 copy { spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs6) }
-                copy { spec -> spec.from(sourceDirEs6).into(targetDirEs6) }
+                copy { spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
             }
         } else {
             project.copy { spec -> spec.from(frontendBuildDir).exclude(excludes).into(webAppGenFrontendDir) }
