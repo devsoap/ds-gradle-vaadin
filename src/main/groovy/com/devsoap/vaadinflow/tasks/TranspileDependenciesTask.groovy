@@ -15,25 +15,18 @@
  */
 package com.devsoap.vaadinflow.tasks
 
-import com.moowork.gradle.node.yarn.YarnExecRunner
-
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
-import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.models.PolymerBuild
 import com.devsoap.vaadinflow.util.LogUtils
+import com.moowork.gradle.node.yarn.YarnExecRunner
 import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
-import org.gradle.api.tasks.InputDirectory
-import org.gradle.api.tasks.InputFile
-import org.gradle.api.tasks.OutputDirectory
-import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.process.ExecSpec
 
 import java.nio.file.Files
@@ -84,16 +77,13 @@ class TranspileDependenciesTask extends DefaultTask {
     final File polymerJson = new File(workingDir, 'polymer.json')
 
     @OutputFile
-    final File html = new File(workingDir, 'vaadin-flow-bundle.html')
+    final File html = new File(workingDir, "vaadin-flow-bundle-${UUID.randomUUID().toString().substring(0,8)}.html")
 
     @OutputDirectory
     final File es5dir = new File(workingDir, 'frontend-es5')
 
     @OutputDirectory
     final File es6dir = new File(workingDir, 'frontend-es6')
-
-    @OutputDirectory
-    final File compilationResultDir = new File(workingDir, 'build')
 
     @OutputFile
     final File manifestJson = new File(workingDir, 'vaadin-flow-bundle-manifest.json')
@@ -103,8 +93,8 @@ class TranspileDependenciesTask extends DefaultTask {
         onlyIf {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
             client.compileFromSources
-
         }
+
         description = 'Compiles client modules to support legacy browsers'
         group = 'Vaadin'
         yarnRunner.workingDir = workingDir
@@ -112,11 +102,6 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @TaskAction
     void run() {
-
-        // Add polymer-cli as a script
-        ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
-        pkg.scripts[POLYMER_COMMAND] = POLYMER_COMMAND
-        packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
 
         LOGGER.info('Unpacking webjars...')
         unpackWebjars(workingDir, project)
@@ -150,20 +135,12 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Transpiling...')
         yarnRunner.arguments = ['run', POLYMER_COMMAND, 'build', '--npm', "--component-dir='node_modules'"]
         yarnRunner.execute().assertNormalExitValue()
-
-        LOGGER.info("Linking $BOWER_COMPONENTS to $NODE_MODULES...")
-        File es5ResultDir = new File(compilationResultDir, es5dir.name)
-        Files.createSymbolicLink(Paths.get(new File(es5ResultDir, BOWER_COMPONENTS).toURI()),
-                Paths.get(new File(es5ResultDir, NODE_MODULES).toURI()))
-        File es6ResultDir = new File(compilationResultDir, es6dir.name)
-        Files.createSymbolicLink(Paths.get(new File(es6ResultDir, BOWER_COMPONENTS).toURI()),
-                Paths.get(new File(es6ResultDir, NODE_MODULES).toURI()))
     }
 
     private static List<String> initModuleSources(List<String> imports) {
         Set<String> sources = imports.collect { htmlPath ->
             String path = htmlPath.split(/\//).dropRight(1).join('/')
-            if(path.startsWith(NODE_MODULES)) {
+            if(path.startsWith(NODE_MODULES) || path.startsWith(BOWER_COMPONENTS)) {
                 path += '/src/**/*'
             } else {
                 path += '/**/*'
@@ -176,26 +153,27 @@ class TranspileDependenciesTask extends DefaultTask {
     private List<String> initHTMLImports() {
 
         List<String> imports = []
-        File nodeModules = new File(workingDir, NODE_MODULES)
+        List<File> scanDirs = [new File(workingDir, NODE_MODULES), new File(workingDir, BOWER_COMPONENTS)]
         String htmlIncludeGlob = '**/*.html'
+        scanDirs.each {
+            LOGGER.info("Searching for html imports in $it")
+            it.eachDir { dir ->
+                project.fileTree(dir)
+                        .include(htmlIncludeGlob)
+                        .exclude(
+                        '**/index.html',
+                        '**/demo/**',
+                        '**/test*/**',
+                        '**/src/**',
+                        '**/lib/**',
+                        '**/templates/**',
+                        '**/polymer-cli/**')
+                        .each { File htmlFile ->
 
-        LOGGER.info("Searching for html imports in $nodeModules")
-        nodeModules.eachDir { dir ->
-            project.fileTree(dir)
-                    .include(htmlIncludeGlob)
-                    .exclude(
-                    '**/index.html',
-                    '**/demo/**',
-                    '**/test*/**',
-                    '**/src/**',
-                    '**/lib/**',
-                    '**/templates/**',
-                    '**/polymer-cli/**')
-                    .each { File htmlFile ->
-
-                if(new File(dir, 'bower.json').exists()){
-                    String path = (htmlFile.path - workingDir.path).substring(1)
-                    imports.add(path)
+                    if(new File(dir, 'bower.json').exists()){
+                        String path = (htmlFile.path - workingDir.path).substring(1)
+                        imports.add(path)
+                    }
                 }
             }
         }
@@ -219,11 +197,11 @@ class TranspileDependenciesTask extends DefaultTask {
 
         List<String> extraDependencies = [manifestJson.name]
 
-        File nodeModules = new File(workingDir, NODE_MODULES)
-        File webcomponentsjs = new File(nodeModules, 'webcomponentsjs')
+        File bowerComponents = new File(workingDir, BOWER_COMPONENTS)
+        File webcomponentsjs = new File(bowerComponents, 'webcomponentsjs')
         webcomponentsjs.eachFile {
             if(it.name.endsWith('.js') || it.name.endsWith('.js.map')) {
-                extraDependencies.add("node_modules/webcomponentsjs/$it.name")
+                extraDependencies.add("$BOWER_COMPONENTS/webcomponentsjs/$it.name")
             }
         }
 
@@ -256,6 +234,11 @@ class TranspileDependenciesTask extends DefaultTask {
             nodeModules.mkdirs()
         }
 
+        File bowerComponents = new File(targetDir, BOWER_COMPONENTS)
+        if (!bowerComponents.exists()) {
+            bowerComponents.mkdirs()
+        }
+
         project.configurations.all.each { Configuration conf ->
             if (['compile', 'implementation'].contains(conf.name)) {
                 Configuration cc
@@ -271,29 +254,32 @@ class TranspileDependenciesTask extends DefaultTask {
                         cc.files(dependency).each { File file ->
                             if (file.file && file.name.endsWith('.jar')) {
 
-                                // Find package.json
+
+                                // Check for bower.json
                                 String packageJsonFolder = null
                                 String componentRootPackage = null
+                                boolean isBowerJar = false
                                 file.withInputStream { InputStream stream ->
                                     JarInputStream jarStream = new JarInputStream(stream)
                                     JarEntry entry
                                     while ((entry = jarStream.nextJarEntry) != null) {
-                                        if (entry.name.endsWith(PACKAGE_JSON_FILE)) {
-                                            packageJsonFolder = entry.name - PACKAGE_JSON_FILE
+                                        if (entry.name.endsWith(BOWER_JSON_FILE)) {
+                                            packageJsonFolder = entry.name - BOWER_JSON_FILE
                                             componentRootPackage = packageJsonFolder.split(SLASH).last()
+                                            isBowerJar = true
                                             break
                                         }
                                     }
                                 }
 
-                                if(!packageJsonFolder || !componentRootPackage) {
-                                    // Some webjars does not ship with a package.json, try bower.json
+                                // Check for package.json
+                                if(!isBowerJar){
                                     file.withInputStream { InputStream stream ->
                                         JarInputStream jarStream = new JarInputStream(stream)
                                         JarEntry entry
                                         while ((entry = jarStream.nextJarEntry) != null) {
-                                            if (entry.name.endsWith(BOWER_JSON_FILE)) {
-                                                packageJsonFolder = entry.name - BOWER_JSON_FILE
+                                            if (entry.name.endsWith(PACKAGE_JSON_FILE)) {
+                                                packageJsonFolder = entry.name - PACKAGE_JSON_FILE
                                                 componentRootPackage = packageJsonFolder.split(SLASH).last()
                                                 break
                                             }
@@ -303,10 +289,9 @@ class TranspileDependenciesTask extends DefaultTask {
 
                                 // Unpack directory with package.json
                                 if (packageJsonFolder && componentRootPackage) {
-                                    TranspileDependenciesTask.LOGGER.info("Found package.json in ${file.name}, " +
-                                            "unpacking ${packageJsonFolder} ...")
 
-                                    File componentRoot = new File(nodeModules, componentRootPackage)
+                                    File componentRoot = new File(isBowerJar ?
+                                            bowerComponents : nodeModules, componentRootPackage)
 
                                     if (componentRoot.exists()) {
                                         TranspileDependenciesTask.LOGGER.info("Skipped ${packageJsonFolder}, " +
