@@ -90,8 +90,8 @@ class InstallYarnDependenciesTask extends DefaultTask {
         // Ensure working directory is clean (keep node_modules and bower_components for to prevent re-downloads)
         workingDir.mkdirs()
         workingDir.eachFile {
-            if(it.name != 'node_modules' && it.name != 'bower_components') {
-                if(it.directory) {
+            if (it.name != 'node_modules' && it.name != 'bower_components') {
+                if (it.directory) {
                     it.deleteDir()
                 } else {
                     it.delete()
@@ -116,7 +116,7 @@ class InstallYarnDependenciesTask extends DefaultTask {
         pkg.devDependencies[POLYMER_BUNDLER_COMMAND] = Versions.rawVersion('polymer.bundler.version')
         pkg.scripts[POLYMER_BUNDLER_COMMAND] = POLYMER_BUNDLER_COMMAND
 
-        if(!client.bowerDependencies.isEmpty()) {
+        if (!client.bowerDependencies.isEmpty()) {
             pkg.devDependencies[BOWER_COMMAND] = 'latest'
             pkg.scripts[BOWER_COMMAND] = BOWER_COMMAND
         }

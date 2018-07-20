@@ -34,7 +34,7 @@ class PolymerBuild {
     /**
      * Represents a single build in the build process.
      */
-    interface Build {}
+    interface Build { }
 
     static class CustomBuild implements Build {
         String name
