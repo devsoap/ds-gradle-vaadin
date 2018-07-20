@@ -44,14 +44,13 @@ class ClientDependenciesTest extends FunctionalTest {
         when:
             BuildResult result = run  'vaadinAssembleClient'
         then:
-            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'build', 'webapp-gen', 'frontend').toFile()
-            bowerComponentExists(frontend, 'paper-slider')
+            yarnComponentExists(frontend, '@polymer/paper-slider')
     }
 
     void 'add paper-slider to project as bower dependency'() {
@@ -68,8 +67,7 @@ class ClientDependenciesTest extends FunctionalTest {
         when:
             BuildResult result = run 'vaadinAssembleClient'
         then:
-            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
@@ -88,8 +86,7 @@ class ClientDependenciesTest extends FunctionalTest {
             run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
             BuildResult result = run 'jar'
         then:
-            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
@@ -120,42 +117,37 @@ class ClientDependenciesTest extends FunctionalTest {
                 '''.stripMargin()
             run 'vaadinCreateProject'
         when:
-            BuildResult createResult = run 'vaadinCreateWebComponent', '--dependency',
-                    'bower:PolymerElements/paper-slider'
-            BuildResult result = run('jar')
+            run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
+            run('jar')
         then:
-            createResult.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
-            createResult.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
-
-            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.UP_TO_DATE
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
-            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
 
             File webappGen = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'webapp-gen').toFile()
-            File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
 
             File frontend5 = new File(webappGen, 'frontend-es5')
             frontend5.exists()
-            bowerComponentExists(frontend5, 'paper-slider')
-            bowerComponentExists(frontend5, 'vaadin-button')
+
+            File bundle5 = new File(frontend5, 'vaadin-flow-bundle-manifest.json')
+            bundle5.exists()
+
+            File styles5 = new File(frontend5, 'styles')
+            styles5.exists()
+            File cssFile5 = new File(styles5, testProjectDir.root.name.toLowerCase() + '-theme.css')
+            cssFile5.exists()
+            File cssFile5HTML = new File(styles5, testProjectDir.root.name.toLowerCase() + '-theme.html')
+            cssFile5HTML.exists()
 
             File frontend6 = new File(webappGen, 'frontend-es6')
             frontend6.exists()
-            bowerComponentExists(frontend6, 'paper-slider')
-            bowerComponentExists(frontend6, 'vaadin-button')
 
-            File frontend = new File(webapp, 'frontend')
-            frontend.exists()
-            !bowerComponentExists(frontend, 'paper-slider')
-            !bowerComponentExists(frontend, 'vaadin-button')
+            File bundle6 = new File(frontend6, 'vaadin-flow-bundle-manifest.json')
+            bundle6.exists()
 
-            File styles = new File(frontend, 'styles')
-            styles.exists()
-
-            File cssFile = new File(styles, testProjectDir.root.name.toLowerCase() + '-theme.css')
-            cssFile.exists()
+            File styles6 = new File(frontend6, 'styles')
+            styles6.exists()
+            File cssFile6 = new File(styles6, testProjectDir.root.name.toLowerCase() + '-theme.css')
+            cssFile6.exists()
+            File cssFile6HTML = new File(styles6, testProjectDir.root.name.toLowerCase() + '-theme.html')
+            cssFile6HTML.exists()
     }
 
     void 'transpile when no client dependencies in production mode'() {
@@ -168,9 +160,8 @@ class ClientDependenciesTest extends FunctionalTest {
         when:
             BuildResult result = run('jar')
         then:
-            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
-            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
 
@@ -213,15 +204,20 @@ class ClientDependenciesTest extends FunctionalTest {
         when:
             BuildResult result = run('build')
         then:
-            result.task(':vaadinInstallNpmDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SKIPPED
-            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
     }
 
     private static boolean bowerComponentExists(File frontend, String component) {
         File componentFile = Paths.get(frontend.canonicalPath, 'bower_components', component).toFile()
         File componentHTMLFile = new File(componentFile, "${component}.html")
+        componentFile.exists() && componentHTMLFile.exists()
+    }
+
+    private static boolean yarnComponentExists(File frontend, String component) {
+        File componentFile = new File(Paths.get(frontend.canonicalPath, 'node_modules').toFile(), component)
+        File componentHTMLFile = new File(componentFile, "${component.split('/').last()}.html")
         componentFile.exists() && componentHTMLFile.exists()
     }
 }

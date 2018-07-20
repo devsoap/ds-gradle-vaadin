@@ -106,19 +106,24 @@ class VaadinFlowPlugin implements Plugin<Project> {
     private static void workaroundInvalidBomVersionRanges(Project project) {
         project.configurations.all {
             it.resolutionStrategy.eachDependency { dep ->
-                if (dep.requested.group == 'org.webjars.bowergithub.vaadin'
-                        && dep.requested.name != 'vaadin-usage-statistics'
-                        && dep.requested.version.startsWith('[')) {
-                    dep.because("Dependency is using a unsupported range")
-                    dep.useVersion("latest.release")
+                String group = dep.requested.group
+                String name = dep.requested.name
+                String version = dep.requested.version
+                if (group == 'org.webjars.bowergithub.vaadin') {
+                    if (name != 'vaadin-usage-statistics' && version.startsWith('[')) {
+                        dep.because('Dependency is using a unsupported range')
+                        dep.useVersion('latest.release')
+                    }
+                    if (name == 'vaadin-lumo-styles') {
+                        // Do not pull in lumo-styles Polymer 3 alpha/beta components
+                        dep.because('Latest lumo does not support bower')
+                        dep.useVersion('1.0.0')
+                    }
                 }
-                if(dep.requested.group == 'org.webjars.bowergithub.vaadin' && dep.requested.name == 'vaadin-lumo-styles') {
-                    // Do not pull in lumo-styles Polymer 3 alpha/beta components
-                    dep.useVersion("1.0.0")
-                }
-                if(dep.requested.group == 'org.webjars.bowergithub.webcomponents' && dep.requested.name == 'shadycss') {
+                if (group == 'org.webjars.bowergithub.webcomponents' && name == 'shadycss') {
                     // Lock shadycss (used by lumo-styles) as 1.3.x does no longer support bower
-                    dep.useVersion("1.2.1")
+                    dep.because('Latest shadycss does not support bower')
+                    dep.useVersion('1.2.1')
                 }
             }
         }
