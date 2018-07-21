@@ -19,6 +19,8 @@ import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.provider.Property
 
+import java.nio.file.Paths
+
 /**
  * Extension for configuring the client dependencies
  *
@@ -47,6 +49,8 @@ class VaadinClientDependenciesExtension {
 
     private final Property<Boolean> compileFromSources
 
+    private final Property<String> offlineCachePath
+
     /**
      * Creates the extension
      *
@@ -56,6 +60,9 @@ class VaadinClientDependenciesExtension {
     VaadinClientDependenciesExtension(Project project) {
         this.project = project
         compileFromSources = project.objects.property(Boolean)
+        offlineCachePath = project.objects.property(String)
+        offlineCachePath.set(Paths.get(project.file('.gradle').canonicalPath,
+                'yarn', 'yarn-offline-mirror').toFile().canonicalPath)
     }
 
     /**
@@ -157,5 +164,26 @@ class VaadinClientDependenciesExtension {
         if (!project.extensions.getByType(VaadinFlowPluginExtension).productionMode) {
             LOGGER.warning('compileFromSources has no effect without setting vaadin.productionMode to true')
         }
+    }
+
+    /**
+     * Get the cache path where Yarn should cache offline artifacts
+     */
+    String getOfflineCachePath() {
+        offlineCachePath.get()
+    }
+
+    /**
+     * Set the cache path where Yarn should cache offline artifacts
+     */
+    void setOfflineCachePath(String path) {
+        offlineCachePath.set(path)
+    }
+
+    /**
+     * Set the cache path where Yarn should cache offline artifacts
+     */
+    void setOfflineCachePath(File file) {
+        offlineCachePath.set(file.canonicalPath)
     }
 }

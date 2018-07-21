@@ -17,28 +17,15 @@ package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.models.PolymerBuild
-import com.devsoap.vaadinflow.util.LogUtils
-import com.moowork.gradle.node.yarn.YarnExecRunner
+import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonOutput
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
-import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.gradle.process.ExecSpec
-
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.util.jar.JarEntry
-import java.util.jar.JarFile
-import java.util.jar.JarInputStream
-import java.util.logging.Level
 
 /**
  * Transpiles web components to ES5 and ES6 production artifacts
@@ -51,28 +38,26 @@ class TranspileDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinTranspileDependencies'
 
-    private static final String POLYMER_COMMAND = 'polymer'
     private static final String BOWER_JSON_FILE = 'bower.json'
     private static final String PACKAGE_JSON_FILE = 'package.json'
     private static final String SLASH = '/'
     private static final String BOWER_COMPONENTS = 'bower_components'
     private static final String NODE_MODULES = 'node_modules'
-    private static final String RUN_COMMAND = 'run'
-
-    final YarnExecRunner yarnRunner = new YarnExecRunner(project).with {
-        execOverrides = { ExecSpec spec ->
-            spec.standardOutput = LogUtils.getLogOutputStream(Level.FINE)
-            spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
-        }
-        it
-    }
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+    final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
+
     final File webappGenDir = new File(project.buildDir, 'webapp-gen')
     final File webappGenFrontendDir = new File(webappGenDir, 'frontend')
 
     @InputDirectory
     final File webappGenFrontendStylesDir = new File(webappGenFrontendDir, 'styles')
+
+    @InputDirectory
+    final File nodeModules = new File(workingDir, NODE_MODULES)
+
+    // Cannot be defined as input as it is optional
+    final File bowerComponents = new File(workingDir, BOWER_COMPONENTS)
 
     @InputFile
     final File packageJson = new File(workingDir, PACKAGE_JSON_FILE)
@@ -80,8 +65,8 @@ class TranspileDependenciesTask extends DefaultTask {
     @OutputFile
     final File polymerJson = new File(workingDir, 'polymer.json')
 
-    @OutputFile
-    final File html = new File(workingDir, "vaadin-flow-bundle-${ UUID.randomUUID().toString()[0..8] }.html")
+    //Cannot be an output file as it has a random filename
+    final File html = new File(workingDir, "vaadin-flow-bundle-${ UUID.randomUUID().toString()[0..7] }.cache.html")
 
     @OutputDirectory
     final File es5dir = new File(workingDir, 'frontend-es5')
@@ -95,20 +80,27 @@ class TranspileDependenciesTask extends DefaultTask {
     TranspileDependenciesTask() {
         dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME, ConvertCssToHtmlStyleTask.NAME)
         onlyIf {
-            VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            client.compileFromSources
+            project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
         }
 
         description = 'Compiles client modules to support legacy browsers'
         group = 'Vaadin'
-        yarnRunner.workingDir = workingDir
+
+        inputs.property('compileFromSources') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
+        }
+
+        inputs.property('yarnDependencies') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies
+        }
+
+        inputs.property('bowerDependencies') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
+        }
     }
 
     @TaskAction
     void run() {
-
-        LOGGER.info('Unpacking webjars...')
-        unpackWebjars(workingDir, project)
 
         LOGGER.info( 'Copying generated styles....')
         project.copy { spec -> spec.from(webappGenFrontendDir).include('**/styles/**').into(workingDir) }
@@ -124,21 +116,11 @@ class TranspileDependenciesTask extends DefaultTask {
         initPolymerJson(sources)
 
         LOGGER.info("Creating ${manifestJson.name}...")
-        YarnExecRunner yarnBundleRunner = new YarnExecRunner(project).with {
-            execOverrides = { ExecSpec spec ->
-                spec.standardOutput = new ByteArrayOutputStream()
-                spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
-            }
-            it
-        }
-        yarnBundleRunner.workingDir = workingDir
-        yarnBundleRunner.arguments = [RUN_COMMAND, 'polymer-bundler',
-                                      "--manifest-out=${manifestJson.canonicalPath}", html.name]
-        yarnBundleRunner.execute().assertNormalExitValue()
+        VaadinYarnRunner yarnBundleRunner = new VaadinYarnRunner(project, workingDir, new ByteArrayOutputStream())
+        yarnBundleRunner.polymerBundle(manifestJson, html)
 
         LOGGER.info('Transpiling...')
-        yarnRunner.arguments = [RUN_COMMAND, POLYMER_COMMAND, 'build', '--npm', "--component-dir='node_modules'"]
-        yarnRunner.execute().assertNormalExitValue()
+        yarnRunner.transpile()
     }
 
     private static List<String> initModuleSources(List<String> imports) {
@@ -156,7 +138,14 @@ class TranspileDependenciesTask extends DefaultTask {
 
     private List<String> initHTMLImports() {
         List<String> imports = []
-        List<File> scanDirs = [new File(workingDir, NODE_MODULES), new File(workingDir, BOWER_COMPONENTS)]
+        List<File> scanDirs = []
+        if (nodeModules.exists()) {
+            scanDirs.add(nodeModules)
+        }
+        if (bowerComponents.exists()) {
+            scanDirs.add(bowerComponents)
+        }
+
         String htmlIncludeGlob = '**/*.html'
         scanDirs.each {
             LOGGER.info("Searching for html imports in $it")
@@ -200,12 +189,15 @@ class TranspileDependenciesTask extends DefaultTask {
 
         List<String> extraDependencies = [manifestJson.name]
 
-        File bowerComponents = new File(workingDir, BOWER_COMPONENTS)
-        File webcomponentsjs = new File(bowerComponents, 'webcomponentsjs')
-        webcomponentsjs.eachFile {
-            if (it.name.endsWith('.js') || it.name.endsWith('.js.map')) {
-                extraDependencies.add("$BOWER_COMPONENTS/webcomponentsjs/$it.name")
+        if (bowerComponents.exists()) {
+            File webcomponentsjs = new File(bowerComponents, 'webcomponentsjs')
+            webcomponentsjs.eachFile {
+                if (it.name.endsWith('.js') || it.name.endsWith('.js.map')) {
+                    extraDependencies.add("$BOWER_COMPONENTS/webcomponentsjs/$it.name")
+                }
             }
+        } else {
+            logger.warn('Skipping loading webcomponentsjs as it was not found in bower_components')
         }
 
         PolymerBuild buildModel = new PolymerBuild(
@@ -220,58 +212,6 @@ class TranspileDependenciesTask extends DefaultTask {
         polymerJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(buildModel))
     }
 
-    private static void unpackWebjars(File targetDir, Project project) {
-        File nodeModules = new File(targetDir, NODE_MODULES)
-        if (!nodeModules.exists()) {
-            nodeModules.mkdirs()
-        }
-
-        File bowerComponents = new File(targetDir, BOWER_COMPONENTS)
-        if (!bowerComponents.exists()) {
-            bowerComponents.mkdirs()
-        }
-
-        List<Configuration> configs = project.configurations
-                .findAll { ['compile', 'implementation'].contains(it.name) }
-                .collect { it.canBeResolved ? it : it.copy().with { canBeResolved = true; it } }
-
-        configs.each { Configuration conf ->
-
-            Set<Dependency> artifactDependencies = conf.allDependencies.findAll { !(it instanceof ProjectDependency) }
-
-            artifactDependencies.each { Dependency dependency ->
-
-                Set<File> jarFiles = conf.files(dependency).findAll { it.file && it.name.endsWith('.jar') }
-
-                jarFiles.each { File file ->
-
-                    // Check for bower.json
-                    Tuple2<String, String> result = findFolderAndPath(TranspileDependenciesTask.BOWER_JSON_FILE, file)
-                    boolean isBowerJar = result
-
-                    // Check for package.json if no bower.json was found
-                    result = result ?: findFolderAndPath(NODE_MODULES, file)
-
-                    if (result) {
-                        String packageJsonFolder = result.first
-                        String componentRootPackage = result.second
-
-                        File componentRoot = new File(isBowerJar ? bowerComponents : nodeModules, componentRootPackage)
-
-                        if (componentRoot.exists()) {
-                            TranspileDependenciesTask.LOGGER.info(
-                                    "Skipped ${packageJsonFolder}, directory already exists.")
-                        } else {
-                            copyJarToFolder(file, packageJsonFolder, componentRoot)
-                            TranspileDependenciesTask.LOGGER.info(
-                                    "Unpacked ${dependency.group}.${dependency.name} into $componentRoot")
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private void initHtml(List<String> imports) {
         if (!html.exists()) {
             html.createNewFile()
@@ -279,53 +219,6 @@ class TranspileDependenciesTask extends DefaultTask {
 
         html.withPrintWriter { writer ->
             imports.each { writer.write("<link rel='import' href='$it' >\n") }
-        }
-    }
-
-    private static Tuple2<String, String> findFolderAndPath(String searchFileName, File jarFile) {
-        Tuple2<String, String> result = null
-        jarFile.withInputStream { InputStream stream ->
-            JarInputStream jarStream = new JarInputStream(stream)
-            JarEntry entry
-            while ((entry = jarStream.nextJarEntry) != null) {
-                if (entry.name.endsWith(searchFileName)) {
-                    String packageJsonFolder = entry.name - searchFileName
-                    String componentRootPackage = packageJsonFolder.split(SLASH).last()
-                    result = new Tuple2<>(packageJsonFolder, componentRootPackage)
-                    break
-                }
-            }
-        }
-        result
-    }
-
-    private static void copyJarToFolder(File file, String packageJsonFolder, File componentRoot) {
-        componentRoot.mkdirs()
-        file.withInputStream { InputStream stream ->
-            JarInputStream jarStream = new JarInputStream(stream)
-            JarEntry entry
-            JarFile jarFile = new JarFile(file)
-            while ((entry = jarStream.nextJarEntry) != null) {
-                if (entry.name.startsWith(packageJsonFolder) &&
-                        entry.name != packageJsonFolder) {
-                    String filename = entry.name[packageJsonFolder.length()..-1]
-                    if (filename) {
-                        File f = Paths.get(componentRoot.canonicalPath, filename
-                                .split(SLASH)).toFile()
-                        if (!f.parentFile.exists()) {
-                            f.parentFile.mkdirs()
-                        }
-
-                        if (entry.directory && !f.exists()) {
-                            f.mkdirs()
-                        } else {
-                            jarFile.getInputStream(entry).with { is ->
-                                Files.copy(is, f.toPath())
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }

@@ -48,10 +48,16 @@ class FunctionalTest extends Specification {
      * Sets up the test
      */
     protected void setup() {
+        String offlineCachePath = System.getProperty('yarn.cache.dir',
+                testProjectDir.root.canonicalPath + '/yarn-cache')
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << """
             plugins {
                 id '$PLUGIN_ID'
+            }
+
+            vaadinClientDependencies {
+                offlineCachePath = "$offlineCachePath"
             }
 
         """.stripMargin()
@@ -63,6 +69,7 @@ class FunctionalTest extends Specification {
 
         testStart = System.currentTimeMillis()
         println "Running test in ${testProjectDir.root}"
+        println "Using Yarn cache dir $offlineCachePath"
     }
 
     /**

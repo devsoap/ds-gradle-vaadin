@@ -19,6 +19,8 @@ import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.util.LogUtils
+import com.devsoap.vaadinflow.util.VaadinYarnRunner
+import com.devsoap.vaadinflow.util.WebJarHelper
 import com.moowork.gradle.node.npm.NpmExecRunner
 import com.moowork.gradle.node.npm.NpmSetupTask
 import com.moowork.gradle.node.yarn.YarnExecRunner
@@ -27,6 +29,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
@@ -45,23 +48,20 @@ import java.util.logging.Level
 @Log('LOGGER')
 class InstallBowerDependenciesTask extends DefaultTask {
 
-    private static final String BOWER_COMMAND = 'bower'
-    private static final String INSTALL_COMMAND = 'install'
-
     static final String NAME = 'vaadinInstallBowerDependencies'
-
-    final YarnExecRunner yarnRunner = new YarnExecRunner(project).with {
-        execOverrides = { ExecSpec spec ->
-            spec.standardOutput = LogUtils.getLogOutputStream(Level.FINE)
-            spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
-        }
-        it
-    }
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
 
+    final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
+
+    @InputFile
+    final File packageJson = new File(workingDir, 'package.json')
+
     @OutputFile
     final File bowerJson = new File(workingDir, 'bower.json')
+
+    @OutputDirectory
+    final File bowerComponents = new File(workingDir, 'bower_components')
 
     InstallBowerDependenciesTask() {
         dependsOn( InstallYarnDependenciesTask.NAME )
@@ -73,9 +73,6 @@ class InstallBowerDependenciesTask extends DefaultTask {
         description = 'Installs Vaadin bower client dependencies'
         group = 'Vaadin'
 
-        yarnRunner.workingDir = workingDir
-
-        inputs.file(new File(workingDir, 'package.json'))
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
         }
@@ -98,7 +95,9 @@ class InstallBowerDependenciesTask extends DefaultTask {
         bowerJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(bowerModel))
 
         LOGGER.info('Installing bower dependencies ... ')
-        yarnRunner.arguments = ['run', BOWER_COMMAND, INSTALL_COMMAND, '--config.interactive=false' ]
-        yarnRunner.execute().assertNormalExitValue()
+        yarnRunner.bowerInstall()
+
+        LOGGER.info('Extracting webjars...')
+        WebJarHelper.unpackWebjars(workingDir, project, bowerComponents.name, true)
     }
 }

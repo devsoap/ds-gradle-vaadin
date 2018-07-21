@@ -1,0 +1,118 @@
+/*
+ * Copyright 2018 Devsoap Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.devsoap.vaadinflow.util
+
+import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.models.ClientPackage
+import com.moowork.gradle.node.yarn.YarnExecRunner
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import org.gradle.api.Project
+import org.gradle.process.ExecSpec
+
+import java.util.logging.Level
+
+/**
+ * Yarn runner with Vaadin plugin specific funcationality
+ *
+ * @author John Ahlroos
+ * @since 1.0
+ */
+class VaadinYarnRunner extends YarnExecRunner {
+
+    private static final String YARN_RC_FILENAME = '.yarnrc'
+    private static final String PREFER_OFFLINE = '--prefer-offline'
+    private static final String INSTALL_COMMAND = 'install'
+    private static final String POLYMER_COMMAND = 'polymer'
+    private static final String BOWER_COMMAND = 'bower'
+    private static final String POLYMER_BUNDLER_COMMAND = 'polymer-bundler'
+    public static final String RUN_COMMAND = 'run'
+
+    VaadinYarnRunner(Project project, File workingDir,
+                     OutputStream standardOutput = LogUtils.getLogOutputStream(Level.FINE)) {
+        super(project)
+        this.workingDir = workingDir
+        execOverrides = { ExecSpec spec ->
+            spec.standardOutput = standardOutput
+            spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
+        }
+    }
+
+    void install() {
+        generateYarnRc()
+        arguments = [PREFER_OFFLINE, INSTALL_COMMAND]
+        execute().assertNormalExitValue()
+    }
+
+    void init() {
+
+        // Generator package.json
+        arguments = [PREFER_OFFLINE, 'init', '-y']
+        execute().assertNormalExitValue()
+
+        // Set proper defaults for package.json
+        File packageJson = new File(workingDir as File, 'package.json')
+        ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
+        pkg.main = ''
+        pkg.version = '1.0.0'
+        pkg.name = 'frontend'
+
+        pkg.devDependencies['polymer-cli'] = Versions.rawVersion('polymer.cli.version')
+        pkg.scripts[POLYMER_COMMAND] = POLYMER_COMMAND
+
+        pkg.devDependencies[POLYMER_BUNDLER_COMMAND] = Versions.rawVersion('polymer.bundler.version')
+        pkg.scripts[POLYMER_BUNDLER_COMMAND] = POLYMER_BUNDLER_COMMAND
+
+        VaadinClientDependenciesExtension vaadinClient = project.extensions.getByType(VaadinClientDependenciesExtension)
+        if (!vaadinClient.bowerDependencies.isEmpty()) {
+            pkg.devDependencies[BOWER_COMMAND] = 'latest'
+            pkg.scripts[BOWER_COMMAND] = BOWER_COMMAND
+        }
+        packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
+    }
+
+    void bowerInstall() {
+        generateYarnRc()
+        arguments = [PREFER_OFFLINE, RUN_COMMAND, BOWER_COMMAND, INSTALL_COMMAND, '--config.interactive=false' ]
+        execute().assertNormalExitValue()
+    }
+
+    void polymerBundle(File manifestJson, File htmlManifest) {
+        generateYarnRc()
+        arguments = [PREFER_OFFLINE, RUN_COMMAND, POLYMER_BUNDLER_COMMAND,
+                                      "--manifest-out=${manifestJson.canonicalPath}", htmlManifest.name]
+        execute().assertNormalExitValue()
+    }
+
+    void transpile() {
+        arguments = [PREFER_OFFLINE, RUN_COMMAND, POLYMER_COMMAND, 'build', '--npm']
+        execute().assertNormalExitValue()
+    }
+
+    private void generateYarnRc() {
+        VaadinClientDependenciesExtension vaadinClient = project.extensions.getByType(VaadinClientDependenciesExtension)
+        File yarnrc = new File(workingDir as File, YARN_RC_FILENAME)
+        if (!yarnrc.exists()) {
+            TemplateWriter.builder()
+                    .targetDir(workingDir as File)
+                    .templateFileName(YARN_RC_FILENAME)
+                    .substitutions([
+                        'offlineCachePath': vaadinClient.offlineCachePath,
+                        'cacheFolder': new File(workingDir as File, 'yarn-cache').canonicalPath
+                    ])
+        }
+    }
+}

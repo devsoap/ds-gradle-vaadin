@@ -20,6 +20,7 @@ import org.gradle.api.file.FileTree
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.TaskAction
 
@@ -29,7 +30,6 @@ import org.gradle.api.tasks.TaskAction
  * @author John Ahlroos
  * @since 1.0
  */
-@CacheableTask
 class ConvertCssToHtmlStyleTask extends DefaultTask {
 
     static final String NAME = 'vaadinConvertStyleCssToHtml'
@@ -38,13 +38,18 @@ class ConvertCssToHtmlStyleTask extends DefaultTask {
     static final String STYLES_TARGET_PATH = 'build/webapp-gen/frontend/styles'
 
     @InputFiles
-    FileTree cssFiles = project.fileTree(STYLES_PATH).matching { it.include( '**/*.css') }
+    final FileTree cssFiles = project.fileTree(STYLES_PATH).matching { it.include( '**/*.css') }
 
-    @OutputDirectory
-    File targetPath = project.file(STYLES_TARGET_PATH)
+    final File targetPath = project.file(STYLES_TARGET_PATH)
 
-    @OutputFiles
-    FileTree htmlFiles = project.fileTree(STYLES_TARGET_PATH).matching { it.include( '**/*.html') }
+    ConvertCssToHtmlStyleTask() {
+        group = 'vaadin'
+        description = 'Wraps CSS files in HTML wrappers'
+
+        project.fileTree(STYLES_TARGET_PATH).matching { it.include( '**/*.html') }.files.each {
+            outputs.file(it)
+        }
+    }
 
     @TaskAction
     void run() {
@@ -58,7 +63,8 @@ class ConvertCssToHtmlStyleTask extends DefaultTask {
 
             content += '\n</style></custom-style>'
 
-            project.file("$STYLES_TARGET_PATH/${it.name - '.css'}.html").text = content
+            targetPath.mkdirs()
+            new File(targetPath, "${ it.name - '.css' }.html" ).text = content
         }
     }
 }
