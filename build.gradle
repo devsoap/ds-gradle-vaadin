@@ -117,7 +117,6 @@ jar {
     from 'gradle.properties'
 }
 
-
 /**
  * Plugin artifact sources.
  */
@@ -127,7 +126,6 @@ task sourcesJar(type: Jar) {
     include 'com/**/*.groovy'
     include 'com/**/*.java'
 }
-
 
 /**
  * Artifacts in build
@@ -155,6 +153,7 @@ groovydoc {
 task functionalTest(type: Test) {
     group = 'Verification'
     systemProperty 'spock.configuration', "${findProperty('TEST_CATEGORY') ?: 'AllTests' }Config.groovy"
+    systemProperty 'yarn.cache.dir', new File(project.rootProject.projectDir, 'yarn-cache').canonicalPath
     testClassesDirs = sourceSets.functionalTest.output.classesDirs
     classpath = sourceSets.functionalTest.runtimeClasspath
     maxParallelForks = 5

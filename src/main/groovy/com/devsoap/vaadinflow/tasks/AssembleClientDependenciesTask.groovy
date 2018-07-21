@@ -19,6 +19,8 @@ import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
 /**
@@ -39,6 +41,7 @@ class AssembleClientDependenciesTask extends DefaultTask {
 
     final File webAppGenDir = new File(project.buildDir, 'webapp-gen')
     final File webAppGenFrontendDir = new File(webAppGenDir, 'frontend')
+
     final File targetDirEs5 = new File(webAppGenDir, 'frontend-es5')
     final File targetDirEs6 = new File(webAppGenDir, 'frontend-es6')
 
@@ -69,6 +72,18 @@ class AssembleClientDependenciesTask extends DefaultTask {
             } else {
                 inputs.dir(frontendBuildDir)
             }
+        }
+
+        inputs.property('compileFromSources') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
+        }
+
+        inputs.property('yarnDependencies') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies
+        }
+
+        inputs.property('bowerDependencies') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
         }
     }
 

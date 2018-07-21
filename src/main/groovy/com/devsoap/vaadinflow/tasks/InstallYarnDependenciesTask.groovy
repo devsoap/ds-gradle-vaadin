@@ -18,18 +18,22 @@ package com.devsoap.vaadinflow.tasks
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.util.LogUtils
+import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import com.devsoap.vaadinflow.util.Versions
+import com.devsoap.vaadinflow.util.WebJarHelper
 import com.moowork.gradle.node.yarn.YarnExecRunner
 import com.moowork.gradle.node.yarn.YarnSetupTask
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecSpec
 
+import java.nio.file.Paths
 import java.util.logging.Level
 
 /**
@@ -43,22 +47,18 @@ class InstallYarnDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallYarnDependencies'
 
-    private static final String POLYMER_COMMAND = 'polymer'
-    private static final String BOWER_COMMAND = 'bower'
-    public static final String POLYMER_BUNDLER_COMMAND = 'polymer-bundler'
-
-    final YarnExecRunner yarnRunner = new YarnExecRunner(project).with {
-        execOverrides = { ExecSpec spec ->
-            spec.standardOutput = LogUtils.getLogOutputStream(Level.FINE)
-            spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
-        }
-        it
-    }
-
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+
+    final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
 
     @OutputFile
     final File packageJson = new File(workingDir, 'package.json')
+
+    @OutputFile
+    final File yarnrc = new File(workingDir, '.yarnrc')
+
+    @OutputDirectory
+    final File nodeModules = new File(workingDir, 'node_modules')
 
     /**
      * Creates an installation task
@@ -73,11 +73,19 @@ class InstallYarnDependenciesTask extends DefaultTask {
         description = 'Installs Vaadin yarn dependencies'
         group = 'Vaadin'
 
+        inputs.property('compileFromSources') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
+        }
+
         inputs.property('yarnDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).yarnDependencies
         }
 
-        yarnRunner.workingDir = workingDir
+        inputs.property('bowerDependencies') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
+        }
+
+        outputs.file(project.file(project.extensions.getByType(VaadinClientDependenciesExtension).offlineCachePath))
     }
 
     /**
@@ -85,54 +93,22 @@ class InstallYarnDependenciesTask extends DefaultTask {
      */
     @TaskAction
     void run() {
-        VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-
-        // Ensure working directory is clean (keep node_modules and bower_components for to prevent re-downloads)
-        workingDir.mkdirs()
-        workingDir.eachFile {
-            if (it.name != 'node_modules' && it.name != 'bower_components') {
-                if (it.directory) {
-                    it.deleteDir()
-                } else {
-                    it.delete()
-                }
-            }
-        }
-
-        // Create package.json
         LOGGER.info('Creating package.json ...')
-        yarnRunner.arguments = ['init', '-y']
-        yarnRunner.execute().assertNormalExitValue()
+        yarnRunner.init()
 
-        // Set proper defaults for package.json
+        // Add dependencies to package.json
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
-        pkg.main = ''
-        pkg.version = '1.0.0'
-        pkg.name = 'frontend'
-
-        pkg.devDependencies['polymer-cli'] = Versions.rawVersion('polymer.cli.version')
-        pkg.scripts[POLYMER_COMMAND] = POLYMER_COMMAND
-
-        pkg.devDependencies[POLYMER_BUNDLER_COMMAND] = Versions.rawVersion('polymer.bundler.version')
-        pkg.scripts[POLYMER_BUNDLER_COMMAND] = POLYMER_BUNDLER_COMMAND
-
-        if (!client.bowerDependencies.isEmpty()) {
-            pkg.devDependencies[BOWER_COMMAND] = 'latest'
-            pkg.scripts[BOWER_COMMAND] = BOWER_COMMAND
+        VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
+        deps.yarnDependencies.each { String name, String version ->
+            pkg.dependencies[name] = version
         }
 
         packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
 
-        LOGGER.info('Installing development dependencies ...')
-        yarnRunner.arguments = ['install']
-        yarnRunner.execute().assertNormalExitValue()
-
         LOGGER.info('Installing yarn dependencies...')
-        VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
-        deps.yarnDependencies.each { String name, String version ->
-            LOGGER.info( "Found $name")
-            yarnRunner.arguments = ['add', "$name@$version"]
-            yarnRunner.execute().assertNormalExitValue()
-        }
+        yarnRunner.install()
+
+        LOGGER.info('Extracting webjars...')
+        WebJarHelper.unpackWebjars(workingDir, project, nodeModules.name, false)
     }
 }
