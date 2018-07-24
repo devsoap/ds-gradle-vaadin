@@ -39,7 +39,7 @@ class VaadinYarnRunner extends YarnExecRunner {
     private static final String POLYMER_COMMAND = 'polymer'
     private static final String BOWER_COMMAND = 'bower'
     private static final String POLYMER_BUNDLER_COMMAND = 'polymer-bundler'
-    public static final String RUN_COMMAND = 'run'
+    private static final String RUN_COMMAND = 'run'
 
     VaadinYarnRunner(Project project, File workingDir,
                      OutputStream standardOutput = LogUtils.getLogOutputStream(Level.FINE)) {
@@ -53,7 +53,7 @@ class VaadinYarnRunner extends YarnExecRunner {
 
     void install() {
         generateYarnRc()
-        arguments = [PREFER_OFFLINE, INSTALL_COMMAND]
+        arguments = [PREFER_OFFLINE, '--no-bin-links', INSTALL_COMMAND]
         execute().assertNormalExitValue()
     }
 
@@ -71,16 +71,14 @@ class VaadinYarnRunner extends YarnExecRunner {
         pkg.name = 'frontend'
 
         pkg.devDependencies['polymer-cli'] = Versions.rawVersion('polymer.cli.version')
-        pkg.scripts[POLYMER_COMMAND] = POLYMER_COMMAND
+        pkg.scripts[POLYMER_COMMAND] = 'node_modules/polymer-cli/bin/polymer.js'
 
         pkg.devDependencies[POLYMER_BUNDLER_COMMAND] = Versions.rawVersion('polymer.bundler.version')
-        pkg.scripts[POLYMER_BUNDLER_COMMAND] = POLYMER_BUNDLER_COMMAND
+        pkg.scripts[POLYMER_BUNDLER_COMMAND] = 'node_modules/polymer-bundler/lib/bin/polymer-bundler.js'
 
-        VaadinClientDependenciesExtension vaadinClient = project.extensions.getByType(VaadinClientDependenciesExtension)
-        if (!vaadinClient.bowerDependencies.isEmpty()) {
-            pkg.devDependencies[BOWER_COMMAND] = 'latest'
-            pkg.scripts[BOWER_COMMAND] = BOWER_COMMAND
-        }
+        pkg.devDependencies[BOWER_COMMAND] = 'latest'
+        pkg.scripts[BOWER_COMMAND] = 'node_modules/bower/bin/bower'
+
         packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
     }
 

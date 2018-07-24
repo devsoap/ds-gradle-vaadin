@@ -43,6 +43,7 @@ import java.util.logging.Level
  * @since 1.0
  */
 @Log('LOGGER')
+@CacheableTask
 class InstallYarnDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallYarnDependencies'
@@ -84,8 +85,6 @@ class InstallYarnDependenciesTask extends DefaultTask {
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
         }
-
-        outputs.file(project.file(project.extensions.getByType(VaadinClientDependenciesExtension).offlineCachePath))
     }
 
     /**

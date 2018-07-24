@@ -21,11 +21,14 @@ import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonOutput
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+
+import java.nio.file.Paths
 
 /**
  * Transpiles web components to ES5 and ES6 production artifacts
@@ -34,6 +37,7 @@ import org.gradle.api.tasks.TaskAction
  * @since 1.0
  */
 @Log('LOGGER')
+@CacheableTask
 class TranspileDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinTranspileDependencies'
@@ -43,6 +47,7 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String SLASH = '/'
     private static final String BOWER_COMPONENTS = 'bower_components'
     private static final String NODE_MODULES = 'node_modules'
+    private static final String BUILD = 'build'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
@@ -56,7 +61,7 @@ class TranspileDependenciesTask extends DefaultTask {
     @InputDirectory
     final File nodeModules = new File(workingDir, NODE_MODULES)
 
-    // Cannot be defined as input as it is optional
+    @InputDirectory
     final File bowerComponents = new File(workingDir, BOWER_COMPONENTS)
 
     @InputFile
@@ -65,14 +70,14 @@ class TranspileDependenciesTask extends DefaultTask {
     @OutputFile
     final File polymerJson = new File(workingDir, 'polymer.json')
 
-    //Cannot be an output file as it has a random filename
-    final File html = new File(workingDir, "vaadin-flow-bundle-${ UUID.randomUUID().toString()[0..7] }.cache.html")
+    @OutputFile
+    final File html = new File(workingDir, 'vaadin-flow-bundle.cache.html')
 
     @OutputDirectory
-    final File es5dir = new File(workingDir, 'frontend-es5')
+    final File es5dir = Paths.get(workingDir.canonicalPath, BUILD, 'frontend-es5').toFile()
 
     @OutputDirectory
-    final File es6dir = new File(workingDir, 'frontend-es6')
+    final File es6dir = Paths.get(workingDir.canonicalPath, BUILD, 'frontend-es6').toFile()
 
     @OutputFile
     final File manifestJson = new File(workingDir, 'vaadin-flow-bundle-manifest.json')
