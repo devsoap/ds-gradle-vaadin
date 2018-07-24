@@ -46,6 +46,7 @@ import java.util.logging.Level
  * @since 1.0
  */
 @Log('LOGGER')
+@CacheableTask
 class InstallBowerDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallBowerDependencies'
@@ -67,7 +68,7 @@ class InstallBowerDependenciesTask extends DefaultTask {
         dependsOn( InstallYarnDependenciesTask.NAME )
         onlyIf {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !client.bowerDependencies.isEmpty()
+            !client.bowerDependencies.isEmpty() || client.compileFromSources
         }
 
         description = 'Installs Vaadin bower client dependencies'
@@ -75,6 +76,10 @@ class InstallBowerDependenciesTask extends DefaultTask {
 
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
+        }
+
+        inputs.property('compileFromSources') {
+            project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
         }
     }
 

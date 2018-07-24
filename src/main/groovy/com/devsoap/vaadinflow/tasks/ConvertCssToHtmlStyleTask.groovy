@@ -30,6 +30,7 @@ import org.gradle.api.tasks.TaskAction
  * @author John Ahlroos
  * @since 1.0
  */
+@CacheableTask
 class ConvertCssToHtmlStyleTask extends DefaultTask {
 
     static final String NAME = 'vaadinConvertStyleCssToHtml'
@@ -40,15 +41,12 @@ class ConvertCssToHtmlStyleTask extends DefaultTask {
     @InputFiles
     final FileTree cssFiles = project.fileTree(STYLES_PATH).matching { it.include( '**/*.css') }
 
-    final File targetPath = project.file(STYLES_TARGET_PATH)
+    @OutputDirectory
+    final File targetPath = new File(project.rootDir, STYLES_TARGET_PATH)
 
     ConvertCssToHtmlStyleTask() {
         group = 'vaadin'
         description = 'Wraps CSS files in HTML wrappers'
-
-        project.fileTree(STYLES_TARGET_PATH).matching { it.include( '**/*.html') }.files.each {
-            outputs.file(it)
-        }
     }
 
     @TaskAction

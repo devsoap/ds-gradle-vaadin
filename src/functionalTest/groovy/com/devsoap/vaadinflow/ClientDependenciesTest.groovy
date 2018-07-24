@@ -161,7 +161,7 @@ class ClientDependenciesTest extends FunctionalTest {
             BuildResult result = run('jar')
         then:
             result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
 
@@ -205,7 +205,7 @@ class ClientDependenciesTest extends FunctionalTest {
             BuildResult result = run('build')
         then:
             result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SKIPPED
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
     }
 

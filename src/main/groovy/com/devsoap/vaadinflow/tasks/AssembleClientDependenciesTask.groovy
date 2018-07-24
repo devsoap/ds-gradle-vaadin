@@ -30,6 +30,7 @@ import org.gradle.api.tasks.TaskAction
  * @since 1.0
  */
 @Log('LOGGER')
+@CacheableTask
 class AssembleClientDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinAssembleClient'
@@ -68,7 +69,8 @@ class AssembleClientDependenciesTask extends DefaultTask {
             if (vaadin.productionMode && client.compileFromSources) {
                 inputs.dir(sourceDirEs5)
                 inputs.dir(sourceDirEs6)
-                outputs.dirs(targetDirEs5, targetDirEs6)
+                outputs.dir(targetDirEs5)
+                outputs.dir( targetDirEs6)
             } else {
                 inputs.dir(frontendBuildDir)
             }
