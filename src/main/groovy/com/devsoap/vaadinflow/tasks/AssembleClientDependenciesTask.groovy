@@ -105,12 +105,13 @@ class AssembleClientDependenciesTask extends DefaultTask {
         ]
 
         List<String> frontendIncludes = [
-             'vaadin-flow-bundle-manifest.json',
-             'styles/**'
+                'styles/**',
+                'templates/**'
         ]
 
         VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
         if (client.compileFromSources) {
+            frontendIncludes <<  'vaadin-flow-bundle-manifest.json'
             project.with {
                 copy { spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs5) }
                 copy { spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs5) }
@@ -121,6 +122,7 @@ class AssembleClientDependenciesTask extends DefaultTask {
                 copy { spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
             }
         } else {
+            project.copy { spec -> spec.from(frontendDir).include(frontendIncludes).into(webAppGenFrontendDir) }
             project.copy { spec -> spec.from(frontendBuildDir).exclude(excludes).into(webAppGenFrontendDir) }
         }
     }

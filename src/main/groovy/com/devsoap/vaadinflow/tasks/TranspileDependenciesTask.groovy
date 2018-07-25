@@ -24,10 +24,12 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
+import java.nio.file.Files
 import java.nio.file.Paths
 
 /**
@@ -48,15 +50,25 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String BOWER_COMPONENTS = 'bower_components'
     private static final String NODE_MODULES = 'node_modules'
     private static final String BUILD = 'build'
+    private static final String FRONTEND = 'frontend'
+    private static final String TEMPLATES_GLOB = '**/templates/**'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
 
     final File webappGenDir = new File(project.buildDir, 'webapp-gen')
-    final File webappGenFrontendDir = new File(webappGenDir, 'frontend')
+    final File webappGenFrontendDir = new File(webappGenDir, FRONTEND)
 
     @InputDirectory
     final File webappGenFrontendStylesDir = new File(webappGenFrontendDir, 'styles')
+
+    @Optional
+    @InputDirectory
+    final Closure<File> webTemplatesDir = {
+       Paths.get(project.rootDir.canonicalPath,
+               'src', 'main', 'webapp', FRONTEND, 'templates')
+               .toFile().with { it.exists() ? it : null }
+    }
 
     @InputDirectory
     final File nodeModules = new File(workingDir, NODE_MODULES)
@@ -102,6 +114,7 @@ class TranspileDependenciesTask extends DefaultTask {
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
         }
+
     }
 
     @TaskAction
@@ -109,6 +122,14 @@ class TranspileDependenciesTask extends DefaultTask {
 
         LOGGER.info( 'Copying generated styles....')
         project.copy { spec -> spec.from(webappGenFrontendDir).include('**/styles/**').into(workingDir) }
+
+        File templatesDir = webTemplatesDir.call()
+        if (templatesDir) {
+            LOGGER.info( 'Copying html templates styles....')
+            project.copy { spec ->
+                spec.from(templatesDir.parentFile).include(TEMPLATES_GLOB).into(workingDir)
+            }
+        }
 
         LOGGER.info('Searching for HTML imports')
         List<String> imports = initHTMLImports()
@@ -163,7 +184,7 @@ class TranspileDependenciesTask extends DefaultTask {
                         '**/test*/**',
                         '**/src/**',
                         '**/lib/**',
-                        '**/templates/**',
+                        TranspileDependenciesTask.TEMPLATES_GLOB,
                         '**/polymer-cli/**')
                         .each { File htmlFile ->
 
@@ -175,13 +196,24 @@ class TranspileDependenciesTask extends DefaultTask {
             }
         }
 
-        LOGGER.info("Searching for html imports in $webappGenFrontendStylesDir")
-        webappGenFrontendDir.eachDir { dir ->
-            project.fileTree(dir)
-                    .include(htmlIncludeGlob)
-                    .each { File htmlFile ->
-                String path = (htmlFile.path - webappGenFrontendDir.path).substring(1)
-                imports.add(path)
+        scanDirs = [webappGenFrontendDir]
+        if (webTemplatesDir.call()) {
+            scanDirs.add(webTemplatesDir.call())
+        }
+        scanDirs.each { File dir ->
+            LOGGER.info("Searching for html imports in $dir")
+            dir.eachFile { File fileOrDir ->
+                if (fileOrDir.directory) {
+                    project.fileTree(fileOrDir)
+                            .include(htmlIncludeGlob)
+                            .each { File htmlFile ->
+                        String path = (htmlFile.path - dir.path).substring(1)
+                        imports.add(path)
+                    }
+                } else if (fileOrDir.name.endsWith('.html')) {
+                    String path = (fileOrDir.path - dir.parentFile.path).substring(1)
+                    imports.add(path)
+                }
             }
         }
 

@@ -28,6 +28,7 @@ import com.devsoap.vaadinflow.tasks.CreateComponentTask
 import com.devsoap.vaadinflow.tasks.CreateCompositeTask
 import com.devsoap.vaadinflow.tasks.CreateProjectTask
 import com.devsoap.vaadinflow.tasks.CreateWebComponentTask
+import com.devsoap.vaadinflow.tasks.CreateWebTemplateTask
 import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
 import com.devsoap.vaadinflow.tasks.InstallYarnDependenciesTask
 import com.devsoap.vaadinflow.tasks.TranspileDependenciesTask
@@ -84,6 +85,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 create(ConvertCssToHtmlStyleTask.NAME, ConvertCssToHtmlStyleTask)
                 create(CreateCompositeTask.NAME, CreateCompositeTask)
                 create(CreateComponentTask.NAME, CreateComponentTask)
+                create(CreateWebTemplateTask.NAME, CreateWebTemplateTask)
             }
 
             workaroundInvalidBomVersionRanges(it)
