@@ -133,4 +133,43 @@ class ComponentTests extends FunctionalTest {
             componentPackage = 'com.hello.world'
     }
 
+    void 'default web template compiles'() {
+        setup:
+            buildFile << '''
+                    vaadin.autoconfigure()
+                '''.stripIndent()
+        when:
+            run 'vaadinCreateWebTemplate'
+            BuildResult result = run 'jar'
+        then:
+            result.task(':jar').outcome == TaskOutcome.SUCCESS
+    }
+
+    void 'default web template is created'() {
+        setup:
+            File rootDir = testProjectDir.root
+            File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
+            File templatesDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'webapp',
+                    'frontend', 'templates').toFile()
+            File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
+                    testProjectDir.root.name.toLowerCase()).toFile()
+            File javaFile = Paths.get(pkg.canonicalPath, 'ExampleWebTemplate.java').toFile()
+            File templateFile = Paths.get(templatesDir.canonicalPath, 'ExampleWebTemplate.html').toFile()
+        when:
+            BuildResult result = run 'vaadinCreateWebTemplate'
+        then:
+            result.task(':vaadinCreateWebTemplate').outcome == TaskOutcome.SUCCESS
+
+            javaFile.exists()
+            javaFile.text.contains('@Tag("example-web-template")')
+            javaFile.text.contains('@HtmlImport("templates/ExampleWebTemplate.html")')
+            javaFile.text.contains(
+               'public class ExampleWebTemplate extends PolymerTemplate<ExampleWebTemplate.ExampleWebTemplateModel>')
+
+            templateFile.exists()
+            templateFile.text.contains('<dom-module id="example-web-template">')
+            templateFile.text.contains('class ExampleWebTemplate extends Polymer.Element')
+            templateFile.text.contains('customElements.define(ExampleWebTemplate.is, ExampleWebTemplate);')
+    }
+
 }

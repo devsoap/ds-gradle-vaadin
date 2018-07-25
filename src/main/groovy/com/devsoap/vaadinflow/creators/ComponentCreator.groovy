@@ -17,7 +17,9 @@ package com.devsoap.vaadinflow.creators
 
 import com.devsoap.vaadinflow.models.Component
 import com.devsoap.vaadinflow.models.Composite
+import com.devsoap.vaadinflow.models.VaadinProject
 import com.devsoap.vaadinflow.models.WebComponent
+import com.devsoap.vaadinflow.models.WebTemplate
 import com.devsoap.vaadinflow.util.TemplateWriter
 
 import java.nio.file.Paths
@@ -31,6 +33,8 @@ import java.nio.file.Paths
 class ComponentCreator {
 
     private static final String DOT_REGEX = '\\.'
+    private static final String SRC = 'src'
+    private static final String MAIN = 'main'
 
     /**
      * Creates a new Web component from a template
@@ -57,6 +61,39 @@ class ComponentCreator {
                     'componentName' : componentClassName,
                     'packageManager' : webComponent.packageManager.package
                 ]).build().write()
+    }
+
+    /**
+     * Creates a new Web template from a template
+     *
+     * @param webTemplate
+     *      the model of the template
+     */
+    void generate(WebTemplate webTemplate) {
+        File root = webTemplate.rootDirectory
+        File javaSourceDir = getJavaSourceDirectory(root)
+        File pkgDir = Paths.get(javaSourceDir.canonicalPath, webTemplate.componentPackage.split(DOT_REGEX)).toFile()
+        String componentClassName = TemplateWriter.makeStringJavaCompatible(webTemplate.componentName)
+
+        TemplateWriter.builder()
+                .targetDir(pkgDir)
+                .templateFileName('WebTemplate.java')
+                .targetFileName("${componentClassName}.java")
+                .substitutions([
+                    'componentPackage' : webTemplate.componentPackage,
+                    'componentTag' : webTemplate.componentTag,
+                    'componentName' : componentClassName,
+        ]).build().write()
+
+        TemplateWriter.builder()
+                .targetDir(getTemplatesDir(root))
+                .templateFileName('WebTemplate.html')
+                .targetFileName("${componentClassName}.html")
+                .substitutions([
+                    'componentPackage' : webTemplate.componentPackage,
+                    'componentTag' : webTemplate.componentTag,
+                    'componentName' : componentClassName,
+        ]).build().write()
     }
 
     /**
@@ -108,6 +145,10 @@ class ComponentCreator {
     }
 
     private static File getJavaSourceDirectory(File root) {
-        Paths.get(root.canonicalPath, 'src', 'main', 'java').toFile()
+        Paths.get(root.canonicalPath,  SRC, MAIN, 'java').toFile()
+    }
+
+    private static File getTemplatesDir(File root) {
+        Paths.get(root.canonicalPath, SRC, MAIN, 'webapp', 'frontend', 'templates').toFile()
     }
 }
