@@ -20,6 +20,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.util.GFileUtils
 
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -73,14 +74,15 @@ class WebJarHelper {
                         String componentRootPackage = result.second
 
                         File componentRoot = new File(componentsDir, componentRootPackage)
-
                         if (componentRoot.exists()) {
-                            WebJarHelper.LOGGER.info("Skipped ${packageJsonFolder}, directory already exists.")
-                        } else {
-                            copyJarToFolder(file, packageJsonFolder, componentRoot)
-                            WebJarHelper.LOGGER.info(
-                                    "Unpacked ${dependency.group}.${dependency.name} into $componentRoot")
+                            GFileUtils.deleteDirectory(componentRoot)
                         }
+
+                        copyJarToFolder(file, packageJsonFolder, componentRoot)
+
+                        WebJarHelper.LOGGER.info(
+                                "Unpacked ${dependency.group}.${dependency.name} into $componentRoot")
+
                     }
                 }
             }
