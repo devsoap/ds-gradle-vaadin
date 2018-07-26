@@ -96,7 +96,7 @@ class VaadinYarnRunner extends YarnExecRunner {
     }
 
     void transpile() {
-        arguments = [PREFER_OFFLINE, RUN_COMMAND, POLYMER_COMMAND, 'build', '--npm']
+        arguments = [PREFER_OFFLINE, RUN_COMMAND, POLYMER_COMMAND, 'build', '--npm', '--module-resolution=node']
         execute().assertNormalExitValue()
     }
 
