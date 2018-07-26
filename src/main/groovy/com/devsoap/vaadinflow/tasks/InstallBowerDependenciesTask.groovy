@@ -89,6 +89,9 @@ class InstallBowerDependenciesTask extends DefaultTask {
     @TaskAction
     void run() {
 
+        LOGGER.info('Extracting webjars...')
+        WebJarHelper.unpackWebjars(workingDir, project, bowerComponents.name, true)
+
         LOGGER.info('Creating bower.json...')
         VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
         ClientPackage bowerModel = new ClientPackage(name: 'frontend', version: '1.0.0').with { model ->
@@ -101,8 +104,5 @@ class InstallBowerDependenciesTask extends DefaultTask {
 
         LOGGER.info('Installing bower dependencies ... ')
         yarnRunner.bowerInstall()
-
-        LOGGER.info('Extracting webjars...')
-        WebJarHelper.unpackWebjars(workingDir, project, bowerComponents.name, true)
     }
 }
