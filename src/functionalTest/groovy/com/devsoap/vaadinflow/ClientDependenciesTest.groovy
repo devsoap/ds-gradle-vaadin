@@ -86,8 +86,8 @@ class ClientDependenciesTest extends FunctionalTest {
             run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
             BuildResult result = run 'jar'
         then:
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.UP_TO_DATE
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.UP_TO_DATE
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
 

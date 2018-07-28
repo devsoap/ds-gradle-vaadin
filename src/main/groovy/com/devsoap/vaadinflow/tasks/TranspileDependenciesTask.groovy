@@ -180,12 +180,19 @@ class TranspileDependenciesTask extends DefaultTask {
 
             LOGGER.info("Searching for html imports in $it")
             it.eachDir { dir ->
-                File bowerJsonFile = new File(dir, TranspileDependenciesTask.BOWER_JSON)
+                File bowerJsonFile = new File(dir, '.bower.json')
+                if (!bowerJsonFile.exists()) {
+                    bowerJsonFile = new File(dir, TranspileDependenciesTask.BOWER_JSON)
+                }
                 if (bowerJsonFile.exists()) {
-                    Object bowerJson = new JsonSlurper().parse(new File(dir, TranspileDependenciesTask.BOWER_JSON))
-                    String[] entrypoint = bowerJson.main
-                    println entrypoint + " = " + dir
-                    entrypoint?.findAll { it.endsWith(TranspileDependenciesTask.HTML_FILE_TYPE) }?.each {
+                    Object bowerJson = new JsonSlurper().parse(bowerJsonFile)
+                    List<String> entrypoints = []
+                    if (bowerJson.main instanceof List) {
+                        entrypoints.addAll(bowerJson.main as List)
+                    } else {
+                        entrypoints.add(bowerJson.main as String)
+                    }
+                    entrypoints.findAll { it?.endsWith(TranspileDependenciesTask.HTML_FILE_TYPE) }.each {
                         File resourceFile = new File(dir, it)
                         String path = (resourceFile.path - workingDir.path).substring(1)
                         imports.add(path)
@@ -229,7 +236,7 @@ class TranspileDependenciesTask extends DefaultTask {
         workingDir.listFiles ({ File file, String name ->
             name.endsWith(HTML_FILE_TYPE) || name.endsWith(JAVASCRIPT_FILE_TYPE)
         } as FilenameFilter).each {
-            if(!it.name.startsWith('vaadin-flow-bundle')){
+            if (!it.name.startsWith('vaadin-flow-bundle')) {
                 String path = (it.path - workingDir.path).substring(1)
                 imports.add(path)
             }
