@@ -181,10 +181,11 @@ class TranspileDependenciesTask extends DefaultTask {
             LOGGER.info("Searching for html imports in $it")
             it.eachDir { dir ->
                 File bowerJsonFile = new File(dir, TranspileDependenciesTask.BOWER_JSON)
-                if(bowerJsonFile.exists()){
+                if (bowerJsonFile.exists()) {
                     Object bowerJson = new JsonSlurper().parse(new File(dir, TranspileDependenciesTask.BOWER_JSON))
                     String[] entrypoint = bowerJson.main
-                    entrypoint?.findAll { it.endsWith(HTML_FILE_TYPE) }?.each {
+                    println entrypoint + " = " + dir
+                    entrypoint?.findAll { it.endsWith(TranspileDependenciesTask.HTML_FILE_TYPE) }?.each {
                         File resourceFile = new File(dir, it)
                         String path = (resourceFile.path - workingDir.path).substring(1)
                         imports.add(path)
@@ -212,7 +213,7 @@ class TranspileDependenciesTask extends DefaultTask {
                         String path = (htmlFile.path - dir.path).substring(1)
                         imports.add(path)
                     }
-                } else if (fileOrDir.name.endsWith(HTML_FILE_TYPE)) {
+                } else if (fileOrDir.name.endsWith(TranspileDependenciesTask.HTML_FILE_TYPE)) {
                     String path = (fileOrDir.path - dir.parentFile.path).substring(1)
                     imports.add(path)
                 }
@@ -228,8 +229,10 @@ class TranspileDependenciesTask extends DefaultTask {
         workingDir.listFiles ({ File file, String name ->
             name.endsWith(HTML_FILE_TYPE) || name.endsWith(JAVASCRIPT_FILE_TYPE)
         } as FilenameFilter).each {
-            String path = (it.path - workingDir.path).substring(1)
-            imports.add(path)
+            if(!it.name.startsWith('vaadin-flow-bundle')){
+                String path = (it.path - workingDir.path).substring(1)
+                imports.add(path)
+            }
         }
 
         imports
@@ -269,7 +272,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
         html.withPrintWriter { writer ->
             imports.each { String path ->
-                if(path.endsWith(JAVASCRIPT_FILE_TYPE)) {
+                if (path.endsWith(TranspileDependenciesTask.JAVASCRIPT_FILE_TYPE)) {
                     writer.write("<script src='$path'></script>\n")
                 } else {
                     writer.write("<link rel='import' href='$path' >\n")
