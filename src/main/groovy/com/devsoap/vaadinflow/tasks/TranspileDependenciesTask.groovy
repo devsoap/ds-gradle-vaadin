@@ -19,6 +19,7 @@ import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.models.PolymerBuild
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
@@ -29,7 +30,6 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
-import java.nio.file.Files
 import java.nio.file.Paths
 
 /**
@@ -44,7 +44,6 @@ class TranspileDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinTranspileDependencies'
 
-    private static final String BOWER_JSON_FILE = 'bower.json'
     private static final String PACKAGE_JSON_FILE = 'package.json'
     private static final String SLASH = '/'
     private static final String BOWER_COMPONENTS = 'bower_components'
@@ -52,6 +51,9 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String BUILD = 'build'
     private static final String FRONTEND = 'frontend'
     private static final String TEMPLATES_GLOB = '**/templates/**'
+    private static final String BOWER_JSON = 'bower.json'
+    private static final String HTML_FILE_TYPE = '.html'
+    private static final String JAVASCRIPT_FILE_TYPE = '.js'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
@@ -114,7 +116,6 @@ class TranspileDependenciesTask extends DefaultTask {
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
         }
-
     }
 
     @TaskAction
@@ -131,15 +132,17 @@ class TranspileDependenciesTask extends DefaultTask {
             }
         }
 
-        LOGGER.info('Searching for HTML imports')
-        List<String> imports = initHTMLImports()
+        LOGGER.info('Searching for HTML imports...')
+        List<String> imports = initHTMLImportsFromComponents()
+        imports += initGeneratedHTMLImports()
+        imports += initResourceImports()
 
         LOGGER.info("Creating ${html.name}...")
         initHtml(imports)
 
         LOGGER.info("Creating ${polymerJson.name}...")
-        List<String> sources = initModuleSources(imports)
-        initPolymerJson(sources)
+        initModuleSources(imports)
+        initPolymerJson(imports)
 
         LOGGER.info("Creating ${manifestJson.name}...")
         VaadinYarnRunner yarnBundleRunner = new VaadinYarnRunner(project, workingDir, new ByteArrayOutputStream())
@@ -162,8 +165,9 @@ class TranspileDependenciesTask extends DefaultTask {
         Collections.unmodifiableList(new ArrayList(sources))
     }
 
-    private List<String> initHTMLImports() {
+    private List<String> initHTMLImportsFromComponents() {
         List<String> imports = []
+
         List<File> scanDirs = []
         if (nodeModules.exists()) {
             scanDirs.add(nodeModules)
@@ -172,31 +176,29 @@ class TranspileDependenciesTask extends DefaultTask {
             scanDirs.add(bowerComponents)
         }
 
-        String htmlIncludeGlob = '**/*.html'
         scanDirs.each {
+
             LOGGER.info("Searching for html imports in $it")
             it.eachDir { dir ->
-                project.fileTree(dir)
-                        .include(htmlIncludeGlob)
-                        .exclude(
-                        '**/index.html',
-                        '**/demo/**',
-                        '**/test*/**',
-                        '**/src/**',
-                        '**/lib/**',
-                        TranspileDependenciesTask.TEMPLATES_GLOB,
-                        '**/polymer-cli/**')
-                        .each { File htmlFile ->
-
-                    if (new File(dir, TranspileDependenciesTask.BOWER_JSON_FILE).exists()) {
-                        String path = (htmlFile.path - workingDir.path).substring(1)
+                File bowerJsonFile = new File(dir, TranspileDependenciesTask.BOWER_JSON)
+                if(bowerJsonFile.exists()){
+                    Object bowerJson = new JsonSlurper().parse(new File(dir, TranspileDependenciesTask.BOWER_JSON))
+                    String[] entrypoint = bowerJson.main
+                    entrypoint?.findAll { it.endsWith(HTML_FILE_TYPE) }?.each {
+                        File resourceFile = new File(dir, it)
+                        String path = (resourceFile.path - workingDir.path).substring(1)
                         imports.add(path)
                     }
                 }
             }
         }
+        imports
+    }
 
-        scanDirs = [webappGenFrontendDir]
+    private List<String> initGeneratedHTMLImports() {
+        List<String> imports = []
+
+        List<File> scanDirs = [webappGenFrontendDir]
         if (webTemplatesDir.call()) {
             scanDirs.add(webTemplatesDir.call())
         }
@@ -205,21 +207,32 @@ class TranspileDependenciesTask extends DefaultTask {
             dir.eachFile { File fileOrDir ->
                 if (fileOrDir.directory) {
                     project.fileTree(fileOrDir)
-                            .include(htmlIncludeGlob)
+                            .include('**/*.html')
                             .each { File htmlFile ->
                         String path = (htmlFile.path - dir.path).substring(1)
                         imports.add(path)
                     }
-                } else if (fileOrDir.name.endsWith('.html')) {
+                } else if (fileOrDir.name.endsWith(HTML_FILE_TYPE)) {
                     String path = (fileOrDir.path - dir.parentFile.path).substring(1)
                     imports.add(path)
                 }
             }
         }
+        imports
+    }
 
-        imports.each { LOGGER.info("Found import $it") }
+    private List<String> initResourceImports() {
+        List<String> imports = []
 
-        Collections.unmodifiableList(imports)
+        LOGGER.info("Searching for resource HTML/JS imports in $workingDir")
+        workingDir.listFiles ({ File file, String name ->
+            name.endsWith(HTML_FILE_TYPE) || name.endsWith(JAVASCRIPT_FILE_TYPE)
+        } as FilenameFilter).each {
+            String path = (it.path - workingDir.path).substring(1)
+            imports.add(path)
+        }
+
+        imports
     }
 
     private void initPolymerJson(List<String> sources) {
@@ -229,7 +242,7 @@ class TranspileDependenciesTask extends DefaultTask {
         if (bowerComponents.exists()) {
             File webcomponentsjs = new File(bowerComponents, 'webcomponentsjs')
             webcomponentsjs.eachFile {
-                if (it.name.endsWith('.js') || it.name.endsWith('.js.map')) {
+                if (it.name.endsWith(JAVASCRIPT_FILE_TYPE) || it.name.endsWith('.js.map')) {
                     extraDependencies.add("$BOWER_COMPONENTS/webcomponentsjs/$it.name")
                 }
             }
@@ -255,7 +268,13 @@ class TranspileDependenciesTask extends DefaultTask {
         }
 
         html.withPrintWriter { writer ->
-            imports.each { writer.write("<link rel='import' href='$it' >\n") }
+            imports.each { String path ->
+                if(path.endsWith(JAVASCRIPT_FILE_TYPE)) {
+                    writer.write("<script src='$path'></script>\n")
+                } else {
+                    writer.write("<link rel='import' href='$path' >\n")
+                }
+            }
         }
     }
 }

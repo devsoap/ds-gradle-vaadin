@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.devsoap.vaadinflow.models
-
 /**
  * TemplateModel for representing a polymer build (polymer.json)
  *
@@ -44,10 +43,6 @@ class PolymerBuild {
         BuildConfiguration html = new BuildConfiguration()
     }
 
-    static class BuildPreset implements Build {
-        String preset
-    }
-
     /**
      * Represents a jss/css/html build configuration.
      */
@@ -57,8 +52,4 @@ class PolymerBuild {
 
         boolean compile = false
     }
-
-    static final BuildPreset ES5_BUNDLED = new BuildPreset(preset: 'es5-bundled')
-    static final BuildPreset ES6_BUNDLED = new BuildPreset(preset: 'es6-bundled')
-    static final BuildPreset ES6_UNBUNDLED = new BuildPreset(preset: 'es6-unbundled')
 }

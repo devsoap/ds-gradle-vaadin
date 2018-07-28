@@ -38,8 +38,25 @@ import java.util.jar.JarInputStream
 class WebJarHelper {
 
     private static final String SLASH = '/'
+    private static final String FRONTEND_RESOURCES_META_DIR = 'META-INF/resources/frontend/'
 
-    static void unpackWebjars(File targetDir, Project project, String moduleDirName, boolean bower) {
+    /**
+     * Unpacks WebJars into a target directory
+     *
+     * @param targetDir
+     *      the target directory to unpack to
+     * @param project
+     *      the project
+     * @param moduleDirName
+     *      the module directory (bower_components or node_modules)
+     * @param bower
+     *      Is th webjar a bower dependency
+     * @return
+     *      A list of directories representing the unpacked target directories
+     */
+    static List<File> unpackWebjars(File targetDir, Project project, String moduleDirName, boolean bower) {
+        List<File> unpackedDirectories = []
+
         File componentsDir = new File(targetDir, moduleDirName)
         if (!componentsDir.exists()) {
             componentsDir.mkdirs()
@@ -79,14 +96,18 @@ class WebJarHelper {
                         }
 
                         copyJarToFolder(file, packageJsonFolder, componentRoot)
+                        unpackedDirectories.add(componentRoot)
+                    }
 
-                        WebJarHelper.LOGGER.info(
-                                "Unpacked ${dependency.group}.${dependency.name} into $componentRoot")
-
+                    if(findFolder(FRONTEND_RESOURCES_META_DIR, file)) {
+                        LOGGER.info("Found frontend resources in $file.name")
+                        copyJarToFolder(file, FRONTEND_RESOURCES_META_DIR, targetDir)
                     }
                 }
             }
         }
+
+        unpackedDirectories
     }
 
     private static Tuple2<String, String> findFolderAndPath(String searchFileName, File jarFile) {
@@ -104,6 +125,21 @@ class WebJarHelper {
             }
         }
         result
+    }
+
+    private static boolean findFolder(String searchFolder, File jarFile) {
+        boolean found = false
+        jarFile.withInputStream { InputStream stream ->
+            JarInputStream jarStream = new JarInputStream(stream)
+            JarEntry entry
+            while ((entry = jarStream.nextJarEntry) != null) {
+                if (entry.name == searchFolder) {
+                    found = true
+                    break
+                }
+            }
+        }
+        found
     }
 
     private static void copyJarToFolder(File file, String packageJsonFolder, File componentRoot) {
@@ -124,7 +160,7 @@ class WebJarHelper {
 
                         if (entry.directory && !f.exists()) {
                             f.mkdirs()
-                        } else {
+                        } else if (!f.exists()) {
                             jarFile.getInputStream(entry).with { is ->
                                 Files.copy(is, f.toPath())
                             }
