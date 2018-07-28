@@ -91,7 +91,9 @@ class VaadinYarnRunner extends YarnExecRunner {
     void polymerBundle(File manifestJson, File htmlManifest) {
         generateYarnRc()
         arguments = [PREFER_OFFLINE, RUN_COMMAND, POLYMER_BUNDLER_COMMAND,
-                                      "--manifest-out=${manifestJson.canonicalPath}", htmlManifest.name]
+                    '--inline-scripts',
+                    "--manifest-out=${manifestJson.canonicalPath}",
+                     htmlManifest.name]
         execute().assertNormalExitValue()
     }
 
