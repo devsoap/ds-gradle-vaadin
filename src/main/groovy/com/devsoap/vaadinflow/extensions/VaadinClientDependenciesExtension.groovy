@@ -73,11 +73,11 @@ class VaadinClientDependenciesExtension {
      *      the dependency using the "<dependency-name>:<dependency-version>" notation
      */
     void yarn(String dependencyNotation) {
-        if(dependencyNotation.contains(COLON)) {
+        if (dependencyNotation.contains(COLON)) {
             dependencyNotation.split(COLON).with {
                 yarn(it.first(), it.last())
             }
-        } else if(dependencyNotation.contains(HASH)) {
+        } else if (dependencyNotation.contains(HASH)) {
             dependencyNotation.split(HASH).with {
                 yarn(it.first(), it.last())
             }
@@ -105,11 +105,11 @@ class VaadinClientDependenciesExtension {
      *      the dependency using the "<dependency-name>:<dependency-version>" notation
      */
     void bower(String dependencyNotation) {
-        if(dependencyNotation.contains(COLON)) {
+        if (dependencyNotation.contains(COLON)) {
             dependencyNotation.split(COLON).with {
                 bower(it.first(), it.last())
             }
-        } else if(dependencyNotation.contains(HASH)) {
+        } else if (dependencyNotation.contains(HASH)) {
             dependencyNotation.split(HASH).with {
                 bower(it.first(), it.last())
             }

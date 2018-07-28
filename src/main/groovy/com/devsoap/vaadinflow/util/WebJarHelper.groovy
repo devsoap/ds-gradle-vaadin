@@ -99,7 +99,7 @@ class WebJarHelper {
                         unpackedDirectories.add(componentRoot)
                     }
 
-                    if(findFolder(FRONTEND_RESOURCES_META_DIR, file)) {
+                    if (findFolder(FRONTEND_RESOURCES_META_DIR, file)) {
                         LOGGER.info("Found frontend resources in $file.name")
                         copyJarToFolder(file, FRONTEND_RESOURCES_META_DIR, targetDir)
                     }

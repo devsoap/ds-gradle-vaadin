@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.devsoap.vaadinflow.models
+
 /**
  * TemplateModel for representing a polymer build (polymer.json)
  *

@@ -90,9 +90,9 @@ class CreateWebComponentTask extends DefaultTask {
 
         // Resolve dependency without version
         String depNoVersion
-        if(dep.contains(COLON)) {
+        if (dep.contains(COLON)) {
             depNoVersion = dep.split(COLON).first()
-        } else if(dep.contains(HASH)) {
+        } else if (dep.contains(HASH)) {
             depNoVersion = dep.split(HASH).first()
         } else {
             depNoVersion = dep
@@ -100,7 +100,7 @@ class CreateWebComponentTask extends DefaultTask {
 
         // Resolve dependency package
         String dependencyPackage
-        if(depNoVersion.contains(PATH_SEPARATOR)) {
+        if (depNoVersion.contains(PATH_SEPARATOR)) {
             dependencyPackage = depNoVersion.split(PATH_SEPARATOR).last()
         } else {
             dependencyPackage = depNoVersion
