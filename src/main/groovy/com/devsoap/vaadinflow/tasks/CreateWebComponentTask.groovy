@@ -45,6 +45,7 @@ class CreateWebComponentTask extends DefaultTask {
     private static final String PATH_SEPARATOR = '/'
 
     static final String NAME = 'vaadinCreateWebComponent'
+    public static final String HASH = '#'
 
     @Option(option = 'name', description = 'Component name')
     String componentName
@@ -76,31 +77,51 @@ class CreateWebComponentTask extends DefaultTask {
         componentDependency = componentDependency ?: componentTag
 
         File buildFile = project.file('build.gradle')
-        String dependencyPackage
-        String dependencyHtml
+
+        // Resolve package manager
         String dep
         if (componentDependency.startsWith(YARN_PREFIX)) {
             dep = componentDependency - YARN_PREFIX
-            String depNoVersion = dep.split(COLON).first()
-            dependencyPackage = depNoVersion
-            dependencyHtml = dep.split(COLON).first().split(PATH_SEPARATOR).last()
+        } else if (componentDependency.startsWith(BOWER_PREFIX)) {
+            dep = componentDependency - BOWER_PREFIX
+        } else {
+            throw new GradleException("Dependency needs too start with either $YARN_PREFIX or $BOWER_PREFIX")
+        }
 
+        // Resolve dependency without version
+        String depNoVersion
+        if(dep.contains(COLON)) {
+            depNoVersion = dep.split(COLON).first()
+        } else if(dep.contains(HASH)) {
+            depNoVersion = dep.split(HASH).first()
+        } else {
+            depNoVersion = dep
+        }
+
+        // Resolve dependency package
+        String dependencyPackage
+        if(depNoVersion.contains(PATH_SEPARATOR)) {
+            dependencyPackage = depNoVersion.split(PATH_SEPARATOR).last()
+        } else {
+            dependencyPackage = depNoVersion
+        }
+
+        // Assuming imported HTML file is named the same as the package name
+        String dependencyHtml = dependencyPackage
+
+        // Add dependency import to build.gradle
+        VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
+        if (componentDependency.startsWith(YARN_PREFIX)) {
             buildFile << """
             ${VaadinClientDependenciesExtension.NAME}.yarn('$dep')
             """.stripIndent()
+            client.yarn(dep)
 
         } else if (componentDependency.startsWith(BOWER_PREFIX)) {
-            dep = componentDependency - BOWER_PREFIX
-            String depNoVersion = dep.split(COLON).first()
-            dependencyPackage = depNoVersion.split(PATH_SEPARATOR).last()
-            dependencyHtml = dependencyPackage
-
             buildFile << """
             ${VaadinClientDependenciesExtension.NAME}.bower('$dep')
             """.stripIndent()
-
-        } else {
-            throw new GradleException("Dependency needs too start with either $YARN_PREFIX or $BOWER_PREFIX")
+            client.bower(dep)
         }
 
         webComponentCreator.generate new WebComponent(

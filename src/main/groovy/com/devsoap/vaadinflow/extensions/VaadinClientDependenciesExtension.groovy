@@ -32,6 +32,7 @@ class VaadinClientDependenciesExtension {
 
     private static final String COLON = ':'
     private static final String LATEST = 'latest'
+    private static final String HASH = '#'
 
     static final String NAME = 'vaadinClientDependencies'
 
@@ -72,8 +73,12 @@ class VaadinClientDependenciesExtension {
      *      the dependency using the "<dependency-name>:<dependency-version>" notation
      */
     void yarn(String dependencyNotation) {
-        if (dependencyNotation.contains(COLON)) {
+        if(dependencyNotation.contains(COLON)) {
             dependencyNotation.split(COLON).with {
+                yarn(it.first(), it.last())
+            }
+        } else if(dependencyNotation.contains(HASH)) {
+            dependencyNotation.split(HASH).with {
                 yarn(it.first(), it.last())
             }
         } else {
@@ -100,8 +105,12 @@ class VaadinClientDependenciesExtension {
      *      the dependency using the "<dependency-name>:<dependency-version>" notation
      */
     void bower(String dependencyNotation) {
-        if (dependencyNotation.contains(COLON)) {
+        if(dependencyNotation.contains(COLON)) {
             dependencyNotation.split(COLON).with {
+                bower(it.first(), it.last())
+            }
+        } else if(dependencyNotation.contains(HASH)) {
+            dependencyNotation.split(HASH).with {
                 bower(it.first(), it.last())
             }
         } else {
