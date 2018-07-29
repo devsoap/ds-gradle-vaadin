@@ -37,9 +37,13 @@ import groovy.util.logging.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.internal.FeaturePreviews
 import org.gradle.api.invocation.Gradle
+import org.gradle.internal.reflect.Instantiator
 import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.util.VersionNumber
+
+import javax.inject.Inject
 
 /**
  * Main plugin class
@@ -53,25 +57,34 @@ class VaadinFlowPlugin implements Plugin<Project> {
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
     private final List<PluginAction> actions = []
+    private final Instantiator instantiator
+    private final FeaturePreviews featurePreviews
 
-    VaadinFlowPlugin() {
-        actions << new VaadinFlowPluginAction()
-        actions << new NodePluginAction()
-        actions << new WarPluginAction()
-        actions << new GrettyPluginAction()
+    @Inject
+    VaadinFlowPlugin(Gradle gradle, Instantiator instantiator, FeaturePreviews featurePreviews) {
+        this.featurePreviews = featurePreviews
+        this.instantiator = instantiator
+
+        validateGradleVersion(gradle)
+
+        actions << instantiator.newInstance(VaadinFlowPluginAction)
+        actions << instantiator.newInstance(NodePluginAction)
+        actions << instantiator.newInstance(WarPluginAction)
+        actions << instantiator.newInstance(GrettyPluginAction)
     }
 
     @Override
     void apply(Project project) {
+        FeaturePreviews settings = featurePreviews
+
         project.with {
-            validateGradleVersion(it)
 
             actions.each { action ->
                 action.apply(project)
             }
 
             extensions.with {
-                create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project)
+                create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project, settings)
                 create(VaadinClientDependenciesExtension.NAME, VaadinClientDependenciesExtension, project)
             }
 
@@ -93,6 +106,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
             afterEvaluate {
                 disableStatistics(project)
             }
+
         }
     }
 
@@ -142,8 +156,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
         }
     }
 
-    private static void validateGradleVersion(Project project) {
-        Gradle gradle = project.gradle
+    private static void validateGradleVersion(Gradle gradle) {
         VersionNumber version = VersionNumber.parse(gradle.gradleVersion)
         VersionNumber requiredVersion = Versions.version('vaadin.plugin.gradle.version')
         if ( version.baseVersion < requiredVersion ) {

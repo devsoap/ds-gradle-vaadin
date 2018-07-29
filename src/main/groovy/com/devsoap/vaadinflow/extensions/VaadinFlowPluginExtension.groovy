@@ -23,6 +23,7 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.ArtifactRepository
+import org.gradle.api.internal.FeaturePreviews
 import org.gradle.api.provider.Property
 
 /**
@@ -48,12 +49,15 @@ class VaadinFlowPluginExtension {
     private final DependencyHandler dependencyHandler
     private final RepositoryHandler repositoryHandler
     private final Project project
+    private final FeaturePreviews featurePreviews
 
     private boolean dependencyApplied = false
     private boolean statisticsApplied = false
+    private boolean bomApplied = false
 
-    VaadinFlowPluginExtension(Project project) {
+    VaadinFlowPluginExtension(Project project, FeaturePreviews featurePreviews) {
         this.project = project
+        this.featurePreviews = featurePreviews
         dependencyHandler = project.dependencies
         repositoryHandler = project.repositories
         version = project.objects.property(String)
@@ -120,7 +124,7 @@ class VaadinFlowPluginExtension {
      */
     void autoconfigure() {
         repositoryHandler.jcenter()
-        repositoryHandler.addAll(repositories())
+        repositoryHandler.add(addons())
         dependencyHandler.add(COMPILE, bom())
         dependencyHandler.add(COMPILE, platform())
         dependencyHandler.add('compileOnly', servletApi())
@@ -169,7 +173,7 @@ class VaadinFlowPluginExtension {
      * Add all stable Vaadin repositories
      */
     Collection<ArtifactRepository> repositories() {
-        [prereleases(), addons() ]
+        [addons(), prereleases(), snapshots()]
     }
 
     /**
@@ -190,7 +194,12 @@ class VaadinFlowPluginExtension {
      * Add the BOM that provides the versions of the dependencies
      */
     Dependency bom() {
-        dependency('bom')
+        if (!featurePreviews.isFeatureEnabled(FeaturePreviews.Feature.IMPROVED_POM_SUPPORT)) {
+            throw new GradleException('Please enable improved POM support in settings.gradle to use Vaadin BOM. ' +
+                    'This can be done by adding enableFeaturePreview(\'IMPROVED_POM_SUPPORT\') to settings.gradle')
+        }
+        bomApplied = true
+        dependency('bom', true)
     }
 
     /**
@@ -229,7 +238,7 @@ class VaadinFlowPluginExtension {
      * @return
      *      the dependency
      */
-    Dependency dependency(String name, boolean useVersion=true) {
+    Dependency dependency(String name, boolean useVersion=!bomApplied) {
         List<String> dependency = [GROUP]
 
         if (name == VAADIN) {
@@ -239,7 +248,13 @@ class VaadinFlowPluginExtension {
         }
 
         if (useVersion) {
+            if (bomApplied) {
+                LOGGER.warning('Forcing a Vaadin version while also using the BOM is not recommended')
+            }
             dependency << version.getOrElse(Versions.rawVersion('vaadin.default.version'))
+        } else if (!bomApplied) {
+            throw new GradleException('Cannot use un-versioned dependencies without using a BOM. Please apply the ' +
+                    'BOM before adding un-versioned dependencies.')
         }
 
         dependencyApplied = true
