@@ -15,9 +15,7 @@
  */
 package com.devsoap.vaadinflow
 
-import static org.gradle.testkit.runner.TaskOutcome.FAILED
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
-
 import org.gradle.testkit.runner.BuildResult
 import spock.lang.Unroll
 
@@ -43,7 +41,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
         when:
             BuildResult result = runAndFail({ it.withGradleVersion(version) }, '--info', 'jar')
         then:
-            result.output.contains("Your gradle version ($version.0) is too old")
+            result.output.contains('BUILD FAILED')
         where:
             version = '4.5'
     }
@@ -80,7 +78,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
             result.task(':dependencyInsight').outcome == SUCCESS
             result.output.contains("com.vaadin:vaadin-core:$version")
         where:
-            version = '10.0.0.beta1'
+            version = TEST_VAADIN_VERSION
     }
 
     void 'server dependencies are applied to project'() {
@@ -127,9 +125,9 @@ class VaadinFlowPluginTest extends FunctionalTest {
 
     void 'all repositories are added to project'() {
         setup:
-        buildFile << '''
+        buildFile << """
                 vaadin {
-                    version '10.0.0.beta1'
+                    version '$TEST_VAADIN_VERSION'
                 }
                 repositories {
                     mavenCentral()
@@ -139,12 +137,12 @@ class VaadinFlowPluginTest extends FunctionalTest {
                     implementation vaadin.core()
                     compileOnly vaadin.servletApi()
                 }
-            '''.stripMargin()
+            """.stripMargin()
         when:
             BuildResult result = run('dependencyInsight', '--dependency', 'com.vaadin:flow-server')
         then:
             result.task(':dependencyInsight').outcome == SUCCESS
-            result.output.contains('com.vaadin:vaadin-core:10.0.0.beta1')
+            result.output.contains("com.vaadin:vaadin-core:$TEST_VAADIN_VERSION")
     }
 
     void 'autoconfigure project'() {
@@ -229,5 +227,56 @@ class VaadinFlowPluginTest extends FunctionalTest {
                 'org.webjars.bowergithub.vaadin:vaadin-usage-statistics')
         then:
             !result.output.contains('Allow Vaadin to gather usage statistics')
+    }
+
+    void 'fail if BOM is used without feature preview'() {
+        setup:
+            settingsFile.text = ''
+            buildFile << '''
+                repositories {
+                    mavenCentral()
+                }
+                dependencies {
+                    implementation vaadin.bom()
+                }
+            '''.stripMargin()
+        when:
+            BuildResult result = runAndFail('jar')
+        then:
+            result.output.contains('Please enable improved POM support in settings.gradle to use Vaadin BOM')
+    }
+
+    void 'fail if un-versioned dependency is applied before BOM'() {
+        setup:
+            buildFile << '''
+                repositories {
+                    mavenCentral()
+                }
+                dependencies {
+                    implementation vaadin.dependency('core', false)
+                    implementation vaadin.bom()
+                }
+            '''.stripMargin()
+        when:
+            BuildResult result = runAndFail('jar')
+        then:
+            result.output.contains('Cannot use un-versioned dependencies without using a BOM')
+    }
+
+    void 'warn if using both BOM and defined version'() {
+        setup:
+            buildFile << '''
+                repositories {
+                    mavenCentral()
+                }
+                dependencies {
+                    implementation vaadin.bom()
+                    implementation vaadin.dependency('core', true)
+                }
+            '''.stripMargin()
+        when:
+            BuildResult result = run('jar')
+        then:
+            result.output.contains('Forcing a Vaadin version while also using the BOM is not recommended')
     }
 }
