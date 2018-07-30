@@ -100,14 +100,19 @@ class CreateWebComponentTask extends DefaultTask {
 
         // Resolve dependency package
         String dependencyPackage
+        String dependencyHtml
         if (depNoVersion.contains(PATH_SEPARATOR)) {
-            dependencyPackage = depNoVersion.split(PATH_SEPARATOR).last()
+            if (componentDependency.startsWith(YARN_PREFIX)) {
+                dependencyPackage = depNoVersion.split(COLON).last()
+                dependencyHtml = depNoVersion.split(PATH_SEPARATOR).last()
+            } else {
+                dependencyPackage = depNoVersion.split(PATH_SEPARATOR).last()
+                dependencyHtml = dependencyPackage
+            }
         } else {
             dependencyPackage = depNoVersion
+            dependencyHtml = dependencyPackage
         }
-
-        // Assuming imported HTML file is named the same as the package name
-        String dependencyHtml = dependencyPackage
 
         // Add dependency import to build.gradle
         VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
