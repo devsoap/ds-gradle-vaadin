@@ -41,6 +41,7 @@ class VaadinFlowPluginExtension {
 
     private static final String COLON = ':'
     private static final String COMPILE = 'compile'
+    private static final String BOM_ARTIFACT_NAME = 'bom'
 
     private final Property<String> version
     private final Property<Boolean> productionMode
@@ -199,7 +200,7 @@ class VaadinFlowPluginExtension {
                     'This can be done by adding enableFeaturePreview(\'IMPROVED_POM_SUPPORT\') to settings.gradle')
         }
         bomApplied = true
-        dependency('bom', true)
+        dependency(BOM_ARTIFACT_NAME, true)
     }
 
     /**
@@ -248,7 +249,7 @@ class VaadinFlowPluginExtension {
         }
 
         if (useVersion) {
-            if (bomApplied) {
+            if (name != BOM_ARTIFACT_NAME && bomApplied) {
                 LOGGER.warning('Forcing a Vaadin version while also using the BOM is not recommended')
             }
             dependency << version.getOrElse(Versions.rawVersion('vaadin.default.version'))
