@@ -58,6 +58,9 @@ class InstallYarnDependenciesTask extends DefaultTask {
     @OutputFile
     final File yarnrc = new File(workingDir, '.yarnrc')
 
+    @OutputFile
+    final File yarnLock = new File(workingDir, 'yarn.lock')
+
     @OutputDirectory
     final File nodeModules = new File(workingDir, 'node_modules')
 
@@ -96,7 +99,7 @@ class InstallYarnDependenciesTask extends DefaultTask {
         yarnRunner.init()
 
         LOGGER.info('Extracting webjars...')
-        WebJarHelper.unpackWebjars(workingDir, project, nodeModules.name, false)
+        WebJarHelper.unpackWebjars(workingDir, null, project, nodeModules.name, false)
 
         // Add dependencies to package.json
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage

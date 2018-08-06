@@ -41,6 +41,16 @@ class VaadinYarnRunner extends YarnExecRunner {
     private static final String POLYMER_BUNDLER_COMMAND = 'polymer-bundler'
     private static final String RUN_COMMAND = 'run'
 
+    /**
+     * Creates a new Yarn runner
+     *
+     * @param project
+     *      the project to run Yarn agains
+     * @param workingDir
+     *      the frontend working directory
+     * @param standardOutput
+     *      output stream for messages (stdout)
+     */
     VaadinYarnRunner(Project project, File workingDir,
                      OutputStream standardOutput = LogUtils.getLogOutputStream(Level.FINE)) {
         super(project)
@@ -51,12 +61,22 @@ class VaadinYarnRunner extends YarnExecRunner {
         }
     }
 
+    /**
+     * Yarn install
+     *
+     * https://yarnpkg.com/lang/en/docs/cli/install/
+     */
     void install() {
         generateYarnRc()
         arguments = [PREFER_OFFLINE, '--no-bin-links', INSTALL_COMMAND]
         execute().assertNormalExitValue()
     }
 
+    /**
+     * Yarn init
+     *
+     * https://yarnpkg.com/en/docs/cli/init
+     */
     void init() {
 
         // Generator package.json
@@ -82,12 +102,26 @@ class VaadinYarnRunner extends YarnExecRunner {
         packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
     }
 
+    /**
+     * Bower install
+     *
+     * https://bower.io/docs/api/#install
+     */
     void bowerInstall() {
         generateYarnRc()
         arguments = [PREFER_OFFLINE, RUN_COMMAND, BOWER_COMMAND, INSTALL_COMMAND, '--config.interactive=false' ]
         execute().assertNormalExitValue()
     }
 
+    /**
+     * Polymer bundle
+     *
+     * @param manifestJson
+     *      the manifest json file
+     *
+     * @param htmlManifest
+     *      the html manifest file
+     */
     void polymerBundle(File manifestJson, File htmlManifest) {
         generateYarnRc()
         arguments = [PREFER_OFFLINE, RUN_COMMAND, POLYMER_BUNDLER_COMMAND,
@@ -97,6 +131,9 @@ class VaadinYarnRunner extends YarnExecRunner {
         execute().assertNormalExitValue()
     }
 
+    /**
+     * Polymer build
+     */
     void transpile() {
         arguments = [PREFER_OFFLINE, RUN_COMMAND, POLYMER_COMMAND, 'build', '--npm', '--module-resolution=node']
         execute().assertNormalExitValue()

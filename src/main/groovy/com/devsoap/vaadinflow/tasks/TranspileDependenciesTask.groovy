@@ -28,6 +28,7 @@ import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.TaskAction
 
 import java.nio.file.Paths
@@ -54,6 +55,8 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String BOWER_JSON = 'bower.json'
     private static final String HTML_FILE_TYPE = '.html'
     private static final String JAVASCRIPT_FILE_TYPE = '.js'
+    private static final String STYLES = 'styles'
+    private static final String TEMPLATES = 'templates'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
@@ -62,13 +65,13 @@ class TranspileDependenciesTask extends DefaultTask {
     final File webappGenFrontendDir = new File(webappGenDir, FRONTEND)
 
     @InputDirectory
-    final File webappGenFrontendStylesDir = new File(webappGenFrontendDir, 'styles')
+    final File webappGenFrontendStylesDir = new File(webappGenFrontendDir, STYLES)
 
     @Optional
     @InputDirectory
     final Closure<File> webTemplatesDir = {
        Paths.get(project.rootDir.canonicalPath,
-               'src', 'main', 'webapp', FRONTEND, 'templates')
+               'src', 'main', 'webapp', FRONTEND, TEMPLATES)
                .toFile().with { it.exists() ? it : null }
     }
 
@@ -77,6 +80,9 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @InputDirectory
     final File bowerComponents = new File(workingDir, BOWER_COMPONENTS)
+
+    @InputDirectory
+    final File unpackedStaticResources = new File(workingDir, 'static')
 
     @InputFile
     final File packageJson = new File(workingDir, PACKAGE_JSON_FILE)
@@ -95,6 +101,21 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @OutputFile
     final File manifestJson = new File(workingDir, 'vaadin-flow-bundle-manifest.json')
+
+    @OutputDirectory
+    final File stylesDir = new File(workingDir, STYLES)
+
+    @OutputDirectory
+    final File templatesDir = new File(workingDir, TEMPLATES)
+
+    @OutputFiles
+    final Closure<Map<String, File>> staticResources = {
+        Map<String, File> map = [:]
+        project.fileTree(unpackedStaticResources).each {
+            map[it.name] = new File(workingDir, it.name)
+        }
+        map
+    }
 
     TranspileDependenciesTask() {
         dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME, ConvertCssToHtmlStyleTask.NAME)
@@ -120,6 +141,8 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @TaskAction
     void run() {
+        LOGGER.info('Copying unpacked static resources')
+        project.copy { spec -> spec.from(unpackedStaticResources).into(workingDir) }
 
         LOGGER.info( 'Copying generated styles....')
         project.copy { spec -> spec.from(webappGenFrontendDir).include('**/styles/**').into(workingDir) }

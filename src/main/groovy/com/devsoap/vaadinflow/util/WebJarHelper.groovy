@@ -54,9 +54,8 @@ class WebJarHelper {
      * @return
      *      A list of directories representing the unpacked target directories
      */
-    static List<File> unpackWebjars(File targetDir, Project project, String moduleDirName, boolean bower) {
-        List<File> unpackedDirectories = []
-
+    static void unpackWebjars(File targetDir, File resourceTargetDir, Project project, String moduleDirName,
+                              boolean bower) {
         File componentsDir = new File(targetDir, moduleDirName)
         if (!componentsDir.exists()) {
             componentsDir.mkdirs()
@@ -95,19 +94,17 @@ class WebJarHelper {
                             GFileUtils.deleteDirectory(componentRoot)
                         }
 
+                        LOGGER.info("Undpacking frontend component in $file.name into $componentRoot")
                         copyJarToFolder(file, packageJsonFolder, componentRoot)
-                        unpackedDirectories.add(componentRoot)
                     }
 
-                    if (findFolder(FRONTEND_RESOURCES_META_DIR, file)) {
-                        LOGGER.info("Found frontend resources in $file.name")
-                        copyJarToFolder(file, FRONTEND_RESOURCES_META_DIR, targetDir)
+                    if (resourceTargetDir && findFolder(FRONTEND_RESOURCES_META_DIR, file)) {
+                        LOGGER.info("Unpacking frontend resources in $file.name into $resourceTargetDir")
+                        copyJarToFolder(file, FRONTEND_RESOURCES_META_DIR, resourceTargetDir)
                     }
                 }
             }
         }
-
-        unpackedDirectories
     }
 
     private static Tuple2<String, String> findFolderAndPath(String searchFileName, File jarFile) {
