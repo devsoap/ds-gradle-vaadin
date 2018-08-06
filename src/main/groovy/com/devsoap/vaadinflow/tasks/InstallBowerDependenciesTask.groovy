@@ -34,6 +34,7 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecSpec
 
@@ -64,6 +65,9 @@ class InstallBowerDependenciesTask extends DefaultTask {
     @OutputDirectory
     final File bowerComponents = new File(workingDir, 'bower_components')
 
+    @OutputDirectory
+    final File staticResourcesDir = new File(workingDir, 'static')
+
     InstallBowerDependenciesTask() {
         dependsOn( InstallYarnDependenciesTask.NAME )
         onlyIf {
@@ -90,7 +94,7 @@ class InstallBowerDependenciesTask extends DefaultTask {
     void run() {
 
         LOGGER.info('Extracting webjars...')
-        WebJarHelper.unpackWebjars(workingDir, project, bowerComponents.name, true)
+        WebJarHelper.unpackWebjars(workingDir, staticResourcesDir, project, bowerComponents.name, true)
 
         LOGGER.info('Creating bower.json...')
         VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
