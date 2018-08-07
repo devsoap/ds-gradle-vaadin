@@ -30,6 +30,7 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.TaskAction
+import org.gradle.internal.hash.HashUtil
 
 import java.nio.file.Paths
 
@@ -91,7 +92,12 @@ class TranspileDependenciesTask extends DefaultTask {
     final File polymerJson = new File(workingDir, 'polymer.json')
 
     @OutputFile
-    final File html = new File(workingDir, 'vaadin-flow-bundle.cache.html')
+    final Closure<File> html = {
+        String fileHash = inputs.files.collect { it.exists() ? HashUtil.sha256(it) : '' }.join('')
+        String propertyHash = inputs.properties.collect { key, value -> HashUtil.createCompactMD5(key + value) }
+        String manifestHash = HashUtil.createCompactMD5(fileHash + propertyHash)
+        new File(workingDir, "vaadin-flow-bundle-${manifestHash}.cache.html")
+    }
 
     @OutputDirectory
     final File es5dir = Paths.get(workingDir.canonicalPath, BUILD, 'frontend-es5').toFile()
@@ -160,16 +166,17 @@ class TranspileDependenciesTask extends DefaultTask {
         imports += initGeneratedHTMLImports()
         imports += initResourceImports()
 
-        LOGGER.info("Creating ${html.name}...")
-        initHtml(imports)
+        File htmlFile = html.call()
+        LOGGER.info("Creating ${htmlFile.name}...")
+        initHtml(htmlFile, imports)
 
         LOGGER.info("Creating ${polymerJson.name}...")
         initModuleSources(imports)
-        initPolymerJson(imports)
+        initPolymerJson(htmlFile, imports)
 
         LOGGER.info("Creating ${manifestJson.name}...")
         VaadinYarnRunner yarnBundleRunner = new VaadinYarnRunner(project, workingDir, new ByteArrayOutputStream())
-        yarnBundleRunner.polymerBundle(manifestJson, html)
+        yarnBundleRunner.polymerBundle(manifestJson, htmlFile)
 
         LOGGER.info('Transpiling...')
         yarnRunner.transpile()
@@ -268,7 +275,7 @@ class TranspileDependenciesTask extends DefaultTask {
         imports
     }
 
-    private void initPolymerJson(List<String> sources) {
+    private void initPolymerJson(File html, List<String> sources) {
 
         List<String> extraDependencies = [manifestJson.name]
 
@@ -295,7 +302,7 @@ class TranspileDependenciesTask extends DefaultTask {
         polymerJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(buildModel))
     }
 
-    private void initHtml(List<String> imports) {
+    private void initHtml(File html, List<String> imports) {
         if (!html.exists()) {
             html.createNewFile()
         }
