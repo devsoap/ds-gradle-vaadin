@@ -151,12 +151,21 @@ groovydoc {
  *
  ***********************************************************************************************************************/
 task functionalTest(type: Test) {
+    dependsOn test
     group = 'Verification'
-    systemProperty 'spock.configuration', "${findProperty('TEST_CATEGORY') ?: 'AllTests' }Config.groovy"
-    systemProperty 'yarn.cache.dir', new File(project.rootProject.projectDir, 'yarn-cache').canonicalPath
+
+    systemProperties = System.properties as Map
+    if (!systemProperties['spock.configuration']) {
+        systemProperty 'spock.configuration', "${findProperty('TEST_CATEGORY') ?: 'AllTests' }Config.groovy"
+    }
+
+    if (!systemProperties['yarn.cache.dir']) {
+        systemProperty 'yarn.cache.dir', new File(project.rootProject.projectDir, 'yarn-cache').canonicalPath
+    }
+
     testClassesDirs = sourceSets.functionalTest.output.classesDirs
     classpath = sourceSets.functionalTest.runtimeClasspath
-    maxParallelForks = 5
+    maxParallelForks = 1
     testLogging {
         exceptionFormat = 'full'
         showStandardStreams = true

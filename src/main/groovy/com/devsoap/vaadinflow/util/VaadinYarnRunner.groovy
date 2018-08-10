@@ -20,13 +20,15 @@ import com.devsoap.vaadinflow.models.ClientPackage
 import com.moowork.gradle.node.yarn.YarnExecRunner
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
+import groovy.transform.CompileStatic
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.Project
 import org.gradle.process.ExecSpec
 
 import java.util.logging.Level
 
 /**
- * Yarn runner with Vaadin plugin specific funcationality
+ * Yarn runner with Vaadin plugin specific functionality
  *
  * @author John Ahlroos
  * @since 1.0
@@ -78,6 +80,7 @@ class VaadinYarnRunner extends YarnExecRunner {
      * https://yarnpkg.com/en/docs/cli/init
      */
     void init() {
+        generateYarnRc()
 
         // Generator package.json
         arguments = [PREFER_OFFLINE, 'init', '-y']
@@ -91,13 +94,17 @@ class VaadinYarnRunner extends YarnExecRunner {
         pkg.name = 'frontend'
 
         pkg.devDependencies['polymer-cli'] = Versions.rawVersion('polymer.cli.version')
-        pkg.scripts[POLYMER_COMMAND] = 'node_modules/polymer-cli/bin/polymer.js'
+        pkg.scripts[POLYMER_COMMAND] = './node_modules/polymer-cli/bin/polymer.js'
 
         pkg.devDependencies[POLYMER_BUNDLER_COMMAND] = Versions.rawVersion('polymer.bundler.version')
-        pkg.scripts[POLYMER_BUNDLER_COMMAND] = 'node_modules/polymer-bundler/lib/bin/polymer-bundler.js'
+        pkg.scripts[POLYMER_BUNDLER_COMMAND] = './node_modules/polymer-bundler/lib/bin/polymer-bundler.js'
 
         pkg.devDependencies[BOWER_COMMAND] = 'latest'
-        pkg.scripts[BOWER_COMMAND] = 'node_modules/bower/bin/bower'
+        pkg.scripts[BOWER_COMMAND] = './node_modules/bower/bin/bower'
+
+        if (this.variant.windows) {
+            pkg.scripts.replaceAll { key, value -> this.variant.nodeExec + ' ' + value }
+        }
 
         packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
     }
@@ -148,8 +155,8 @@ class VaadinYarnRunner extends YarnExecRunner {
                     .templateFileName(YARN_RC_FILENAME)
                     .substitutions([
                         'offlineCachePath': vaadinClient.offlineCachePath,
-                        'cacheFolder': new File(workingDir as File, 'yarn-cache').canonicalPath
-                    ])
+                        'cacheFolder': './build/frontend/yarn-cache'
+                    ]).build().write()
         }
     }
 }

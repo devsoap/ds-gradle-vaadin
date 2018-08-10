@@ -22,6 +22,7 @@ import org.junit.rules.TemporaryFolder
 import spock.lang.Shared
 import spock.lang.Specification
 
+import java.nio.file.Paths
 import java.time.Clock
 import java.util.concurrent.TimeUnit
 
@@ -35,7 +36,7 @@ class FunctionalTest extends Specification {
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
-    static final String TEST_VAADIN_VERSION = '10.0.2'
+    static final String TEST_VAADIN_VERSION = '10.0.3'
 
     @Rule
     protected TemporaryFolder testProjectDir
@@ -51,7 +52,7 @@ class FunctionalTest extends Specification {
      */
     protected void setup() {
         String offlineCachePath = System.getProperty('yarn.cache.dir',
-                testProjectDir.root.canonicalPath + '/yarn-cache')
+                Paths.get(testProjectDir.root.canonicalPath, 'yarn-cache').toFile().canonicalPath)
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << """
             plugins {
