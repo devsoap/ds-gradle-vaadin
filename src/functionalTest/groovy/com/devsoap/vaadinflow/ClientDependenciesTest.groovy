@@ -30,6 +30,29 @@ import java.nio.file.Paths
 @Client
 class ClientDependenciesTest extends FunctionalTest {
 
+    void 'add paper-slider to project as bower dependency'() {
+        setup:
+        buildFile << """
+                vaadinClientDependencies {
+                    bower 'PolymerElements/paper-slider'
+                }
+
+                vaadin.autoconfigure()
+
+            """.stripMargin()
+        run 'vaadinCreateProject'
+        when:
+        BuildResult result = run 'vaadinAssembleClient'
+        then:
+        result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+        result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+        result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
+        result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
+        File frontend = Paths.get(buildFile.parentFile.canonicalPath,
+                'build', 'webapp-gen', 'frontend').toFile()
+        bowerComponentExists(frontend, 'paper-slider')
+    }
+
     void 'add paper-slider to project as yarn dependency'() {
         setup:
             buildFile << """
@@ -51,29 +74,6 @@ class ClientDependenciesTest extends FunctionalTest {
             File frontend = Paths.get(buildFile.parentFile.canonicalPath,
                     'build', 'webapp-gen', 'frontend').toFile()
             yarnComponentExists(frontend, '@polymer/paper-slider')
-    }
-
-    void 'add paper-slider to project as bower dependency'() {
-        setup:
-            buildFile << """
-                vaadinClientDependencies {
-                    bower 'PolymerElements/paper-slider'
-                }
-
-                vaadin.autoconfigure()
-
-            """.stripMargin()
-             run 'vaadinCreateProject'
-        when:
-            BuildResult result = run 'vaadinAssembleClient'
-        then:
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
-            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
-            File frontend = Paths.get(buildFile.parentFile.canonicalPath,
-                'build', 'webapp-gen', 'frontend').toFile()
-            bowerComponentExists(frontend, 'paper-slider')
     }
 
     void 'add paper-slider web component via task'() {

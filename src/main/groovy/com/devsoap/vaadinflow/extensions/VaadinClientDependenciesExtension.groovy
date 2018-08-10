@@ -62,8 +62,7 @@ class VaadinClientDependenciesExtension {
         this.project = project
         compileFromSources = project.objects.property(Boolean)
         offlineCachePath = project.objects.property(String)
-        offlineCachePath.set(Paths.get(project.file('.gradle').canonicalPath,
-                'yarn', 'yarn-offline-mirror').toFile().canonicalPath)
+        offlineCachePath.set('./.gradle/yarn/yarn-offline-mirror')
     }
 
     /**
