@@ -209,6 +209,29 @@ class ClientDependenciesTest extends FunctionalTest {
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
     }
 
+    void 'default yarn offline mirror is in project folder'() {
+        setup:
+            buildFile.text = """
+                    plugins {
+                        id '$PLUGIN_ID'
+                    }
+
+                    vaadinClientDependencies {
+                        yarn '@polymer/paper-slider:0.0.3'
+                    }
+
+                    vaadin.autoconfigure()
+
+                """.stripMargin()
+        when:
+            run '--info', 'vaadinInstallYarnDependencies'
+            File mirror = Paths.get(testProjectDir.root.canonicalPath, '.gradle', 'yarn',
+                    'yarn-offline-mirror').toFile()
+        then:
+            mirror.exists()
+            mirror.list().length > 0
+    }
+
     private static boolean bowerComponentExists(File frontend, String component) {
         File componentFile = Paths.get(frontend.canonicalPath, 'bower_components', component).toFile()
         File componentHTMLFile = new File(componentFile, "${component}.html")
