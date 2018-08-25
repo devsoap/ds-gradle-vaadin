@@ -7,6 +7,4 @@ import com.vaadin.flow.theme.Theme;
 
 @HtmlImport("frontend://styles/${applicationTheme}")
 @Theme(${applicationBaseTheme.toLowerCase().capitalize()}.class)
-public class ${applicationName}UI extends UI {
-
-}
+public class ${applicationName}UI extends UI { }

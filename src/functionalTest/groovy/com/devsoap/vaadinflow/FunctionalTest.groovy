@@ -47,6 +47,8 @@ class FunctionalTest extends Specification {
 
     private long testStart
 
+    protected Map<String, String> getExtraPlugins() { [:] }
+
     /**
      * Sets up the test
      */
@@ -57,6 +59,7 @@ class FunctionalTest extends Specification {
         buildFile << """
             plugins {
                 id '$PLUGIN_ID'
+                ${extraPlugins.collect { it.value ? "id '$it.key' version '$it.version'" : "id '$it.key'" }.join('\n')}
             }
 
             vaadinClientDependencies {

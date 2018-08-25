@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow.tasks
 import com.devsoap.vaadinflow.creators.VaadinProjectCreator
 import com.devsoap.vaadinflow.creators.VaadinThemeCreator
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
+import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.models.VaadinProject
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
@@ -69,7 +70,8 @@ class CreateProjectTask extends DefaultTask {
                 applicationPackage : applicationPackage ?: "com.example.${project.name.toLowerCase()}",
                 applicationBaseTheme :applicationBaseTheme ?: LUMO,
                 rootDirectory :project.rootDir,
-                productionMode : vaadin.productionMode
+                productionMode : vaadin.productionMode,
+                projectType: ProjectType.get(project)
         )
 
         projectCreator.generate(vaadinProject)

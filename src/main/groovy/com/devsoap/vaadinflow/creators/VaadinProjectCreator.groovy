@@ -39,14 +39,18 @@ class VaadinProjectCreator {
 
         File root = vaadinProject.rootDirectory
         File sourceMain = Paths.get(root.canonicalPath, 'src', 'main').toFile()
-        File javaSourceDir = new File(sourceMain, 'java')
-        File pkgDir = Paths.get(javaSourceDir.canonicalPath, vaadinProject.applicationPackage.split('\\.')).toFile()
+
+        File languageSourceDir = new File(sourceMain, vaadinProject.projectType.sourceDir)
+        String sourceFileExtension = vaadinProject.projectType.extension
+
+        File pkgDir = Paths.get(languageSourceDir.canonicalPath,
+                vaadinProject.applicationPackage.split('\\.')).toFile()
         String appClassName = TemplateWriter.makeStringJavaCompatible(vaadinProject.applicationName)
 
         TemplateWriter.builder()
-                .templateFileName('Servlet.java')
+                .templateFileName("Servlet.$sourceFileExtension")
                 .targetDir(pkgDir)
-                .targetFileName("${appClassName}Servlet.java")
+                .targetFileName("${appClassName}Servlet.$sourceFileExtension")
                 .substitutions([
                     'applicationPackage' : vaadinProject.applicationPackage,
                     'applicationName' : vaadinProject.applicationName,
@@ -55,9 +59,9 @@ class VaadinProjectCreator {
                 .build().write()
 
         TemplateWriter.builder()
-                .templateFileName('AppView.java')
+                .templateFileName("AppView.$sourceFileExtension")
                 .targetDir(pkgDir)
-                .targetFileName("${appClassName}View.java")
+                .targetFileName("${appClassName}View.$sourceFileExtension")
                 .substitutions([
                         'applicationPackage': vaadinProject.applicationPackage,
                         'applicationName' : appClassName,
@@ -65,9 +69,9 @@ class VaadinProjectCreator {
                 .build().write()
 
         TemplateWriter.builder()
-                .templateFileName('UI.java')
+                .templateFileName("UI.$sourceFileExtension")
                 .targetDir(pkgDir)
-                .targetFileName("${appClassName}UI.java")
+                .targetFileName("${appClassName}UI.$sourceFileExtension")
                 .substitutions([
                         'applicationPackage': vaadinProject.applicationPackage,
                         'applicationName' : appClassName,

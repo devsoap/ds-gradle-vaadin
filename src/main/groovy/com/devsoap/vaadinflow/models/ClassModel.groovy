@@ -27,4 +27,5 @@ trait ClassModel {
 
     String componentPackage
 
+    ProjectType projectType
 }

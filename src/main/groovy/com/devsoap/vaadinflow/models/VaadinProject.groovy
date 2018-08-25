@@ -32,4 +32,6 @@ class VaadinProject {
     File rootDirectory
 
     boolean productionMode
+
+    ProjectType projectType
 }

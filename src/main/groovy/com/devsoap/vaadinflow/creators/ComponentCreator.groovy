@@ -17,7 +17,7 @@ package com.devsoap.vaadinflow.creators
 
 import com.devsoap.vaadinflow.models.Component
 import com.devsoap.vaadinflow.models.Composite
-import com.devsoap.vaadinflow.models.VaadinProject
+import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.models.WebComponent
 import com.devsoap.vaadinflow.models.WebTemplate
 import com.devsoap.vaadinflow.util.TemplateWriter
@@ -45,21 +45,22 @@ class ComponentCreator {
     void generate(WebComponent webComponent) {
 
         File root = webComponent.rootDirectory
-        File javaSourceDir = getJavaSourceDirectory(root)
-        File pkgDir = Paths.get(javaSourceDir.canonicalPath, webComponent.componentPackage.split(DOT_REGEX)).toFile()
+        File sourceDir = getSourceDirectory(root, webComponent.projectType)
+        File pkgDir = Paths.get(sourceDir.canonicalPath, webComponent.componentPackage.split(DOT_REGEX)).toFile()
         String componentClassName = TemplateWriter.makeStringJavaCompatible(webComponent.componentName)
+        String extension = webComponent.projectType.extension
 
         TemplateWriter.builder()
                 .targetDir(pkgDir)
-                .templateFileName('WebComponent.java')
-                .targetFileName("${componentClassName}.java")
+                .templateFileName("WebComponent.$extension")
+                .targetFileName("${componentClassName}.$extension")
                 .substitutions([
                     'componentPackage' : webComponent.componentPackage,
                     'componentTag' : webComponent.componentTag,
                     'dependencyPackage': webComponent.dependencyPackage,
                     'dependencyHtml': webComponent.dependencyHtml,
                     'componentName' : componentClassName,
-                    'packageManager' : webComponent.packageManager.package
+                    'packageManager' : webComponent.packageManager.packageDir
                 ]).build().write()
     }
 
@@ -71,14 +72,15 @@ class ComponentCreator {
      */
     void generate(WebTemplate webTemplate) {
         File root = webTemplate.rootDirectory
-        File javaSourceDir = getJavaSourceDirectory(root)
+        File javaSourceDir = getSourceDirectory(root, webTemplate.projectType)
         File pkgDir = Paths.get(javaSourceDir.canonicalPath, webTemplate.componentPackage.split(DOT_REGEX)).toFile()
         String componentClassName = TemplateWriter.makeStringJavaCompatible(webTemplate.componentName)
+        String extension = webTemplate.projectType.extension
 
         TemplateWriter.builder()
                 .targetDir(pkgDir)
-                .templateFileName('WebTemplate.java')
-                .targetFileName("${componentClassName}.java")
+                .templateFileName("WebTemplate.$extension")
+                .targetFileName("${componentClassName}.$extension")
                 .substitutions([
                     'componentPackage' : webTemplate.componentPackage,
                     'componentTag' : webTemplate.componentTag,
@@ -105,14 +107,15 @@ class ComponentCreator {
     void generate(Composite composite) {
 
         File root = composite.rootDirectory
-        File javaSourceDir = getJavaSourceDirectory(root)
+        File javaSourceDir = getSourceDirectory(root, composite.projectType)
         File pkgDir = Paths.get(javaSourceDir.canonicalPath, composite.componentPackage.split(DOT_REGEX)).toFile()
         String componentClassName = TemplateWriter.makeStringJavaCompatible(composite.componentName)
+        String extension = composite.projectType.extension
 
         TemplateWriter.builder()
                 .targetDir(pkgDir)
-                .templateFileName('Composite.java')
-                .targetFileName("${componentClassName}.java")
+                .templateFileName("Composite.$extension")
+                .targetFileName("${componentClassName}.$extension")
                 .substitutions([
                 'componentPackage'  : composite.componentPackage,
                 'componentBaseClass': composite.componentBaseClass,
@@ -129,14 +132,15 @@ class ComponentCreator {
     void generate(Component component) {
 
         File root = component.rootDirectory
-        File javaSourceDir = getJavaSourceDirectory(root)
+        File javaSourceDir = getSourceDirectory(root, component.projectType)
         File pkgDir = Paths.get(javaSourceDir.canonicalPath, component.componentPackage.split(DOT_REGEX)).toFile()
         String componentClassName = TemplateWriter.makeStringJavaCompatible(component.componentName)
+        String extension = component.projectType.extension
 
         TemplateWriter.builder()
                 .targetDir(pkgDir)
-                .templateFileName('Component.java')
-                .targetFileName("${componentClassName}.java")
+                .templateFileName("Component.$extension")
+                .targetFileName("${componentClassName}.$extension")
                 .substitutions([
                 'componentPackage' : component.componentPackage,
                 'componentTag' : component.componentTag,
@@ -144,8 +148,8 @@ class ComponentCreator {
         ]).build().write()
     }
 
-    private static File getJavaSourceDirectory(File root) {
-        Paths.get(root.canonicalPath,  SRC, MAIN, 'java').toFile()
+    private static File getSourceDirectory(File root, ProjectType projectType) {
+        Paths.get(root.canonicalPath,  SRC, MAIN, projectType.sourceDir).toFile()
     }
 
     private static File getTemplatesDir(File root) {
