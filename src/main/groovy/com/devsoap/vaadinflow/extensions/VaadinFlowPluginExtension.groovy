@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.extensions
 
+import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.GradleException
@@ -131,6 +132,10 @@ class VaadinFlowPluginExtension {
         dependencyHandler.add(COMPILE, platform())
         dependencyHandler.add('compileOnly', servletApi())
         dependencyHandler.add('runtime', slf4j())
+
+        if (ProjectType.get(project) == ProjectType.GROOVY) {
+            dependencyHandler.add(COMPILE, groovy())
+        }
     }
 
     /**
@@ -226,6 +231,15 @@ class VaadinFlowPluginExtension {
     Dependency disableStatistics() {
         String version = Versions.rawVersion('vaadin.statistics.version')
         dependencyHandler.create("org.webjars.bowergithub.vaadin:vaadin-usage-statistics:$version")
+    }
+
+    /**
+     * Returns a compatible Groovy version
+     * @return
+     */
+    Dependency groovy() {
+        String version = Versions.rawVersion('groovy.version')
+        dependencyHandler.create("org.codehaus.groovy:groovy-all:$version")
     }
 
     /**

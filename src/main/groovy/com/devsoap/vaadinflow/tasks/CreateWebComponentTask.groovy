@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow.tasks
 import static com.devsoap.vaadinflow.models.WebComponent.PackageManager.BOWER
 import static com.devsoap.vaadinflow.models.WebComponent.PackageManager.YARN
 
+import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.creators.ComponentCreator
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.models.WebComponent
@@ -43,9 +44,9 @@ class CreateWebComponentTask extends DefaultTask {
     private static final String BOWER_PREFIX = 'bower:'
     private static final String COLON = ':'
     private static final String PATH_SEPARATOR = '/'
+    private static final String HASH = '#'
 
     static final String NAME = 'vaadinCreateWebComponent'
-    public static final String HASH = '#'
 
     @Option(option = 'name', description = 'Component name')
     String componentName
@@ -136,7 +137,8 @@ class CreateWebComponentTask extends DefaultTask {
                 dependencyPackage : dependencyPackage,
                 dependencyHtml : dependencyHtml,
                 rootDirectory : project.rootDir,
-                packageManager : componentDependency.startsWith('yarn') ? YARN : BOWER
+                packageManager : componentDependency.startsWith('yarn') ? YARN : BOWER,
+                projectType: ProjectType.get(project)
         )
     }
 

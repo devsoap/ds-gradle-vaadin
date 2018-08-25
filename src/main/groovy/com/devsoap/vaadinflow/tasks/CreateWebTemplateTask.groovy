@@ -16,6 +16,7 @@
 package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.creators.ComponentCreator
+import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.models.WebTemplate
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
@@ -58,6 +59,7 @@ class CreateWebTemplateTask extends DefaultTask {
                 componentPackage : templatePackage,
                 componentTag : templateTag,
                 rootDirectory : project.rootDir,
+                projectType: ProjectType.get(project)
         )
     }
 }

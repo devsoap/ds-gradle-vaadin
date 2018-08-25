@@ -2,6 +2,7 @@ package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.creators.ComponentCreator
 import com.devsoap.vaadinflow.models.Composite
+import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.util.TemplateWriter
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
@@ -50,7 +51,8 @@ class CreateCompositeTask extends DefaultTask {
                 rootDirectory: project.rootDir,
                 componentBaseClass: baseClass,
                 componentPackage: componentPackage,
-                componentName: componentName
+                componentName: componentName,
+                projectType: ProjectType.get(project)
         )
     }
 }

@@ -38,7 +38,7 @@ class WebComponent extends Component {
             this.pkg = pkg
         }
 
-        String getPackage() {
+        String getPackageDir() {
             pkg
         }
     }
