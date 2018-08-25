@@ -212,17 +212,17 @@ class ClientDependenciesTest extends FunctionalTest {
     void 'default yarn offline mirror is in project folder'() {
         setup:
             buildFile.text = """
-                    plugins {
-                        id '$PLUGIN_ID'
-                    }
+                plugins {
+                    id '$PLUGIN_ID'
+                }
 
-                    vaadinClientDependencies {
-                        yarn '@polymer/paper-slider:0.0.3'
-                    }
+                vaadinClientDependencies {
+                    yarn '@polymer/paper-slider:0.0.3'
+                }
 
-                    vaadin.autoconfigure()
+                vaadin.autoconfigure()
 
-                """.stripMargin()
+            """.stripMargin()
         when:
             run '--info', 'vaadinInstallYarnDependencies'
             File mirror = Paths.get(testProjectDir.root.canonicalPath, '.gradle', 'yarn',
@@ -230,6 +230,42 @@ class ClientDependenciesTest extends FunctionalTest {
         then:
             mirror.exists()
             mirror.list().length > 0
+    }
+
+    void 'template subfolders are transpiled'() {
+        setup:
+            run 'vaadinCreateProject'
+            buildFile << '''
+                vaadin.productionMode = true
+
+                repositories {
+                    vaadin.repositories()
+                }
+
+                dependencies {
+                  implementation vaadin.bom()
+                  implementation vaadin.core()
+                  implementation vaadin.servletApi()
+                }
+            '''.stripMargin()
+
+            File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
+            File templates = Paths.get(webapp.absolutePath, 'frontend', 'templates').toFile()
+
+            File htmlImport = Paths.get(templates.absolutePath, 'hello.html').toFile()
+            htmlImport.parentFile.mkdirs()
+            htmlImport.createNewFile()
+
+            File deepHTMLImport = Paths.get(templates.absolutePath, 'foo', 'bar', 'baz.html').toFile()
+            deepHTMLImport.parentFile.mkdirs()
+            deepHTMLImport.createNewFile()
+        when:
+            run('vaadinTranspileDependencies')
+        then:
+            File frontend = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'frontend').toFile()
+            File polymerJson = new File(frontend, 'polymer.json')
+            polymerJson.text.contains('templates/foo/bar/baz.html')
+            polymerJson.text.contains('templates/hello.html')
     }
 
     private static boolean bowerComponentExists(File frontend, String component) {

@@ -65,8 +65,11 @@ class TranspileDependenciesTask extends DefaultTask {
     final File webappGenDir = new File(project.buildDir, 'webapp-gen')
     final File webappGenFrontendDir = new File(webappGenDir, FRONTEND)
 
+    @Optional
     @InputDirectory
-    final File webappGenFrontendStylesDir = new File(webappGenFrontendDir, STYLES)
+    final Closure<File> webappGenFrontendStylesDir = {
+        new File(webappGenFrontendDir, STYLES).with { it.exists() ? it : null }
+    }
 
     @Optional
     @InputDirectory
@@ -155,7 +158,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
         File templatesDir = webTemplatesDir.call()
         if (templatesDir) {
-            LOGGER.info( 'Copying html templates styles....')
+            LOGGER.info( 'Copying html templates ...')
             project.copy { spec ->
                 spec.from(templatesDir.parentFile).include(TEMPLATES_GLOB).into(workingDir)
             }
@@ -234,24 +237,25 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private List<String> initGeneratedHTMLImports() {
-        List<String> imports = []
 
-        List<File> scanDirs = [webappGenFrontendDir]
+        List<File> scanDirs = []
+
+        if (webappGenFrontendStylesDir.call()) {
+            scanDirs.add(webappGenFrontendStylesDir.call())
+        }
+
         if (webTemplatesDir.call()) {
             scanDirs.add(webTemplatesDir.call())
         }
+
+        List<String> imports = []
         scanDirs.each { File dir ->
             LOGGER.info("Searching for html imports in $dir")
             dir.eachFile { File fileOrDir ->
-                if (fileOrDir.directory) {
-                    project.fileTree(fileOrDir)
-                            .include('**/*.html')
-                            .each { File htmlFile ->
-                        String path = (htmlFile.path - dir.path).substring(1)
-                        imports.add(path)
-                    }
-                } else if (fileOrDir.name.endsWith(TranspileDependenciesTask.HTML_FILE_TYPE)) {
-                    String path = (fileOrDir.path - dir.parentFile.path).substring(1)
+                project.fileTree(fileOrDir)
+                        .include('**/*.html')
+                        .each { File htmlFile ->
+                    String path = (htmlFile.path - dir.parentFile.path).substring(1)
                     imports.add(path)
                 }
             }
