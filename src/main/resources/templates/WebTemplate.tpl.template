@@ -1,0 +1,18 @@
+link (rel:'import', href: '../bower_components/polymer/polymer-element.html')
+
+'dom-module' ( id:'${componentTag}') {
+    template {
+        div (id:'caption', 'on-click' : 'sayHello') {
+            yield '[[caption]]'
+        }
+    }
+
+    script('''
+        class ${componentName} extends Polymer.Element {
+            static get is() {
+                return '${componentTag}'
+            }
+        }
+        customElements.define(${componentName}.is, ${componentName});
+    ''')
+}

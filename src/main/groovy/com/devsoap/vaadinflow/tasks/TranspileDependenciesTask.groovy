@@ -73,6 +73,12 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @Optional
     @InputDirectory
+    final Closure<File> webappGenFrontendTemplatesDir = {
+        new File(webappGenFrontendDir, TEMPLATES).with { it.exists() ? it : null }
+    }
+
+    @Optional
+    @InputDirectory
     final Closure<File> webTemplatesDir = {
        Paths.get(project.rootDir.canonicalPath,
                'src', 'main', 'webapp', FRONTEND, TEMPLATES)
@@ -127,7 +133,8 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     TranspileDependenciesTask() {
-        dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME, ConvertCssToHtmlStyleTask.NAME)
+        dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME, ConvertCssToHtmlStyleTask.NAME,
+                ConvertGroovyTemplatesToHTML.NAME)
         onlyIf {
             project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
         }
@@ -155,6 +162,9 @@ class TranspileDependenciesTask extends DefaultTask {
 
         LOGGER.info( 'Copying generated styles....')
         project.copy { spec -> spec.from(webappGenFrontendDir).include('**/styles/**').into(workingDir) }
+
+        LOGGER.info( 'Copying generated templates....')
+        project.copy { spec -> spec.from(webappGenFrontendDir).include(TEMPLATES_GLOB).into(workingDir) }
 
         File templatesDir = webTemplatesDir.call()
         if (templatesDir) {
@@ -242,6 +252,10 @@ class TranspileDependenciesTask extends DefaultTask {
 
         if (webappGenFrontendStylesDir.call()) {
             scanDirs.add(webappGenFrontendStylesDir.call())
+        }
+
+        if (webappGenFrontendTemplatesDir.call()) {
+            scanDirs.add(webappGenFrontendTemplatesDir.call())
         }
 
         if (webTemplatesDir.call()) {
