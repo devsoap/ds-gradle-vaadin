@@ -8,7 +8,7 @@ import com.vaadin.flow.templatemodel.TemplateModel
 
 @Tag('${componentTag}')
 @HtmlImport('templates/${componentName}.html')
-class ${componentName} extends PolymerTemplate<${componentName}.${componentName}Model> {
+class ${componentName} extends PolymerTemplate<${componentName}Model> {
 
     ${componentName}() {
         model.caption = 'Hello template!'
@@ -19,7 +19,7 @@ class ${componentName} extends PolymerTemplate<${componentName}.${componentName}
         model.caption = 'You clicked, how can I help you?'
     }
 
-    interface ${componentName}Model extends TemplateModel {
+    static interface ${componentName}Model extends TemplateModel {
         void setCaption(String greeting);
     }
 }

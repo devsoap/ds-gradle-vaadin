@@ -67,4 +67,47 @@ class GroovyProjectTest extends FunctionalTest {
         then:
             result.task(':jar').outcome == SUCCESS
     }
+
+    void 'Groovy template is converted'() {
+        setup:
+            run'vaadinCreateProject'
+            run 'vaadinCreateWebTemplate', '--name', 'groovytemplate'
+
+            File gen = Paths.get(testProjectDir.root.canonicalPath,
+                'build', 'webapp-gen', 'frontend', 'templates').toFile()
+            File htmlFile = new File(gen, 'groovytemplate.html')
+        when:
+            run 'vaadinConvertGroovyTemplatesToHtml'
+        then:
+            htmlFile.exists()
+            htmlFile.text.contains("<link rel='import' href='../bower_components/polymer/polymer-element.html'/>")
+            htmlFile.text.contains("<dom-module id='groovytemplate'>")
+            htmlFile.text.contains("<dom-module id='groovytemplate'>")
+    }
+
+    void 'Groovy templates are included in transpilation'() {
+        setup:
+            run 'vaadinCreateProject'
+            run 'vaadinCreateWebTemplate', '--name', 'groovytemplate'
+
+            buildFile << '''
+                vaadin.productionMode = true
+
+                repositories {
+                    vaadin.repositories()
+                }
+
+                dependencies {
+                  implementation vaadin.bom()
+                  implementation vaadin.core()
+                  implementation vaadin.servletApi()
+                }
+            '''.stripMargin()
+        when:
+            run('vaadinTranspileDependencies')
+        then:
+            File frontend = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'frontend').toFile()
+            File polymerJson = new File(frontend, 'polymer.json')
+            polymerJson.text.contains('templates/groovytemplate.html')
+    }
 }

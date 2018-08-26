@@ -76,6 +76,7 @@ class ComponentCreator {
         File pkgDir = Paths.get(javaSourceDir.canonicalPath, webTemplate.componentPackage.split(DOT_REGEX)).toFile()
         String componentClassName = TemplateWriter.makeStringJavaCompatible(webTemplate.componentName)
         String extension = webTemplate.projectType.extension
+        String templateExtension = webTemplate.projectType.templateExtension
 
         TemplateWriter.builder()
                 .targetDir(pkgDir)
@@ -89,8 +90,8 @@ class ComponentCreator {
 
         TemplateWriter.builder()
                 .targetDir(getTemplatesDir(root))
-                .templateFileName('WebTemplate.html')
-                .targetFileName("${componentClassName}.html")
+                .templateFileName("WebTemplate.$templateExtension")
+                .targetFileName("${componentClassName}.$templateExtension")
                 .substitutions([
                     'componentPackage' : webTemplate.componentPackage,
                     'componentTag' : webTemplate.componentTag,

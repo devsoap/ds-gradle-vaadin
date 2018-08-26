@@ -34,7 +34,7 @@ enum ProjectType {
     /**
      * Project with Groovy plugin applied
      */
-    GROOVY ,
+    GROOVY,
 
     /**
      * Get the project type for a project
@@ -59,9 +59,18 @@ enum ProjectType {
 
     /**
      * Get the source directory of this type of project
-     * @return
      */
     String getSourceDir() {
         this.name().toLowerCase()
+    }
+
+    /**
+     * Get the file extension for the web template
+     */
+    String getTemplateExtension() {
+        if (this == GROOVY) {
+            return 'tpl'
+        }
+        'html'
     }
 }
