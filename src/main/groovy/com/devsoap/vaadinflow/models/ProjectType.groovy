@@ -37,6 +37,11 @@ enum ProjectType {
     GROOVY,
 
     /**
+     * Project with Kotlin plugin applied
+     */
+    KOTLIN
+
+    /**
      * Get the project type for a project
      *
      * @param project
@@ -46,6 +51,8 @@ enum ProjectType {
     static ProjectType get(Project project) {
         if (project.plugins.findPlugin('groovy')) {
             return GROOVY
+        } else if (project.plugins.findPlugin('org.jetbrains.kotlin.jvm')) {
+            return KOTLIN
         }
         JAVA
     }
@@ -54,6 +61,9 @@ enum ProjectType {
      * Get the file extension of source file of this type
      */
     String getExtension() {
+        if (this == KOTLIN) {
+            return 'kt'
+        }
         this.name().toLowerCase()
     }
 

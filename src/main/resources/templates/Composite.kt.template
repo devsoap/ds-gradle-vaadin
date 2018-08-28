@@ -1,0 +1,19 @@
+package ${componentPackage}
+
+import com.vaadin.flow.component.Composite
+import ${componentBaseClass}
+import com.vaadin.flow.component.html.Input
+import com.vaadin.flow.component.html.Label
+
+class ${componentName}(labelText : String, value : String) : Composite<${componentBaseClass.split('\\.').last()}>() {
+
+  private val label : Label = Label()
+
+  private val input : Input = Input()
+
+  init {
+      label.text = labelText
+      input.value = value
+      content.add(label, input)
+  }
+}

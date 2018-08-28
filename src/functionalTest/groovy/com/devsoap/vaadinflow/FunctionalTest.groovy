@@ -59,7 +59,7 @@ class FunctionalTest extends Specification {
         buildFile << """
             plugins {
                 id '$PLUGIN_ID'
-                ${extraPlugins.collect { it.value ? "id '$it.key' version '$it.version'" : "id '$it.key'" }.join('\n')}
+                ${extraPlugins.collect { it.value ? "id '$it.key' version '$it.value'" : "id '$it.key'" }.join('\n')}
             }
 
             vaadinClientDependencies {
