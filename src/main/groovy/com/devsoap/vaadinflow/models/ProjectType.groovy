@@ -45,7 +45,7 @@ enum ProjectType {
      * Get the project type for a project
      *
      * @param project
-     *      the project to get the project type fore
+     *      the project to get the project type for
      */
     @Memoized
     static ProjectType get(Project project) {
