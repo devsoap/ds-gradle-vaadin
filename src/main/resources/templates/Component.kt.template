@@ -1,0 +1,22 @@
+package ${componentPackage};
+
+import com.vaadin.flow.component.Component
+import com.vaadin.flow.component.Synchronize
+import com.vaadin.flow.component.Tag
+
+@Tag("${componentTag}")
+class ${componentName}(value: String) : Component() {
+
+    init {
+        setValue(value)
+    }
+
+    @Synchronize("change")
+    fun getValue() : String {
+        return element.getProperty("value")
+    }
+
+    fun setValue(value:String) {
+        element.setProperty("value", value)
+    }
+}

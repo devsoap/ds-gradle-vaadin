@@ -1,0 +1,15 @@
+package ${componentPackage}
+
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.dependency.HtmlImport;
+
+@Tag("${componentTag}")
+@HtmlImport("frontend://${packageManager}/${dependencyPackage}/${dependencyHtml}.html")
+class ${componentName} : Component() {
+
+    init {
+
+    }
+}
+

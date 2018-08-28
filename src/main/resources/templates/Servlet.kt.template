@@ -1,0 +1,11 @@
+package ${applicationPackage}
+
+import com.vaadin.flow.server.VaadinServlet
+import com.vaadin.flow.server.VaadinServletConfiguration
+
+import javax.servlet.annotation.WebServlet
+
+
+@WebServlet(urlPatterns = ["/*"], name = "${applicationName}Servlet", asyncSupported = true)
+@VaadinServletConfiguration(ui = ${applicationName}UI::class, productionMode = ${productionMode})
+class ${applicationName}Servlet : VaadinServlet()
