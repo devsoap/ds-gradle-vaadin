@@ -103,46 +103,8 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 create(ConvertGroovyTemplatesToHTML.NAME, ConvertGroovyTemplatesToHTML)
             }
 
-            workaroundInvalidBomVersionRanges(it)
-
             afterEvaluate {
                 disableStatistics(project)
-            }
-
-        }
-    }
-
-    /**
-     * Looks like vaadins BOM is using invalid version ranges which do not account for alpha/beta releases.
-     * Workaround it here by using the '+' notation.
-     *
-     * FIXME This is a ugly hack that should be removed once Vaadin gets its BOMs fixed.
-     *
-     * @param project
-     *      the project
-     */
-    private static void workaroundInvalidBomVersionRanges(Project project) {
-        project.configurations.all {
-            it.resolutionStrategy.eachDependency { dep ->
-                String group = dep.requested.group
-                String name = dep.requested.name
-                String version = dep.requested.version
-                if (group == 'org.webjars.bowergithub.vaadin') {
-                    if (name != 'vaadin-usage-statistics' && version.startsWith('[')) {
-                        dep.because('Dependency is using a unsupported range')
-                        dep.useVersion('latest.release')
-                    }
-                    if (name == 'vaadin-lumo-styles') {
-                        // Do not pull in lumo-styles Polymer 3 alpha/beta components
-                        dep.because('Latest lumo does not support bower')
-                        dep.useVersion('1.0.0')
-                    }
-                }
-                if (group == 'org.webjars.bowergithub.webcomponents' && name == 'shadycss') {
-                    // Lock shadycss (used by lumo-styles) as 1.3.x does no longer support bower
-                    dep.because('Latest shadycss does not support bower')
-                    dep.useVersion('1.2.1')
-                }
             }
         }
     }
