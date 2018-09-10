@@ -38,7 +38,6 @@ import groovy.util.logging.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
-import org.gradle.api.internal.FeaturePreviews
 import org.gradle.api.invocation.Gradle
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.tooling.UnsupportedVersionException
@@ -58,14 +57,9 @@ class VaadinFlowPlugin implements Plugin<Project> {
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
     private final List<PluginAction> actions = []
-    private final Instantiator instantiator
-    private final FeaturePreviews featurePreviews
 
     @Inject
-    VaadinFlowPlugin(Gradle gradle, Instantiator instantiator, FeaturePreviews featurePreviews) {
-        this.featurePreviews = featurePreviews
-        this.instantiator = instantiator
-
+    VaadinFlowPlugin(Gradle gradle, Instantiator instantiator) {
         validateGradleVersion(gradle)
 
         actions << instantiator.newInstance(VaadinFlowPluginAction)
@@ -76,7 +70,11 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        FeaturePreviews settings = featurePreviews
+        // FeaturePreviews was only introduced in Gradle 4.6 so if we import it the plugin will fail in a
+        // cryptic error message (#108). Instead we use dynamic imports allowing the constructor to run and throw
+        // a readable exception so users understand to update their Gradle version.
+        org.gradle.api.internal.FeaturePreviews settings =
+                project.gradle.services.get(org.gradle.api.internal.FeaturePreviews)
 
         project.with {
 
