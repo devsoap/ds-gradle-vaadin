@@ -241,5 +241,6 @@ pluginBundle {
  **********************************************************************************************************************/
 wrapper {
     gradleVersion = '4.6'
+    distributionUrl = distributionUrl.replace('bin', 'all') // Download sources
 }
 
