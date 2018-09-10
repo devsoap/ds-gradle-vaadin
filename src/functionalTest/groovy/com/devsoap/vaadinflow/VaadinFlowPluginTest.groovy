@@ -41,7 +41,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
         when:
             BuildResult result = runAndFail({ it.withGradleVersion(version) }, '--info', 'jar')
         then:
-            result.output.contains('BUILD FAILED')
+            result.output.contains("Your gradle version (${version}.0) is too old.")
         where:
             version = '4.5'
     }
