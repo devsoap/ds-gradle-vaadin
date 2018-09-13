@@ -15,7 +15,7 @@ import java.nio.file.Paths
  *
  * Usage:
  * <code>
- *     vaadinCreateWebComponent --dependency 'bower:PolymerElements/paper-slider'
+ *     vaadinCreateWebComponent --dependency 'bower:PolymerElements/paper-slider:v2.0.5'
  * </code>
  *
  * @author John Ahlroos
