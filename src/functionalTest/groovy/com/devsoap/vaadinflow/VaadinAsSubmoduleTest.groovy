@@ -18,6 +18,8 @@ package com.devsoap.vaadinflow
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 
+import java.nio.file.Paths
+
 /**
  * Tests creation of Vaadin project as submodule
  *
@@ -40,5 +42,39 @@ class VaadinAsSubmoduleTest extends MultimoduleFunctionalTest {
         then:
             result.output.contains('/vaadinProject/src/main/java/com/example/vaadinproject/ExampleTextField.java')
             result.task(':vaadinProject:vaadinCreateComponent').outcome == TaskOutcome.SUCCESS
+    }
+
+    void 'submodule project with single build file'() {
+        setup:
+            vaadinProjectBuildFile.delete()
+            libraryProjectBuildFile.delete()
+            String offlineCachePath = System.getProperty('yarn.cache.dir',
+                Paths.get(rootProjectDir.root.canonicalPath, 'yarn-cache').toFile().canonicalPath)
+            buildFile.text = """
+                 plugins {
+                    id '$PLUGIN_ID' apply false
+                 }
+
+                 project(':libraryProject') {
+                    apply plugin: 'java'
+                 }
+
+                 project(':vaadinProject') {
+                    apply plugin: '$PLUGIN_ID'
+
+                    vaadinClientDependencies {
+                        offlineCachePath = "$offlineCachePath"
+                    }
+
+                    dependencies {
+                        implementation project(':libraryProject')
+                    }
+                 }
+            """.stripMargin()
+        when:
+            BuildResult result = run('vaadinCreateProject')
+        then:
+            result.output.contains('/vaadinProject/src/main/java/com/example/vaadinproject/VaadinProjectServlet.java')
+            result.task(':vaadinProject:vaadinCreateProject').outcome == TaskOutcome.SUCCESS
     }
 }

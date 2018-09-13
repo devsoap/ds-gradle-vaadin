@@ -42,6 +42,8 @@ class MultimoduleFunctionalTest extends Specification {
     protected File vaadinProject
 
     protected File buildFile
+    protected File libraryProjectBuildFile
+    protected File vaadinProjectBuildFile
 
     protected File settingsFile
 
@@ -63,14 +65,14 @@ class MultimoduleFunctionalTest extends Specification {
             }
         """.stripMargin()
 
-        File libraryProjectBuildFile = new File(libraryProject, 'build.gradle')
+        libraryProjectBuildFile = new File(libraryProject, 'build.gradle')
         libraryProjectBuildFile << """
             apply plugin: 'java'
         """.stripMargin()
 
-        File vaadinProjectBuildFile = new File(vaadinProject, 'build.gradle')
+        vaadinProjectBuildFile = new File(vaadinProject, 'build.gradle')
         vaadinProjectBuildFile << """
-             apply plugin: '$PLUGIN_ID'
+            apply plugin: '$PLUGIN_ID'
 
             vaadinClientDependencies {
                 offlineCachePath = "$offlineCachePath"
