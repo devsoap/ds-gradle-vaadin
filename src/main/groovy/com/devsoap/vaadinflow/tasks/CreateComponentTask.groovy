@@ -2,9 +2,8 @@ package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.creators.ComponentCreator
 import com.devsoap.vaadinflow.models.Component
-import com.devsoap.vaadinflow.models.Composite
 import com.devsoap.vaadinflow.models.ProjectType
-import com.devsoap.vaadinflow.util.PathUtils
+
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
@@ -42,7 +41,7 @@ class CreateComponentTask extends DefaultTask {
         componentTag = componentTag ?: 'input'
 
         componentCreator.generate new Component(
-            rootDirectory : PathUtils.getSubmoduleSensitiveProjectRootDir(project),
+            rootDirectory : project.projectDir,
             componentPackage : this.componentPackage,
             componentName : this.componentName,
             componentTag : componentTag,

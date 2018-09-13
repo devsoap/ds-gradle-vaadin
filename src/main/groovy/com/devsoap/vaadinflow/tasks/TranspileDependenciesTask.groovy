@@ -17,7 +17,7 @@ package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.models.PolymerBuild
-import com.devsoap.vaadinflow.util.PathUtils
+
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
@@ -81,7 +81,7 @@ class TranspileDependenciesTask extends DefaultTask {
     @Optional
     @InputDirectory
     final Closure<File> webTemplatesDir = {
-       Paths.get(PathUtils.getSubmoduleSensitiveProjectRootDir(project).canonicalPath,
+       Paths.get(project.projectDir.canonicalPath,
                'src', 'main', 'webapp', FRONTEND, TEMPLATES)
                .toFile().with { it.exists() ? it : null }
     }
