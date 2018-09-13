@@ -34,7 +34,7 @@ class ClientDependenciesTest extends FunctionalTest {
         setup:
         buildFile << """
                 vaadinClientDependencies {
-                    bower 'PolymerElements/paper-slider'
+                    bower 'PolymerElements/paper-slider:v2.0.5'
                 }
 
                 vaadin.autoconfigure()
@@ -83,7 +83,7 @@ class ClientDependenciesTest extends FunctionalTest {
             '''.stripMargin()
             run 'vaadinCreateProject'
         when:
-            run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
+            run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider:v2.0.5'
             BuildResult result = run 'jar'
         then:
             result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.UP_TO_DATE
@@ -117,7 +117,7 @@ class ClientDependenciesTest extends FunctionalTest {
                 '''.stripMargin()
             run 'vaadinCreateProject'
         when:
-            run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider'
+            run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider:v2.0.5'
             run('jar')
         then:
 

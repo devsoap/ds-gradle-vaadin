@@ -99,7 +99,7 @@ class VaadinYarnRunner extends YarnExecRunner {
         pkg.devDependencies[POLYMER_BUNDLER_COMMAND] = Versions.rawVersion('polymer.bundler.version')
         pkg.scripts[POLYMER_BUNDLER_COMMAND] = './node_modules/polymer-bundler/lib/bin/polymer-bundler.js'
 
-        pkg.devDependencies[BOWER_COMMAND] = 'latest'
+        pkg.devDependencies[BOWER_COMMAND] = Versions.rawVersion('bower.version')
         pkg.scripts[BOWER_COMMAND] = './node_modules/bower/bin/bower'
 
         if (this.variant.windows) {
