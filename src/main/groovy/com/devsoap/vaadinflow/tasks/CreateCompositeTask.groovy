@@ -3,6 +3,7 @@ package com.devsoap.vaadinflow.tasks
 import com.devsoap.vaadinflow.creators.ComponentCreator
 import com.devsoap.vaadinflow.models.Composite
 import com.devsoap.vaadinflow.models.ProjectType
+import com.devsoap.vaadinflow.util.PathUtils
 import com.devsoap.vaadinflow.util.TemplateWriter
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
@@ -48,7 +49,7 @@ class CreateCompositeTask extends DefaultTask {
         baseClass = baseClass ?: 'com.vaadin.flow.component.html.Div'
 
         compositeCreator.generate new Composite(
-                rootDirectory: project.rootDir,
+                rootDirectory: PathUtils.getSubmoduleSensitiveProjectRootDir(project),
                 componentBaseClass: baseClass,
                 componentPackage: componentPackage,
                 componentName: componentName,

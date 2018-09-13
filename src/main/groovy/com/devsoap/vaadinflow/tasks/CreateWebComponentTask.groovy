@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow.tasks
 import static com.devsoap.vaadinflow.models.WebComponent.PackageManager.BOWER
 import static com.devsoap.vaadinflow.models.WebComponent.PackageManager.YARN
 
+import com.devsoap.vaadinflow.util.PathUtils
 import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.creators.ComponentCreator
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
@@ -136,7 +137,7 @@ class CreateWebComponentTask extends DefaultTask {
                 componentTag : componentTag,
                 dependencyPackage : dependencyPackage,
                 dependencyHtml : dependencyHtml,
-                rootDirectory : project.rootDir,
+                rootDirectory : PathUtils.getSubmoduleSensitiveProjectRootDir(project),
                 packageManager : componentDependency.startsWith('yarn') ? YARN : BOWER,
                 projectType: ProjectType.get(project)
         )

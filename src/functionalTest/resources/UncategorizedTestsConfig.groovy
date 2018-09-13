@@ -15,8 +15,9 @@
  */
 import com.devsoap.spock.Client
 import com.devsoap.vaadinflow.FunctionalTest
+import com.devsoap.vaadinflow.MultimoduleFunctionalTest
 
 runner {
-    include FunctionalTest
+    include FunctionalTest, MultimoduleFunctionalTest
     exclude Client
 }

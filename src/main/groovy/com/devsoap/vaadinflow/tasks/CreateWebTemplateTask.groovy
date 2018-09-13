@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow.tasks
 import com.devsoap.vaadinflow.creators.ComponentCreator
 import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.models.WebTemplate
+import com.devsoap.vaadinflow.util.PathUtils
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
@@ -58,7 +59,7 @@ class CreateWebTemplateTask extends DefaultTask {
                 componentName : templateName,
                 componentPackage : templatePackage,
                 componentTag : templateTag,
-                rootDirectory : project.rootDir,
+                rootDirectory : PathUtils.getSubmoduleSensitiveProjectRootDir(project),
                 projectType: ProjectType.get(project)
         )
     }
