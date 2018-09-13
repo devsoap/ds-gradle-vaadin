@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.extensions
 
+import com.devsoap.vaadinflow.util.PathUtils
 import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.provider.Property
@@ -64,9 +65,10 @@ class VaadinClientDependenciesExtension {
         compileFromSources = project.objects.property(Boolean)
         offlineCachePath = project.objects.property(String)
 
-        File mirrorFolder = Paths.get(project.rootDir.absolutePath,
+        File mirrorFolder = Paths.get(PathUtils.getSubmoduleSensitiveProjectRootDir(project).absolutePath,
                 '.gradle', 'yarn', 'yarn-offline-mirror').toFile()
-        File frontendDir = Paths.get(project.rootDir.absolutePath, 'build', 'frontend').toFile()
+        File frontendDir = Paths.get(PathUtils.getSubmoduleSensitiveProjectRootDir(project).absolutePath,
+                'build', 'frontend').toFile()
         offlineCachePath.set(RelativePathUtil.relativePath(frontendDir, mirrorFolder))
     }
 

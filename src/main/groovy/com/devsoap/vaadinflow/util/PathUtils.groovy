@@ -13,9 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.devsoap.vaadinflow.FunctionalTest
-import com.devsoap.vaadinflow.MultimoduleFunctionalTest
+package com.devsoap.vaadinflow.util
 
-runner {
-    include FunctionalTest, MultimoduleFunctionalTest
+import org.gradle.api.Project
+
+/**
+ * Utility methods for resolving paths
+ *
+ * @author John Ahlroos
+ * @since 1.0
+ */
+class PathUtils {
+
+    /**
+     * Get the root directory for a project where the submodule path is also taken into account
+     *
+     * @param project
+     *      the project to get the directory for
+     * @return
+     *      the root directory of the project
+     */
+    static File getSubmoduleSensitiveProjectRootDir(Project project) {
+        new File(project.rootDir, project.path.replace(':', '/'))
+    }
 }
