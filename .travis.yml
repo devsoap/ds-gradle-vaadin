@@ -5,6 +5,7 @@ script: "./gradlew --stacktrace --info --parallel check -PTEST_CATEGORY=$TEST_CA
 env:
   - TEST_CATEGORY=UncategorizedTests
   - TEST_CATEGORY=ClientTests
+  - TEST_CATEGORY=SmokeTests
 branches:
   only:
     - "master"

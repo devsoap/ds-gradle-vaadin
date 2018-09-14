@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.devsoap.spock.Client
 import com.devsoap.spock.Smoke
-import com.devsoap.vaadinflow.FunctionalTest
-import com.devsoap.vaadinflow.MultimoduleFunctionalTest
 
 runner {
-    include FunctionalTest, MultimoduleFunctionalTest
-    exclude Client, Smoke
+    include Smoke
 }
