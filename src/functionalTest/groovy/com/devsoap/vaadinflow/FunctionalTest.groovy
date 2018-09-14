@@ -19,11 +19,9 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
-import spock.lang.Shared
 import spock.lang.Specification
 
 import java.nio.file.Paths
-import java.time.Clock
 import java.util.concurrent.TimeUnit
 
 /**
@@ -36,7 +34,7 @@ class FunctionalTest extends Specification {
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
-    static final String TEST_VAADIN_VERSION = '10.0.4'
+    static final String TEST_VAADIN_VERSION = '11.0.0'
 
     @Rule
     protected TemporaryFolder testProjectDir

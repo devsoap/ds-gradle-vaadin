@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.devsoap.spock.Client
-import com.devsoap.spock.Smoke
-import com.devsoap.vaadinflow.FunctionalTest
-import com.devsoap.vaadinflow.MultimoduleFunctionalTest
+package com.devsoap.spock
 
-runner {
-    include FunctionalTest, MultimoduleFunctionalTest
-    exclude Client, Smoke
-}
+import java.lang.annotation.ElementType
+import java.lang.annotation.Inherited
+import java.lang.annotation.Retention
+import java.lang.annotation.RetentionPolicy
+import java.lang.annotation.Target
+
+/**
+ * Annotation marking tests that are smoke tests (partially tests the full scope)
+ *
+ * @author John Ahlroos
+ * @since 1.0
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target([ElementType.TYPE, ElementType.METHOD])
+@Inherited
+@interface Smoke { }
