@@ -12,7 +12,14 @@ not yet support ES6 and helps with integrating with other useful Gradle plugins.
 
 To get started using the plugin have a look a the plugin Wiki at https://github.com/devsoap/gradle-vaadin-flow/wiki
 
+# Sponsors
+
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website.
+
+[<img src="https://vaadin.com/images/trademark/PNG/VaadinLogo_RGB_500x155.png" width=200 />](https://vaadin.com)
+
+
 # License
 
-This plugin is distributed under the Apache License 2.0. For more information about the license see the LICENSE file 
-in the root directory of the repository.
+This plugin is distributed under the Apache License 2.0 license. For more information about the license see the LICENSE file 
+in the root directory of the repository. A signed CLA is required when contributing to the project.
