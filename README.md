@@ -14,7 +14,7 @@ To get started using the plugin have a look a the plugin Wiki at https://github.
 
 # Sponsors
 
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website.
+Support this project by becoming a sponsor. Your logo will show up here with a link to your website. To become a sponsor send a mail to sponsor@devsoap.com.
 
 [<img src="https://vaadin.com/images/trademark/PNG/VaadinLogo_RGB_500x155.png" width=200 />](https://vaadin.com)
 
