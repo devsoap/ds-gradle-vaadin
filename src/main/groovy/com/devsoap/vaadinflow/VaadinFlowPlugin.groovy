@@ -33,6 +33,7 @@ import com.devsoap.vaadinflow.tasks.CreateWebTemplateTask
 import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
 import com.devsoap.vaadinflow.tasks.InstallYarnDependenciesTask
 import com.devsoap.vaadinflow.tasks.TranspileDependenciesTask
+import com.devsoap.vaadinflow.tasks.VersionCheckTask
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.Plugin
@@ -99,6 +100,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 create(CreateComponentTask.NAME, CreateComponentTask)
                 create(CreateWebTemplateTask.NAME, CreateWebTemplateTask)
                 create(ConvertGroovyTemplatesToHTML.NAME, ConvertGroovyTemplatesToHTML)
+                create(VersionCheckTask.NAME, VersionCheckTask)
             }
 
             afterEvaluate {
