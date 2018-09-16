@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 
+import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -76,5 +77,18 @@ class VaadinAsSubmoduleTest extends MultimoduleFunctionalTest {
         then:
             result.output.contains('/vaadinProject/src/main/java/com/example/vaadinproject/VaadinProjectServlet.java')
             result.task(':vaadinProject:vaadinCreateProject').outcome == TaskOutcome.SUCCESS
+    }
+
+    void 'css wrappers are copied into the correct folder in sub-module'() {
+        setup:
+            File genStyles = Paths.get(vaadinProject.canonicalPath,
+                    'build', 'webapp-gen', 'frontend', 'styles').toFile()
+            File wrappedCss = new File(genStyles, "${vaadinProject.name.toLowerCase()}-theme.html")
+            run('vaadinCreateProject')
+        when:
+            BuildResult result = run('vaadinConvertStyleCssToHtml')
+        then:
+            result.task(':vaadinProject:vaadinConvertStyleCssToHtml').outcome == TaskOutcome.SUCCESS
+            wrappedCss.exists()
     }
 }
