@@ -48,7 +48,7 @@ class TranspileDependenciesTask extends DefaultTask {
     static final String NAME = 'vaadinTranspileDependencies'
 
     private static final String PACKAGE_JSON_FILE = 'package.json'
-    private static final String SLASH = '/'
+    private static final String SLASH = PATH_SEPARATOR
     private static final String BOWER_COMPONENTS = 'bower_components'
     private static final String NODE_MODULES = 'node_modules'
     private static final String BUILD = 'build'
@@ -59,6 +59,7 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String JAVASCRIPT_FILE_TYPE = '.js'
     private static final String STYLES = 'styles'
     private static final String TEMPLATES = 'templates'
+    private static final String PATH_SEPARATOR = '/'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
@@ -179,6 +180,9 @@ class TranspileDependenciesTask extends DefaultTask {
         List<String> imports = initHTMLImportsFromComponents()
         imports += initGeneratedHTMLImports()
         imports += initResourceImports()
+
+        // Replace Windows path back-slashes with forward slashes
+        imports*.replace('\\', PATH_SEPARATOR)
 
         File htmlFile = html.call()
         LOGGER.info("Creating ${htmlFile.name}...")
