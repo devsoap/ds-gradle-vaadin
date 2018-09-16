@@ -49,8 +49,6 @@ class VaadinAsSubmoduleTest extends MultimoduleFunctionalTest {
         setup:
             vaadinProjectBuildFile.delete()
             libraryProjectBuildFile.delete()
-            String offlineCachePath = System.getProperty('yarn.cache.dir',
-                Paths.get(rootProjectDir.root.canonicalPath, 'yarn-cache').toFile().canonicalPath)
             buildFile.text = """
                  plugins {
                     id '$PLUGIN_ID' apply false
@@ -90,5 +88,32 @@ class VaadinAsSubmoduleTest extends MultimoduleFunctionalTest {
         then:
             result.task(':vaadinProject:vaadinConvertStyleCssToHtml').outcome == TaskOutcome.SUCCESS
             wrappedCss.exists()
+    }
+
+    void 'groovy templates are compiled into the correct folder in sub-module'() {
+        setup:
+            vaadinProjectBuildFile.text = """
+                apply plugin: '$PLUGIN_ID'
+                apply plugin: 'groovy'
+
+                vaadinClientDependencies {
+                    offlineCachePath = "$offlineCachePath"
+                }
+
+                dependencies {
+                    implementation project(':libraryProject')
+                }
+            """.stripIndent()
+
+            File templates = Paths.get(vaadinProject.canonicalPath,
+                    'build', 'webapp-gen', 'frontend', 'templates').toFile()
+            File compiledTemplate = new File(templates, 'groovytemplate.html')
+            run('vaadinCreateProject')
+            run 'vaadinCreateWebTemplate', '--name', 'groovytemplate'
+        when:
+            BuildResult result = run('vaadinConvertGroovyTemplatesToHtml')
+        then:
+            result.task(':vaadinProject:vaadinConvertGroovyTemplatesToHtml').outcome == TaskOutcome.SUCCESS
+            compiledTemplate.exists()
     }
 }
