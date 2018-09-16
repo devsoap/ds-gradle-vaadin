@@ -49,6 +49,11 @@ class MultimoduleFunctionalTest extends Specification {
 
     private long testStart
 
+    protected String getOfflineCachePath() {
+        System.getProperty('yarn.cache.dir',
+                Paths.get(rootProjectDir.root.canonicalPath, 'yarn-cache').toFile().canonicalPath)
+    }
+
     protected void setup() {
         libraryProject = new File(rootProjectDir.root, 'libraryProject')
         libraryProject.mkdirs()
@@ -56,8 +61,6 @@ class MultimoduleFunctionalTest extends Specification {
         vaadinProject = new File(rootProjectDir.root, 'vaadinProject')
         vaadinProject.mkdirs()
 
-        String offlineCachePath = System.getProperty('yarn.cache.dir',
-                Paths.get(rootProjectDir.root.canonicalPath, 'yarn-cache').toFile().canonicalPath)
         buildFile = rootProjectDir.newFile('build.gradle')
         buildFile << """
             plugins {

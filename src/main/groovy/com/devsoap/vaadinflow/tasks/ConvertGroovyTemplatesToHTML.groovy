@@ -38,13 +38,13 @@ class ConvertGroovyTemplatesToHTML extends DefaultTask {
     static final String NAME = 'vaadinConvertGroovyTemplatesToHtml'
 
     static final String TEMPLATES_PATH = 'src/main/webapp/frontend/templates'
-    static final String TEMPLATES_TARGET_PATH = 'build/webapp-gen/frontend/templates'
+    static final String TEMPLATES_TARGET_PATH = 'webapp-gen/frontend/templates'
 
     @InputFiles
     final FileTree templateFiles = project.fileTree(TEMPLATES_PATH).matching { it.include( '**/*.tpl') }
 
     @OutputDirectory
-    final File targetPath = new File(project.rootDir, TEMPLATES_TARGET_PATH)
+    final File targetPath = new File(project.buildDir, TEMPLATES_TARGET_PATH)
 
     ConvertGroovyTemplatesToHTML() {
         group = 'vaadin'
