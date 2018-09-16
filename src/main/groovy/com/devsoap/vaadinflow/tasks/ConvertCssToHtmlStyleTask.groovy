@@ -36,13 +36,13 @@ class ConvertCssToHtmlStyleTask extends DefaultTask {
     static final String NAME = 'vaadinConvertStyleCssToHtml'
 
     static final String STYLES_PATH = 'src/main/webapp/frontend/styles'
-    static final String STYLES_TARGET_PATH = 'build/webapp-gen/frontend/styles'
+    static final String STYLES_TARGET_PATH = 'webapp-gen/frontend/styles'
 
     @InputFiles
     final FileTree cssFiles = project.fileTree(STYLES_PATH).matching { it.include( '**/*.css') }
 
     @OutputDirectory
-    final File targetPath = new File(project.rootDir, STYLES_TARGET_PATH)
+    final File targetPath = new File(project.buildDir, STYLES_TARGET_PATH)
 
     ConvertCssToHtmlStyleTask() {
         group = 'vaadin'
