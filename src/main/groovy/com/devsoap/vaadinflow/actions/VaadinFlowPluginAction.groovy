@@ -20,6 +20,7 @@ import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
 import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
 import com.devsoap.vaadinflow.tasks.ConvertGroovyTemplatesToHTML
+import com.devsoap.vaadinflow.tasks.VersionCheckTask
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.Project
@@ -47,6 +48,7 @@ class VaadinFlowPluginAction extends PluginAction {
     @Override
     protected void execute(Project project) {
         super.execute(project)
+        project.tasks[PROCESS_RESOURCES].dependsOn(VersionCheckTask.NAME)
         project.tasks[PROCESS_RESOURCES].dependsOn(ConvertCssToHtmlStyleTask.NAME)
         project.tasks[PROCESS_RESOURCES].dependsOn(ConvertGroovyTemplatesToHTML.NAME)
         project.tasks[PROCESS_RESOURCES].dependsOn(AssembleClientDependenciesTask.NAME)
