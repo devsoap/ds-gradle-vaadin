@@ -67,14 +67,14 @@ class VaadinFlowPluginExtension {
     }
 
     /**
-     * The vaadin version to use. By default latest Vaadin 7 version.
+     * The vaadin version to use. By default latest Vaadin version.
      */
     String getVersion() {
         version.orNull
     }
 
     /**
-     * The vaadin version to use. By default latest Vaadin 7 version.
+     * The vaadin version to use. By default latest Vaadin version.
      */
     void setVersion(String version) {
         if (dependencyApplied) {
@@ -87,7 +87,8 @@ class VaadinFlowPluginExtension {
      * Should the plugin support legacy browsers by transpiling the sources to ES5
      */
     boolean isProductionMode() {
-        productionMode.getOrElse(false)
+        productionMode.getOrElse(Boolean.parseBoolean(System.getProperty('vaadin.productionMode',
+                Boolean.FALSE.toString())))
     }
 
     /**
