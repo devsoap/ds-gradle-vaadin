@@ -24,6 +24,7 @@ import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.internal.FeaturePreviews
+import org.gradle.api.plugins.ExtraPropertiesExtension
 import org.gradle.api.provider.Property
 
 /**
@@ -42,6 +43,7 @@ class VaadinFlowPluginExtension {
     private static final String COLON = ':'
     private static final String COMPILE = 'compile'
     private static final String BOM_ARTIFACT_NAME = 'bom'
+    public static final String VAADIN_VERSION_PROPERTY = 'vaadinVersion'
 
     private final Property<String> version
     private final Property<Boolean> productionMode
@@ -70,7 +72,12 @@ class VaadinFlowPluginExtension {
      * The vaadin version to use. By default latest Vaadin version.
      */
     String getVersion() {
-        version.orNull
+        ExtraPropertiesExtension ext = project.extensions.extraProperties
+        version.getOrElse(                                              // Use vaadin.version if set
+            ext.properties.containsKey(VAADIN_VERSION_PROPERTY) ?       // else see if ext.vaadinVersion is set
+            ext.get(VAADIN_VERSION_PROPERTY).toString() :
+            Versions.rawVersion('vaadin.default.version')          // else fallback to default vaadin version
+        )
     }
 
     /**
@@ -81,6 +88,13 @@ class VaadinFlowPluginExtension {
             throw new GradleException('Cannot set vaadin.version after dependencies have been added')
         }
         this.version.set(version)
+    }
+
+    /**
+     * Has the version been set manually
+     */
+    boolean isVersionSet() {
+        version.isPresent() || project.ext.properties.containsKey(VAADIN_VERSION_PROPERTY)
     }
 
     /**
@@ -287,7 +301,7 @@ class VaadinFlowPluginExtension {
             if (name != BOM_ARTIFACT_NAME && bomApplied) {
                 LOGGER.warning('Forcing a Vaadin version while also using the BOM is not recommended')
             }
-            dependency << version.getOrElse(Versions.rawVersion('vaadin.default.version'))
+            dependency << getVersion()
         } else if (!bomApplied) {
             throw new GradleException('Cannot use un-versioned dependencies without using a BOM. Please apply the ' +
                     'BOM before adding un-versioned dependencies.')
