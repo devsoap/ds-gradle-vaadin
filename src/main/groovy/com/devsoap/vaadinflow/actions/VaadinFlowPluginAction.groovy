@@ -59,7 +59,7 @@ class VaadinFlowPluginAction extends PluginAction {
         super.executeAfterEvaluate(project)
         VersionPrinter.instance.printIfNotPrintedBefore(project)
         VaadinFlowPluginExtension vaadin = project.extensions['vaadin']
-        if (!vaadin.version) {
+        if (!vaadin.versionSet) {
             LOGGER.warning('vaadin.version is not set, falling back to latest Vaadin version')
         }
 
