@@ -15,7 +15,6 @@
  */
 package com.devsoap.vaadinflow.extensions
 
-import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.GradleException
@@ -130,11 +129,17 @@ class VaadinFlowPluginExtension {
         repositoryHandler.add(snapshots())
         dependencyHandler.add(COMPILE, bom())
         dependencyHandler.add(COMPILE, platform())
-        dependencyHandler.add('compileOnly', servletApi())
-        dependencyHandler.add('runtime', slf4j())
 
-        if (ProjectType.get(project) == ProjectType.GROOVY) {
-            dependencyHandler.add(COMPILE, groovy())
+        dependencyHandler.add('compileOnly', servletApi())
+
+        DependencyHandler dh = dependencyHandler // Because Groovy bug hiding this private field from closure
+        project.plugins.withId('groovy') {
+            dh.add(COMPILE, groovy())
+        }
+
+        project.plugins.withId('org.springframework.boot') {
+            dh.add(COMPILE, spring())
+            dh.add(COMPILE, springBoot())
         }
     }
 
@@ -195,6 +200,20 @@ class VaadinFlowPluginExtension {
      */
     Dependency core() {
         dependency('core')
+    }
+
+    /**
+     * Add the Spring dependency
+     */
+    Dependency spring() {
+        dependency('spring', true)
+    }
+
+    /**
+     * Add the the Spring Boot dependency
+     */
+    Dependency springBoot() {
+        dependency('spring-boot-starter', true)
     }
 
     /**
