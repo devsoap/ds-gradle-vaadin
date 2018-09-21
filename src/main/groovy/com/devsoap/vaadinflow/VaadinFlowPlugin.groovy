@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow
 import com.devsoap.vaadinflow.actions.GrettyPluginAction
 import com.devsoap.vaadinflow.actions.NodePluginAction
 import com.devsoap.vaadinflow.actions.PluginAction
+import com.devsoap.vaadinflow.actions.SpringBootAction
 import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
 import com.devsoap.vaadinflow.actions.WarPluginAction
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
@@ -67,6 +68,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
         actions << instantiator.newInstance(NodePluginAction)
         actions << instantiator.newInstance(WarPluginAction)
         actions << instantiator.newInstance(GrettyPluginAction)
+        actions << instantiator.newInstance(SpringBootAction)
     }
 
     @Override
