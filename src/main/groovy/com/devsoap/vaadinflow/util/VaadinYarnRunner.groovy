@@ -20,8 +20,6 @@ import com.devsoap.vaadinflow.models.ClientPackage
 import com.moowork.gradle.node.yarn.YarnExecRunner
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
-import groovy.transform.CompileStatic
-import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.Project
 import org.gradle.process.ExecSpec
 
@@ -129,12 +127,13 @@ class VaadinYarnRunner extends YarnExecRunner {
      * @param htmlManifest
      *      the html manifest file
      */
-    void polymerBundle(File manifestJson, File htmlManifest) {
+    void polymerBundle(File manifestJson, File htmlManifest, List<String> excludes=[]) {
         generateYarnRc()
         arguments = [PREFER_OFFLINE, RUN_COMMAND, POLYMER_BUNDLER_COMMAND,
                     '--inline-scripts',
-                    "--manifest-out=${manifestJson.canonicalPath}",
-                     htmlManifest.name]
+                    "--manifest-out=${manifestJson.canonicalPath}"]
+        arguments.addAll(excludes.collect { "--exclude \"$it\"" })
+        arguments.add(htmlManifest.name)
         execute().assertNormalExitValue()
     }
 

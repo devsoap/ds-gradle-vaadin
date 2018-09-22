@@ -268,6 +268,28 @@ class ClientDependenciesTest extends FunctionalTest {
             polymerJson.text.contains('templates/hello.html')
     }
 
+    void 'exclude specific imports from bundle'() {
+        setup:
+            buildFile << """
+
+                   vaadinTranspileDependencies {
+                       bundleExcludes ['https://www.gstatic.com/charts/loader.js']
+                   }
+
+                   vaadin.productionMode = true
+                   vaadin.autoconfigure()
+
+                """.stripMargin()
+            run 'vaadinCreateProject'
+        when:
+            BuildResult result = run 'vaadinAssembleClient'
+        then:
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
+    }
+
     private static boolean bowerComponentExists(File frontend, String component) {
         File componentFile = Paths.get(frontend.canonicalPath, 'bower_components', component).toFile()
         File componentHTMLFile = new File(componentFile, "${component}.html")
