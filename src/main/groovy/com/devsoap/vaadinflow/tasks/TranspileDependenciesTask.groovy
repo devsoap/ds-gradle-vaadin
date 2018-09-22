@@ -23,6 +23,9 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.Incubating
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.PropertyState
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
@@ -66,6 +69,8 @@ class TranspileDependenciesTask extends DefaultTask {
 
     final File webappGenDir = new File(project.buildDir, 'webapp-gen')
     final File webappGenFrontendDir = new File(webappGenDir, FRONTEND)
+
+    private final Property<List<String>> bundleExcludes = project.objects.property(String)
 
     @Optional
     @InputDirectory
@@ -194,10 +199,26 @@ class TranspileDependenciesTask extends DefaultTask {
 
         LOGGER.info("Creating ${manifestJson.name}...")
         VaadinYarnRunner yarnBundleRunner = new VaadinYarnRunner(project, workingDir, new ByteArrayOutputStream())
-        yarnBundleRunner.polymerBundle(manifestJson, htmlFile)
+        yarnBundleRunner.polymerBundle(manifestJson, htmlFile, getBundleExcludes())
 
         LOGGER.info('Transpiling...')
         yarnRunner.transpile()
+    }
+
+    /**
+     * Sets the bundle exclusions
+     */
+    @Incubating
+    void setBundleExcludes(List<String> excludes) {
+        bundleExcludes.set(excludes)
+    }
+
+    /**
+     * Get bundle exclusions
+     */
+    @Incubating
+    List<String> getBundleExcludes() {
+        bundleExcludes.getOrElse([])
     }
 
     private static List<String> initModuleSources(List<String> imports) {
