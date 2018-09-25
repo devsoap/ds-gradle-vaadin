@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.tasks
 
+import com.devsoap.vaadinflow.models.ApplicationType
 import com.devsoap.vaadinflow.creators.VaadinProjectCreator
 import com.devsoap.vaadinflow.creators.VaadinThemeCreator
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
@@ -72,7 +73,8 @@ class CreateProjectTask extends DefaultTask {
                 applicationBaseTheme :applicationBaseTheme ?: LUMO,
                 rootDirectory : project.projectDir,
                 productionMode : vaadin.productionMode,
-                projectType: ProjectType.get(project)
+                projectType: ProjectType.get(project),
+                applicationType: ApplicationType.get(project)
         )
 
         projectCreator.generate(vaadinProject)

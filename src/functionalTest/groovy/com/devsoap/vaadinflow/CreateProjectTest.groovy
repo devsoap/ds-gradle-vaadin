@@ -132,4 +132,29 @@ class CreateProjectTest extends FunctionalTest {
         where:
             baseTheme = 'foobar'
     }
+
+    void 'spring boot project is created and compiles'() {
+        setup:
+            extraPlugins = ['org.springframework.boot':'2.0.5.RELEASE']
+            buildFile << '''
+                vaadin.autoconfigure()
+            '''.stripIndent()
+
+            File rootDir = testProjectDir.root
+            File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
+            File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
+                    testProjectDir.root.name.toLowerCase()).toFile()
+            File applicationFile = Paths.get(pkg.canonicalPath,
+                    "${testProjectDir.root.name.capitalize()}Application.java").toFile()
+            File jarArchiveFile = Paths.get(rootDir.canonicalPath, 'build', 'libs',
+                    testProjectDir.root.name.toLowerCase() + '.jar').toFile()
+        when:
+            BuildResult createResult = run'vaadinCreateProject'
+            BuildResult buildResult = run'bootJar'
+        then:
+            createResult.task(':vaadinCreateProject').outcome == SUCCESS
+            applicationFile.exists()
+            buildResult.task(':bootJar').outcome == SUCCESS
+            jarArchiveFile.exists()
+    }
 }

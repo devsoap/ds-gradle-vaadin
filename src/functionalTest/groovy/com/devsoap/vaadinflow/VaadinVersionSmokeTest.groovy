@@ -36,7 +36,7 @@ class VaadinVersionSmokeTest extends FunctionalTest {
         setup:
             buildFile << '''
                     vaadin.autoconfigure()
-                '''.stripMargin()
+                '''.stripIndent()
             run 'vaadinCreateProject'
         when:
             BuildResult result = run 'jar'
@@ -53,7 +53,7 @@ class VaadinVersionSmokeTest extends FunctionalTest {
             buildFile << '''
                     vaadin.productionMode = true
                     vaadin.autoconfigure()
-                '''.stripMargin()
+                '''.stripIndent()
             run 'vaadinCreateProject'
         when:
             BuildResult result = run 'vaadinAssembleClient'

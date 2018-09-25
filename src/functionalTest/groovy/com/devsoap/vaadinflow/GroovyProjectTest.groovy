@@ -28,10 +28,9 @@ import java.nio.file.Paths
  */
 class GroovyProjectTest extends FunctionalTest {
 
-    Map<String, String> extraPlugins = ['groovy':'']
-
     void 'Create a Groovy project'() {
         setup:
+            extraPlugins = ['groovy':'']
             File rootDir = testProjectDir.root
             File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'groovy').toFile()
             File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
@@ -53,6 +52,7 @@ class GroovyProjectTest extends FunctionalTest {
 
     void 'Groovy project compiles'() {
         setup:
+            extraPlugins = ['groovy':'']
             buildFile << '''
                     vaadin.autoconfigure()
                 '''.stripIndent()
@@ -70,6 +70,8 @@ class GroovyProjectTest extends FunctionalTest {
 
     void 'Groovy template is converted'() {
         setup:
+            extraPlugins = ['groovy':'']
+
             run'vaadinCreateProject'
             run 'vaadinCreateWebTemplate', '--name', 'groovytemplate'
 
@@ -87,6 +89,8 @@ class GroovyProjectTest extends FunctionalTest {
 
     void 'Groovy templates are included in transpilation'() {
         setup:
+            extraPlugins = ['groovy':'']
+
             run 'vaadinCreateProject'
             run 'vaadinCreateWebTemplate', '--name', 'groovytemplate'
 
@@ -102,7 +106,7 @@ class GroovyProjectTest extends FunctionalTest {
                   implementation vaadin.core()
                   implementation vaadin.servletApi()
                 }
-            '''.stripMargin()
+            '''.stripIndent()
         when:
             run('vaadinTranspileDependencies')
         then:

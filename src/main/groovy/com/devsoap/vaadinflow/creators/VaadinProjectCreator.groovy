@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.creators
 
+import com.devsoap.vaadinflow.models.ApplicationType
 import com.devsoap.vaadinflow.models.VaadinProject
 import com.devsoap.vaadinflow.util.TemplateWriter
 
@@ -79,5 +80,17 @@ class VaadinProjectCreator {
                         'applicationBaseTheme' : vaadinProject.applicationBaseTheme
                 ])
                 .build().write()
+
+        if (vaadinProject.applicationType == ApplicationType.SPRING_BOOT) {
+            TemplateWriter.builder()
+                .templateFileName("SpringBootApplication.$sourceFileExtension")
+                .targetDir(pkgDir)
+                .targetFileName("${appClassName}Application.$sourceFileExtension")
+                .substitutions([
+                    'applicationPackage': vaadinProject.applicationPackage,
+                    'applicationName' : appClassName
+                ])
+                .build().write()
+        }
     }
 }

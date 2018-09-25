@@ -31,18 +31,12 @@ import java.util.zip.ZipFile
  */
 class WarArchiveTest extends FunctionalTest {
 
-    @Override
-    protected void setup() {
-        buildFile.text = """
-            plugins {
-                id '$PLUGIN_ID'
-                id 'war'
-            }
-            vaadin.autoconfigure()
-        """.stripMargin()
-    }
-
     void 'Wrapped CSS styles are packaged into WAR'() {
+        setup:
+            extraPlugins = ['war':'']
+            buildFile << '''
+                vaadin.autoconfigure()
+            '''.stripIndent()
         when:
             run CreateProjectTask.NAME
             BuildResult result = run 'war'

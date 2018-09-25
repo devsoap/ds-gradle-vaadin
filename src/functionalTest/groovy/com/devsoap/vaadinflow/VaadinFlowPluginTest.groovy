@@ -71,7 +71,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                     implementation vaadin.core()
                     compileOnly vaadin.servletApi()
                 }
-            """.stripMargin()
+            """.stripIndent()
         when:
             BuildResult result = run('dependencyInsight', '--dependency', 'com.vaadin:flow-server')
         then:
@@ -92,7 +92,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                     implementation vaadin.core()
                     compileOnly vaadin.servletApi()
                 }
-            '''.stripMargin()
+            '''.stripIndent()
             run  'vaadinCreateProject'
         when:
             BuildResult result = run'jar'
@@ -115,7 +115,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                         implementation vaadin.dependency('core', false)
                         compileOnly vaadin.servletApi()
                     }
-                '''.stripMargin()
+                '''.stripIndent()
              run  'vaadinCreateProject'
         when:
             BuildResult result = run'jar'
@@ -137,7 +137,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                     implementation vaadin.core()
                     compileOnly vaadin.servletApi()
                 }
-            """.stripMargin()
+            """.stripIndent()
         when:
             BuildResult result = run('dependencyInsight', '--dependency', 'com.vaadin:flow-server')
         then:
@@ -149,7 +149,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
         setup:
             buildFile << '''
                 vaadin.autoconfigure()
-            '''.stripMargin()
+            '''.stripIndent()
             run  'vaadinCreateProject'
         when:
             BuildResult result = run'jar'
@@ -161,7 +161,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
         setup:
             buildFile << '''
                 vaadin.autoconfigure()
-            '''.stripMargin()
+            '''.stripIndent()
         when:
             BuildResult result = run'jar'
         then:
@@ -178,7 +178,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                 vaadin {
                     version 'x.x.x'
                 }
-            '''.stripMargin()
+            '''.stripIndent()
         when:
              BuildResult result = runAndFail'jar'
         then:
@@ -189,7 +189,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
         setup:
             buildFile << '''
                 vaadin.autoconfigure()
-            '''.stripMargin()
+            '''.stripIndent()
         when:
             BuildResult result = run('dependencyInsight', '--dependency',
                     'org.webjars.bowergithub.vaadin:vaadin-usage-statistics')
@@ -205,7 +205,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
             buildFile << '''
                     vaadin.submitStatistics = true
                     vaadin.autoconfigure()
-                '''.stripMargin()
+                '''.stripIndent()
         when:
             BuildResult result = run('dependencyInsight', '--dependency',
                     'org.webjars.bowergithub.vaadin:vaadin-usage-statistics')
@@ -221,7 +221,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
             buildFile << '''
                     vaadin.submitStatistics = false
                     vaadin.autoconfigure()
-                '''.stripMargin()
+                '''.stripIndent()
         when:
             BuildResult result = run('dependencyInsight', '--dependency',
                 'org.webjars.bowergithub.vaadin:vaadin-usage-statistics')
@@ -239,7 +239,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                 dependencies {
                     implementation vaadin.bom()
                 }
-            '''.stripMargin()
+            '''.stripIndent()
         when:
             BuildResult result = runAndFail('jar')
         then:
@@ -256,7 +256,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                     implementation vaadin.dependency('core', false)
                     implementation vaadin.bom()
                 }
-            '''.stripMargin()
+            '''.stripIndent()
         when:
             BuildResult result = runAndFail('jar')
         then:
@@ -273,7 +273,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                     implementation vaadin.bom()
                     implementation vaadin.dependency('core', true)
                 }
-            '''.stripMargin()
+            '''.stripIndent()
         when:
             BuildResult result = run('jar')
         then:

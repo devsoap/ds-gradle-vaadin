@@ -29,10 +29,9 @@ import java.nio.file.Paths
  */
 class KotlinProjectTest extends FunctionalTest {
 
-    Map<String, String> extraPlugins = ['org.jetbrains.kotlin.jvm':'1.2.51']
-
     void 'Create a Kotlin project'() {
         setup:
+            extraPlugins = ['org.jetbrains.kotlin.jvm':'1.2.51']
             File rootDir = testProjectDir.root
             File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'kotlin').toFile()
             File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
@@ -54,6 +53,7 @@ class KotlinProjectTest extends FunctionalTest {
 
     void 'Kotlin project compiles'() {
         setup:
+            extraPlugins = ['org.jetbrains.kotlin.jvm':'1.2.51']
             buildFile << '''
                     vaadin.autoconfigure()
                 '''.stripIndent()

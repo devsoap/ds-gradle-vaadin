@@ -148,13 +148,18 @@ class VaadinFlowPluginExtension {
         dependencyHandler.add('compileOnly', servletApi())
 
         DependencyHandler dh = dependencyHandler // Because Groovy bug hiding this private field from closure
+
         project.plugins.withId('groovy') {
             dh.add(COMPILE, groovy())
         }
 
         project.plugins.withId('org.springframework.boot') {
-            dh.add(COMPILE, spring())
             dh.add(COMPILE, springBoot())
+        }
+
+        project.plugins.withId('org.jetbrains.kotlin.jvm') {
+            dh.add(COMPILE, 'org.jetbrains.kotlin:kotlin-stdlib')
+            dh.add(COMPILE, 'org.jetbrains.kotlin:kotlin-reflect')
         }
     }
 
@@ -218,17 +223,10 @@ class VaadinFlowPluginExtension {
     }
 
     /**
-     * Add the Spring dependency
-     */
-    Dependency spring() {
-        dependency('spring', true)
-    }
-
-    /**
      * Add the the Spring Boot dependency
      */
     Dependency springBoot() {
-        dependency('spring-boot-starter', true)
+        dependency('spring-boot-starter')
     }
 
     /**
@@ -269,7 +267,6 @@ class VaadinFlowPluginExtension {
 
     /**
      * Returns a compatible Groovy version
-     * @return
      */
     Dependency groovy() {
         String version = Versions.rawVersion('groovy.version')

@@ -15,25 +15,38 @@
  */
 package com.devsoap.vaadinflow.models
 
+import groovy.transform.Memoized
+import org.gradle.api.Project
+
 /**
- * TemplateModel for representing a Vaadin Project
+ * The type of application to generate
  *
  * @author John Ahlroos
  * @since 1.0
  */
-class VaadinProject {
+enum ApplicationType {
 
-    String applicationName
+    /**
+     * Standard deployable web application (WAR)
+     */
+    WEB_APPLICATION,
 
-    String applicationPackage
+    /**
+     * Spring Boot Application
+     */
+    SPRING_BOOT
 
-    String applicationBaseTheme
-
-    File rootDirectory
-
-    boolean productionMode
-
-    ProjectType projectType
-
-    ApplicationType applicationType
+    /**
+     * Get the application type for a project
+     *
+     * @param project
+     *      the project to get the type for
+     */
+    @Memoized
+    static ApplicationType get(Project project) {
+        if (project.plugins.findPlugin('org.springframework.boot')) {
+            return SPRING_BOOT
+        }
+        WEB_APPLICATION
+    }
 }
