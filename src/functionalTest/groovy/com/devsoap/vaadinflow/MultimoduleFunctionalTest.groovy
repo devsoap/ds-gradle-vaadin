@@ -66,12 +66,12 @@ class MultimoduleFunctionalTest extends Specification {
             plugins {
                 id '$PLUGIN_ID' apply false
             }
-        """.stripMargin()
+        """.stripIndent()
 
         libraryProjectBuildFile = new File(libraryProject, 'build.gradle')
         libraryProjectBuildFile << """
             apply plugin: 'java'
-        """.stripMargin()
+        """.stripIndent()
 
         vaadinProjectBuildFile = new File(vaadinProject, 'build.gradle')
         vaadinProjectBuildFile << """
@@ -85,13 +85,13 @@ class MultimoduleFunctionalTest extends Specification {
                 implementation project(':libraryProject')
             }
 
-        """.stripMargin()
+        """.stripIndent()
 
         settingsFile = rootProjectDir.newFile('settings.gradle')
         settingsFile << '''
             enableFeaturePreview('IMPROVED_POM_SUPPORT')
             include 'libraryProject', 'vaadinProject'
-        '''.stripMargin()
+        '''.stripIndent()
 
         testStart = System.currentTimeMillis()
         println "Running test in ${rootProjectDir.root}"

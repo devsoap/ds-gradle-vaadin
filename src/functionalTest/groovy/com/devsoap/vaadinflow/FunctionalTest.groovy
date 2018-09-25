@@ -45,35 +45,30 @@ class FunctionalTest extends Specification {
 
     private long testStart
 
-    protected Map<String, String> getExtraPlugins() { [:] }
+    private Map<String, String> extraPlugins
 
     /**
      * Sets up the test
      */
     protected void setup() {
-        String offlineCachePath = System.getProperty('yarn.cache.dir',
-                Paths.get(testProjectDir.root.canonicalPath, 'yarn-cache').toFile().canonicalPath)
-        buildFile = testProjectDir.newFile('build.gradle')
-        buildFile << """
-            plugins {
-                id '$PLUGIN_ID'
-                ${extraPlugins.collect { it.value ? "id '$it.key' version '$it.value'" : "id '$it.key'" }.join('\n')}
-            }
-
-            vaadinClientDependencies {
-                offlineCachePath = "$offlineCachePath"
-            }
-
-        """.stripMargin()
-
-        settingsFile = testProjectDir.newFile('settings.gradle')
-        settingsFile << '''
-            enableFeaturePreview('IMPROVED_POM_SUPPORT')
-        '''.stripMargin()
-
+        extraPlugins = [:]
+        initBuildFile()
+        initSettingsFile()
         testStart = System.currentTimeMillis()
         println "Running test in ${testProjectDir.root}"
         println "Using Yarn cache dir $offlineCachePath"
+    }
+
+    /**
+     * Set additional plugins for the test.
+     *
+     * @param plugins
+     *      the plugins to add besides the Vaadin plugin
+     */
+    protected void setExtraPlugins(Map<String,String> plugins) {
+        extraPlugins = plugins
+        buildFile.delete()
+        initBuildFile()
     }
 
     /**
@@ -118,6 +113,33 @@ class FunctionalTest extends Specification {
         config.run(runner)
         println "Running gradle ${runner.arguments.join(' ')}"
         runner.buildAndFail()
+    }
+
+    private void initBuildFile() {
+        buildFile = testProjectDir.newFile('build.gradle')
+        buildFile << """
+            plugins {
+                id '$PLUGIN_ID'
+                ${extraPlugins.collect { it.value ? "id '$it.key' version '$it.value'" : "id '$it.key'" }.join('\n')}
+            }
+
+            vaadinClientDependencies {
+                offlineCachePath = "$offlineCachePath"
+            }
+
+        """.stripIndent()
+    }
+
+    private void initSettingsFile() {
+        settingsFile = testProjectDir.newFile('settings.gradle')
+        settingsFile << '''
+            enableFeaturePreview('IMPROVED_POM_SUPPORT')
+        '''.stripIndent()
+    }
+
+    private String getOfflineCachePath() {
+        System.getProperty('yarn.cache.dir', Paths.get(testProjectDir.root.canonicalPath, 'yarn-cache')
+                .toFile().canonicalPath)
     }
 
     /**

@@ -69,7 +69,7 @@ class VaadinAsSubmoduleTest extends MultimoduleFunctionalTest {
                         implementation project(':libraryProject')
                     }
                  }
-            """.stripMargin()
+            """.stripIndent()
         when:
             BuildResult result = run('vaadinCreateProject')
         then:

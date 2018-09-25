@@ -39,7 +39,7 @@ class ClientDependenciesTest extends FunctionalTest {
 
                 vaadin.autoconfigure()
 
-            """.stripMargin()
+            """.stripIndent()
         run 'vaadinCreateProject'
         when:
         BuildResult result = run 'vaadinAssembleClient'
@@ -62,7 +62,7 @@ class ClientDependenciesTest extends FunctionalTest {
 
                 vaadin.autoconfigure()
 
-            """.stripMargin()
+            """.stripIndent()
             run 'vaadinCreateProject'
         when:
             BuildResult result = run  'vaadinAssembleClient'
@@ -80,7 +80,7 @@ class ClientDependenciesTest extends FunctionalTest {
         setup:
             buildFile << '''
                 vaadin.autoconfigure()
-            '''.stripMargin()
+            '''.stripIndent()
             run 'vaadinCreateProject'
         when:
             run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider:v2.0.5'
@@ -114,7 +114,7 @@ class ClientDependenciesTest extends FunctionalTest {
             buildFile << '''
                     vaadin.productionMode = true
                     vaadin.autoconfigure()
-                '''.stripMargin()
+                '''.stripIndent()
             run 'vaadinCreateProject'
         when:
             run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider:v2.0.5'
@@ -155,7 +155,7 @@ class ClientDependenciesTest extends FunctionalTest {
             buildFile << '''
                     vaadin.productionMode = true
                     vaadin.autoconfigure()
-                '''.stripMargin()
+                '''.stripIndent()
             run 'vaadinCreateProject'
         when:
             BuildResult result = run('jar')
@@ -199,7 +199,7 @@ class ClientDependenciesTest extends FunctionalTest {
                   implementation vaadin.servletApi()
                 }
 
-                '''.stripMargin()
+                '''.stripIndent()
             run 'vaadinCreateProject'
         when:
             BuildResult result = run('build')
@@ -222,7 +222,7 @@ class ClientDependenciesTest extends FunctionalTest {
 
                 vaadin.autoconfigure()
 
-            """.stripMargin()
+            """.stripIndent()
         when:
             run '--info', 'vaadinInstallYarnDependencies'
             File mirror = Paths.get(testProjectDir.root.canonicalPath, '.gradle', 'yarn',
@@ -247,7 +247,7 @@ class ClientDependenciesTest extends FunctionalTest {
                   implementation vaadin.core()
                   implementation vaadin.servletApi()
                 }
-            '''.stripMargin()
+            '''.stripIndent()
 
             File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
             File templates = Paths.get(webapp.absolutePath, 'frontend', 'templates').toFile()
@@ -270,16 +270,15 @@ class ClientDependenciesTest extends FunctionalTest {
 
     void 'exclude specific imports from bundle'() {
         setup:
-            buildFile << """
-
+            buildFile << '''
                    vaadinTranspileDependencies {
                        bundleExcludes ['https://www.gstatic.com/charts/loader.js']
                    }
 
                    vaadin.productionMode = true
                    vaadin.autoconfigure()
+            '''.stripIndent()
 
-                """.stripMargin()
             run 'vaadinCreateProject'
         when:
             BuildResult result = run 'vaadinAssembleClient'
