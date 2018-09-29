@@ -37,6 +37,7 @@ import com.devsoap.vaadinflow.tasks.TranspileDependenciesTask
 import com.devsoap.vaadinflow.tasks.VersionCheckTask
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ConfigurationContainer
@@ -76,8 +77,6 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        FeaturePreviews settings = project.gradle.services.get(FeaturePreviews)
-
         project.with {
 
             actions.each { action ->
@@ -85,7 +84,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
             }
 
             extensions.with {
-                create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project, settings)
+                create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project)
                 create(VaadinClientDependenciesExtension.NAME, VaadinClientDependenciesExtension, project)
             }
 
@@ -127,6 +126,22 @@ class VaadinFlowPlugin implements Plugin<Project> {
         if ( version.baseVersion < requiredVersion ) {
             throw new UnsupportedVersionException("Your gradle version ($version) is too old. " +
                     "Plugin requires Gradle $requiredVersion+")
+        }
+    }
+
+    /**
+     * @deprecated For backward support only, remove when bumping Gradle requirement to 5.0+
+     */
+    @Deprecated
+    private static void enablePOMSupport(Project project) {
+        VersionNumber version = VersionNumber.parse(project.gradle.gradleVersion)
+        if(version.major == 4) {
+            FeaturePreviews featurePreviews = project.gradle.services.get(FeaturePreviews)
+            if (!featurePreviews.isFeatureEnabled(FeaturePreviews.Feature.IMPROVED_POM_SUPPORT)) {
+                File settings = new File(project.rootDir, 'settings.gradle')
+                settings << "enableFeaturePreview('IMPROVED_POM_SUPPORT')\n"
+                featurePreviews.enableFeature(FeaturePreviews.Feature.IMPROVED_POM_SUPPORT)
+            }
         }
     }
 }
