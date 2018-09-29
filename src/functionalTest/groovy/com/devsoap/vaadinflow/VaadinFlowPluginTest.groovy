@@ -56,31 +56,6 @@ class VaadinFlowPluginTest extends FunctionalTest {
             version = '4.10'
     }
 
-    @Unroll
-    void 'use vaadin version #version'(String version) {
-        setup:
-            buildFile << """
-                vaadin {
-                    version '$version'
-                }
-                repositories {
-                    mavenCentral()
-                    vaadin.prereleases()
-                }
-                dependencies {
-                    implementation vaadin.core()
-                    compileOnly vaadin.servletApi()
-                }
-            """.stripIndent()
-        when:
-            BuildResult result = run('dependencyInsight', '--dependency', 'com.vaadin:flow-server')
-        then:
-            result.task(':dependencyInsight').outcome == SUCCESS
-            result.output.contains("com.vaadin:vaadin-core:$version")
-        where:
-            version = TEST_VAADIN_VERSION
-    }
-
     void 'server dependencies are applied to project'() {
         setup:
             buildFile << '''
@@ -125,10 +100,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
 
     void 'all repositories are added to project'() {
         setup:
-        buildFile << """
-                vaadin {
-                    version '$TEST_VAADIN_VERSION'
-                }
+        buildFile << '''
                 repositories {
                     mavenCentral()
                     vaadin.repositories()
@@ -137,12 +109,12 @@ class VaadinFlowPluginTest extends FunctionalTest {
                     implementation vaadin.core()
                     compileOnly vaadin.servletApi()
                 }
-            """.stripIndent()
+            '''.stripIndent()
         when:
             BuildResult result = run('dependencyInsight', '--dependency', 'com.vaadin:flow-server')
         then:
             result.task(':dependencyInsight').outcome == SUCCESS
-            result.output.contains("com.vaadin:vaadin-core:$TEST_VAADIN_VERSION")
+            result.output.contains("com.vaadin:vaadin-core:$vaadinVersion")
     }
 
     void 'autoconfigure project'() {
@@ -159,6 +131,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
 
     void 'no vaadin version is set, fall back to latest version'() {
         setup:
+            vaadinVersion = null
             buildFile << '''
                 vaadin.autoconfigure()
             '''.stripIndent()
@@ -171,6 +144,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
 
     void 'not able to set version after dependency has been added'() {
         setup:
+            vaadinVersion = null
             buildFile << '''
                 dependencies {
                     implementation vaadin.core()

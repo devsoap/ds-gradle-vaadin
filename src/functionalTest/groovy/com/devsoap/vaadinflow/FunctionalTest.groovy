@@ -34,7 +34,7 @@ class FunctionalTest extends Specification {
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
-    static final String TEST_VAADIN_VERSION = '11.0.0'
+    private static final String DEFAULT_TEST_VAADIN_VERSION = '11.0.0'
 
     @Rule
     protected TemporaryFolder testProjectDir
@@ -45,13 +45,16 @@ class FunctionalTest extends Specification {
 
     private long testStart
 
-    private Map<String, String> extraPlugins
+    protected Map<String, String> extraPlugins
+
+    protected String vaadinVersion
 
     /**
      * Sets up the test
      */
     protected void setup() {
         extraPlugins = [:]
+        vaadinVersion = DEFAULT_TEST_VAADIN_VERSION
         initBuildFile()
         initSettingsFile()
         testStart = System.currentTimeMillis()
@@ -67,6 +70,18 @@ class FunctionalTest extends Specification {
      */
     protected void setExtraPlugins(Map<String,String> plugins) {
         extraPlugins = plugins
+        buildFile.delete()
+        initBuildFile()
+    }
+
+    /**
+     * Set the Vaadin version used in the test
+     *
+     * @param version
+     *      the default vaadin version to test
+     */
+    protected void setVaadinVersion(String version) {
+        vaadinVersion = version
         buildFile.delete()
         initBuildFile()
     }
@@ -122,6 +137,8 @@ class FunctionalTest extends Specification {
                 id '$PLUGIN_ID'
                 ${extraPlugins.collect { it.value ? "id '$it.key' version '$it.value'" : "id '$it.key'" }.join('\n')}
             }
+
+            ${ vaadinVersion ? "vaadin.version = '$vaadinVersion'" : '' }
 
             vaadinClientDependencies {
                 offlineCachePath = "$offlineCachePath"
