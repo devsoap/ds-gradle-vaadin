@@ -53,7 +53,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
         then:
             result.task(':jar').outcome == SUCCESS
         where:
-            version = '4.6'
+            version = '4.10'
     }
 
     @Unroll
