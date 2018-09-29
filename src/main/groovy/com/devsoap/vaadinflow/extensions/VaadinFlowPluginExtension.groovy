@@ -23,7 +23,6 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.ArtifactRepository
-import org.gradle.api.internal.FeaturePreviews
 import org.gradle.api.plugins.ExtraPropertiesExtension
 import org.gradle.api.provider.Property
 
@@ -52,15 +51,13 @@ class VaadinFlowPluginExtension {
     private final DependencyHandler dependencyHandler
     private final RepositoryHandler repositoryHandler
     private final Project project
-    private final FeaturePreviews featurePreviews
 
     private boolean dependencyApplied = false
     private boolean statisticsApplied = false
     private boolean bomApplied = false
 
-    VaadinFlowPluginExtension(Project project, FeaturePreviews featurePreviews) {
+    VaadinFlowPluginExtension(Project project) {
         this.project = project
-        this.featurePreviews = featurePreviews
         dependencyHandler = project.dependencies
         repositoryHandler = project.repositories
         version = project.objects.property(String)
@@ -233,10 +230,6 @@ class VaadinFlowPluginExtension {
      * Add the BOM that provides the versions of the dependencies
      */
     Dependency bom() {
-        if (!featurePreviews.isFeatureEnabled(FeaturePreviews.Feature.IMPROVED_POM_SUPPORT)) {
-            throw new GradleException('Please enable improved POM support in settings.gradle to use Vaadin BOM. ' +
-                    'This can be done by adding enableFeaturePreview(\'IMPROVED_POM_SUPPORT\') to settings.gradle')
-        }
         bomApplied = true
         dependency(BOM_ARTIFACT_NAME, true)
     }

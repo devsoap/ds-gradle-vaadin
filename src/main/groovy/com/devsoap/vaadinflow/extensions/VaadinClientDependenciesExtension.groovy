@@ -174,7 +174,7 @@ class VaadinClientDependenciesExtension {
      */
     void setCompileFromSources(boolean compile) {
         compileFromSources.set(compile)
-        if (!project.extensions.getByType(VaadinFlowPluginExtension).productionMode) {
+        if (compile && !project.extensions.getByType(VaadinFlowPluginExtension).productionMode) {
             LOGGER.warning('compileFromSources has no effect without setting vaadin.productionMode to true')
         }
     }
