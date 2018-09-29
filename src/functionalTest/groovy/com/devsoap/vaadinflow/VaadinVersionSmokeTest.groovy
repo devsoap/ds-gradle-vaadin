@@ -34,15 +34,19 @@ class VaadinVersionSmokeTest extends FunctionalTest {
     @Unroll
     void 'Test development mode with Vaadin #version'(String version) {
         setup:
+            vaadinVersion = version
             buildFile << '''
                     vaadin.autoconfigure()
                 '''.stripIndent()
             run 'vaadinCreateProject'
         when:
             BuildResult result = run 'jar'
+            BuildResult depInsightResult = run('dependencyInsight', '--dependency', 'com.vaadin:flow-server')
         then:
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SKIPPED
             result.task(':jar').outcome == TaskOutcome.SUCCESS
+            depInsightResult.task(':dependencyInsight').outcome == TaskOutcome.SUCCESS
+            depInsightResult.output.contains("com.vaadin:vaadin-core:$version")
         where:
             version << VERSIONS
     }
@@ -50,6 +54,7 @@ class VaadinVersionSmokeTest extends FunctionalTest {
     @Unroll
     void 'Test production mode with Vaadin #version'(String version) {
         setup:
+            vaadinVersion = version
             buildFile << '''
                     vaadin.productionMode = true
                     vaadin.autoconfigure()
