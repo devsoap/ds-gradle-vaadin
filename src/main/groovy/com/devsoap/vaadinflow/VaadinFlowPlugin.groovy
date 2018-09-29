@@ -39,7 +39,10 @@ import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.internal.FeaturePreviews
+import org.gradle.api.internal.artifacts.configurations.DefaultConfiguration
 import org.gradle.api.invocation.Gradle
 import org.gradle.internal.reflect.Instantiator
 import org.gradle.tooling.UnsupportedVersionException
@@ -73,11 +76,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     @Override
     void apply(Project project) {
-        // FeaturePreviews was only introduced in Gradle 4.6 so if we import it the plugin will fail in a
-        // cryptic error message (#108). Instead we use dynamic imports allowing the constructor to run and throw
-        // a readable exception so users understand to update their Gradle version.
-        org.gradle.api.internal.FeaturePreviews settings =
-                project.gradle.services.get(org.gradle.api.internal.FeaturePreviews)
+        FeaturePreviews settings = project.gradle.services.get(FeaturePreviews)
 
         project.with {
 
@@ -91,18 +90,18 @@ class VaadinFlowPlugin implements Plugin<Project> {
             }
 
             tasks.with {
-                create(CreateProjectTask.NAME, CreateProjectTask)
-                create(CreateWebComponentTask.NAME, CreateWebComponentTask)
-                create(InstallYarnDependenciesTask.NAME, InstallYarnDependenciesTask)
-                create(InstallBowerDependenciesTask.NAME, InstallBowerDependenciesTask)
-                create(TranspileDependenciesTask.NAME, TranspileDependenciesTask)
-                create(AssembleClientDependenciesTask.NAME, AssembleClientDependenciesTask)
-                create(ConvertCssToHtmlStyleTask.NAME, ConvertCssToHtmlStyleTask)
-                create(CreateCompositeTask.NAME, CreateCompositeTask)
-                create(CreateComponentTask.NAME, CreateComponentTask)
-                create(CreateWebTemplateTask.NAME, CreateWebTemplateTask)
-                create(ConvertGroovyTemplatesToHTML.NAME, ConvertGroovyTemplatesToHTML)
-                create(VersionCheckTask.NAME, VersionCheckTask)
+                register(CreateProjectTask.NAME, CreateProjectTask)
+                register(CreateWebComponentTask.NAME, CreateWebComponentTask)
+                register(InstallYarnDependenciesTask.NAME, InstallYarnDependenciesTask)
+                register(InstallBowerDependenciesTask.NAME, InstallBowerDependenciesTask)
+                register(TranspileDependenciesTask.NAME, TranspileDependenciesTask)
+                register(AssembleClientDependenciesTask.NAME, AssembleClientDependenciesTask)
+                register(ConvertCssToHtmlStyleTask.NAME, ConvertCssToHtmlStyleTask)
+                register(CreateCompositeTask.NAME, CreateCompositeTask)
+                register(CreateComponentTask.NAME, CreateComponentTask)
+                register(CreateWebTemplateTask.NAME, CreateWebTemplateTask)
+                register(ConvertGroovyTemplatesToHTML.NAME, ConvertGroovyTemplatesToHTML)
+                register(VersionCheckTask.NAME, VersionCheckTask)
             }
 
             afterEvaluate {
@@ -112,11 +111,11 @@ class VaadinFlowPlugin implements Plugin<Project> {
     }
 
     private static void disableStatistics(Project project) {
-        VaadinFlowPluginExtension vaadin = project.extensions[VaadinFlowPluginExtension.NAME]
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
         if (!vaadin.submitStatistics) {
             Dependency statistics = vaadin.disableStatistics()
-            project.configurations['implementation'].dependencies.add(statistics)
-            project.configurations.all { config ->
+            project.configurations['compile'].dependencies.add(statistics)
+            project.configurations.all { DefaultConfiguration config ->
                 config.resolutionStrategy.force("${statistics.group}:${statistics.name}:${statistics.version}")
             }
         }
