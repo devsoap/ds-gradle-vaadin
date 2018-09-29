@@ -41,13 +41,14 @@ class VersionCheckTask extends DefaultTask {
 
     private static final String URL = "https://plugins.gradle.org/plugin/$VaadinFlowPlugin.PLUGIN_ID"
 
-    private File versionCacheFile
+    @InputFile
+    @OutputFile
+    private final File versionCacheFile = new File(project.buildDir, '.vaadin-gradle-flow-version.check')
 
     VersionCheckTask() {
         description = 'Checks if there is a newer version of the plugin available'
         group = 'Vaadin'
         project.afterEvaluate {
-            versionCacheFile = new File(project.buildDir, '.vaadin-gradle-plugin-version.check')
             boolean firstRun = false
             if (!versionCacheFile.exists()) {
                 versionCacheFile.parentFile.mkdirs()
@@ -74,25 +75,6 @@ class VersionCheckTask extends DefaultTask {
             LOGGER.info('You are using the latest plugin. Excellent!')
         }
         versionCacheFile.text = latestReleaseVersion.toString()
-    }
-
-    /**
-     * Get the version cache file where previous version checks have been stored
-     */
-    @OutputFile
-    File getVersionCacheFile() {
-        versionCacheFile
-    }
-
-    /**
-     * Set the version cache file where previous version checks have been stored
-     *
-     * @param versionCacheFile
-     *      the version cache file
-     */
-    @InputFile
-    void setVersionCacheFile(File versionCacheFile) {
-        this.versionCacheFile = versionCacheFile
     }
 
     /**
