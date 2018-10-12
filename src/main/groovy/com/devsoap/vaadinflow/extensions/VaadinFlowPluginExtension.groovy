@@ -233,7 +233,8 @@ class VaadinFlowPluginExtension {
      * Add the BOM that provides the versions of the dependencies
      */
     Dependency bom() {
-        if (!featurePreviews.isFeatureEnabled(FeaturePreviews.Feature.IMPROVED_POM_SUPPORT)) {
+        if (featurePreviews.activeFeatures.contains(FeaturePreviews.Feature.IMPROVED_POM_SUPPORT) &&
+                !featurePreviews.isFeatureEnabled(FeaturePreviews.Feature.IMPROVED_POM_SUPPORT)) {
             throw new GradleException('Please enable improved POM support in settings.gradle to use Vaadin BOM. ' +
                     'This can be done by adding enableFeaturePreview(\'IMPROVED_POM_SUPPORT\') to settings.gradle')
         }
