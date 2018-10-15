@@ -240,7 +240,7 @@ pluginBundle {
  *
  **********************************************************************************************************************/
 wrapper {
-    gradleVersion = '4.10'
+    gradleVersion = '5.0-milestone-1'
     distributionUrl = distributionUrl.replace('bin', 'all') // Download sources
 }
 
