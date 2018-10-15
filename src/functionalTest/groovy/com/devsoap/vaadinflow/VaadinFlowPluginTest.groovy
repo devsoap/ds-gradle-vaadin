@@ -43,7 +43,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
         then:
             result.output.contains("Your gradle version (${version}.0) is too old.")
         where:
-            version = '4.5'
+            version = '4.10'
     }
 
     @Unroll
@@ -53,7 +53,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
         then:
             result.task(':jar').outcome == SUCCESS
         where:
-            version = '4.10'
+            version = '5.0-milestone-1'
     }
 
     void 'server dependencies are applied to project'() {
@@ -201,23 +201,6 @@ class VaadinFlowPluginTest extends FunctionalTest {
                 'org.webjars.bowergithub.vaadin:vaadin-usage-statistics')
         then:
             !result.output.contains('Allow Vaadin to gather usage statistics')
-    }
-
-    void 'fail if BOM is used without feature preview'() {
-        setup:
-            settingsFile.text = ''
-            buildFile << '''
-                repositories {
-                    mavenCentral()
-                }
-                dependencies {
-                    implementation vaadin.bom()
-                }
-            '''.stripIndent()
-        when:
-            BuildResult result = runAndFail('jar')
-        then:
-            result.output.contains('Please enable improved POM support in settings.gradle to use Vaadin BOM')
     }
 
     void 'fail if un-versioned dependency is applied before BOM'() {
