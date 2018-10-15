@@ -25,7 +25,6 @@ import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.Incubating
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.PropertyState
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
