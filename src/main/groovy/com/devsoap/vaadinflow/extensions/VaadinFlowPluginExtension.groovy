@@ -231,7 +231,7 @@ class VaadinFlowPluginExtension {
      */
     Dependency bom() {
         bomApplied = true
-        dependency(BOM_ARTIFACT_NAME, true)
+        dependencyHandler.enforcedPlatform("$GROUP:vaadin-$BOM_ARTIFACT_NAME:${getVersion()}")
     }
 
     /**
