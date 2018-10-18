@@ -236,4 +236,16 @@ class VaadinFlowPluginTest extends FunctionalTest {
         then:
             result.output.contains('Forcing a Vaadin version while also using the BOM is not recommended')
     }
+
+    void 'version check test'() {
+        setup:
+            buildFile << '''
+                vaadin.autoconfigure()
+            '''.stripIndent()
+        when:
+            BuildResult result = run('vaadinPluginVersionCheck')
+        then:
+            result.task(':vaadinPluginVersionCheck').outcome == SUCCESS
+            result.output.contains('You are using the latest plugin. Excellent!')
+    }
 }

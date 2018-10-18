@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow.tasks
 import com.devsoap.vaadinflow.VaadinFlowPlugin
 import com.devsoap.vaadinflow.util.Versions
 import groovy.transform.Memoized
+import groovy.transform.PackageScope
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.InputFile
@@ -43,7 +44,8 @@ class VersionCheckTask extends DefaultTask {
 
     @InputFile
     @OutputFile
-    private final File versionCacheFile = new File(project.buildDir, '.vaadin-gradle-flow-version.check')
+    @PackageScope
+    final File versionCacheFile = new File(project.buildDir, '.vaadin-gradle-flow-version.check')
 
     VersionCheckTask() {
         description = 'Checks if there is a newer version of the plugin available'
