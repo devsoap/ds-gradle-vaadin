@@ -43,7 +43,7 @@ class SpringBootAction extends PluginAction {
     private static final String BOOT_WAR_TASK = 'bootWar'
 
     private static final String WEBAPP_GEN = 'webapp-gen'
-    private static final String SPRING_BOOT_CLASSES_PATH = 'BOOT-INF/classes'
+    private static final String SPRING_BOOT_RESOURCES_PATH = 'META-INF/resources'
 
     @Override
     protected void execute(Project project) {
@@ -89,13 +89,13 @@ class SpringBootAction extends PluginAction {
         // Include web-app dirs
         File webappDir = Paths.get(project.projectDir.canonicalPath, WEBAPP_DIR).toFile()
         jar.from(webappDir) {
-            it.into(SPRING_BOOT_CLASSES_PATH)
+            it.into(SPRING_BOOT_RESOURCES_PATH)
         }
 
         // Include web-app gen
         File webappGen = Paths.get(project.buildDir.canonicalPath, WEBAPP_GEN).toFile()
         jar.from(webappGen) {
-            it.into(SPRING_BOOT_CLASSES_PATH)
+            it.into(SPRING_BOOT_RESOURCES_PATH)
         }
     }
 
