@@ -19,8 +19,8 @@ import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.tasks.CacheableTask
-import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
 /**
@@ -111,6 +111,12 @@ class AssembleClientDependenciesTask extends DefaultTask {
 
         VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
         if (client.compileFromSources) {
+            if (!sourceDirEs5.exists()) {
+                throw new GradleException("ES5 compilation result does not exist in $sourceDirEs5")
+            }
+            if (!sourceDirEs6.exists()) {
+                throw new GradleException("ES6 compilation result does not exist in $sourceDirEs6")
+            }
             frontendIncludes <<  'vaadin-flow-bundle-manifest.json'
             project.with {
                 copy { spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs5) }

@@ -23,6 +23,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.Incubating
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
@@ -202,6 +203,17 @@ class TranspileDependenciesTask extends DefaultTask {
 
         LOGGER.info('Transpiling...')
         yarnRunner.transpile()
+
+        LOGGER.info('Validating transpilation...')
+        if (!es5dir.exists()) {
+            throw new GradleException(
+                    "Transpile did not generate ES5 result in $es5dir. Run with --info to get more information.")
+        }
+        if (!es6dir.exists()) {
+            throw new GradleException(
+                    "Transpile did not generate ES6 result in $es6dir. Run with --info to get more information.")
+        }
+        LOGGER.info('Transpiling done successfully.')
     }
 
     /**
