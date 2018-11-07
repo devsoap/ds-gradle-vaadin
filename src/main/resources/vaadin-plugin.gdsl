@@ -1,0 +1,73 @@
+/*
+ * Copyright 2018 Devsoap Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+def vaadinType = 'com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension'
+def vaadinClientType = 'com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension'
+def vaadinProperty = 'vaadin'
+def vaadinClientProperty = 'vaadinClientDependencies'
+def vaadinCtx = context(ctype: vaadinType)
+def gradleType = 'gradle'
+def gradleArtifactRepositoryType = 'org.gradle.api.artifacts.repositories.ArtifactRepository'
+def gradleDependencyType = 'org.gradle.api.artifacts.Dependency'
+def scriptContext = context(scriptType: gradleType, filetypes:[gradleType], scope: scriptScope())
+def closureCtx = context(scriptType: gradleType, filetypes:[gradleType], scope: closureScope())
+
+contributor(vaadinCtx, {
+    if(enclosingCall('repositories')) {
+        method name: 'snapshots', type: gradleArtifactRepositoryType
+        method name: 'prereleases', type: gradleArtifactRepositoryType
+        method name: 'addons', type: gradleArtifactRepositoryType
+        method name: 'repositories', type: "java.util.Collection<${gradleArtifactRepositoryType}>"
+
+    } else if(enclosingCall('dependencies')) {
+        method name: 'platform', type: gradleDependencyType
+        method name: 'core', type: gradleDependencyType
+        method name: 'springBoot', type: gradleDependencyType
+        method name: 'bom', type: gradleDependencyType
+        method name: 'servletApi', type: gradleDependencyType
+        method name: 'slf4j', type: gradleDependencyType
+        method name: 'disableStatistics', type: gradleDependencyType
+        method name: 'groovy', type: gradleDependencyType
+
+    } else if(!enclosingMember()){
+        method name: 'autoconfigure', type: Void.name, params: [:]
+        property name: "version", type:  String.name
+        property name: 'productionMode', type: Boolean.name
+        property name: 'submitStatistics', type: Boolean.name
+    }
+})
+
+contributor(closureCtx, {
+    if(enclosingCall('repositories') || enclosingCall('dependencies')) {
+        property name: vaadinProperty, type: vaadinType
+    }
+    if(enclosingCall(vaadinProperty)) {
+        property name: "version", type: String.name
+        property name: 'productionMode', type: Boolean.name
+        property name: 'submitStatistics', type: Boolean.name
+    }
+    if(enclosingCall('vaadinClientDependencies')) {
+        property name: 'offlineCachePath', type: String.name
+        property name: 'compileFromSources', type: Boolean.name
+        method name: 'bower', params: ['version' :  String.name, 'dependency' : String.name]
+    }
+})
+
+contributor(scriptContext, {
+   property name: vaadinProperty, type: vaadinType
+   property name: vaadinClientProperty, type: vaadinClientType
+   method name: vaadinProperty, params: ['config': Closure.name], type: Void.name
+   method name: vaadinClientProperty, params: ['config': Closure.name], type: Void.name
+})

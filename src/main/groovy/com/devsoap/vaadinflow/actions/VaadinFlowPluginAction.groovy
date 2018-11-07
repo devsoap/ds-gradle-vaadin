@@ -24,6 +24,7 @@ import com.devsoap.vaadinflow.tasks.VersionCheckTask
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Dependency
 import org.gradle.api.invocation.Gradle
 
 /**
@@ -48,10 +49,26 @@ class VaadinFlowPluginAction extends PluginAction {
     @Override
     protected void execute(Project project) {
         super.execute(project)
-        project.tasks[PROCESS_RESOURCES].dependsOn(VersionCheckTask.NAME)
-        project.tasks[PROCESS_RESOURCES].dependsOn(ConvertCssToHtmlStyleTask.NAME)
-        project.tasks[PROCESS_RESOURCES].dependsOn(ConvertGroovyTemplatesToHTML.NAME)
-        project.tasks[PROCESS_RESOURCES].dependsOn(AssembleClientDependenciesTask.NAME)
+        project.with {
+            tasks[PROCESS_RESOURCES].with {
+                dependsOn(VersionCheckTask.NAME)
+                dependsOn(ConvertCssToHtmlStyleTask.NAME)
+                dependsOn(ConvertGroovyTemplatesToHTML.NAME)
+                dependsOn(AssembleClientDependenciesTask.NAME)
+            }
+
+            repositories.maven { repository ->
+                repository.name = 'Gradle Plugin Portal'
+                repository.url = 'https://plugins.gradle.org/m2/'
+            }
+
+            String pluginDependency =
+                    "com.devsoap:gradle-vaadin-flow-plugin:${Versions.rawVersion('vaadin.plugin.version')}"
+            Dependency vaadin = dependencies.create(pluginDependency) {
+                description = 'Gradle Vaadin Plugin'
+            }
+            configurations['compileOnly'].dependencies.add(vaadin)
+        }
     }
 
     @Override

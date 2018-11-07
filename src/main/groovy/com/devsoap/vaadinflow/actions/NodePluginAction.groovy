@@ -41,17 +41,12 @@ class NodePluginAction extends PluginAction {
         project.with {
             pluginManager.apply(NodePlugin)
 
-            repositories.maven { repository ->
-                repository.name = 'Gradle Plugin Portal'
-                repository.url = 'https://plugins.gradle.org/m2/'
+            String nodeDependnecy =
+                    "com.moowork.gradle:gradle-node-plugin:${Versions.rawVersion('node.plugin.version')}"
+            Dependency node = dependencies.create(nodeDependnecy) {
+                description = 'Node Gradle Plugin'
             }
-
-            DependencyHandler projectDependencies = dependencies
-            configurations.getByName('runtime').defaultDependencies {
-                Dependency nodeGradlePlugin = projectDependencies.create(
-                        "com.moowork.gradle:gradle-node-plugin:${Versions.rawVersion('node.plugin.version')}")
-                it.add(nodeGradlePlugin)
-            }
+            configurations['compileOnly'].dependencies.add(node)
         }
     }
 

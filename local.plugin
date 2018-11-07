@@ -10,7 +10,7 @@
  */
 buildscript {
     def gradlePluginDirectory =  System.getProperty("user.home")+'/Repositories/gradle-vaadin-flow/build/libs'
-
+    def pluginVersion = '1.0-SNAPSHOT-'+ new Date().format('yyyyMMdd')
     repositories {
         mavenCentral()
         maven {
@@ -20,9 +20,15 @@ buildscript {
     }
 
     dependencies {
-        classpath group: 'com.devsoap', name: 'gradle-vaadin-flow-plugin', version: '1.0-SNAPSHOT-'+ new Date().format('yyyyMMdd')
+        classpath "com.devsoap:gradle-vaadin-flow-plugin:$pluginVersion"
         classpath "com.moowork.gradle:gradle-node-plugin:1.2.0"
 	}
+}
+
+repositories {
+    def gradlePluginDirectory =  System.getProperty("user.home")+'/Repositories/gradle-vaadin-flow/build/libs'
+    def pluginVersion = '1.0-SNAPSHOT-'+ new Date().format('yyyyMMdd')
+    flatDir dirs: gradlePluginDirectory
 }
 
 if (!project.plugins.findPlugin(com.devsoap.vaadinflow.VaadinFlowPlugin)) {
