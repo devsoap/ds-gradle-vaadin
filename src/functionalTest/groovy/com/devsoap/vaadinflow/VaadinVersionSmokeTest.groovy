@@ -29,13 +29,16 @@ import spock.lang.Unroll
 @Smoke
 class VaadinVersionSmokeTest extends FunctionalTest {
 
-    private static final List<String> VERSIONS = ['10.0.4', '11.0.0']
+    private static final List<String> VERSIONS = ['10.0.4', '11.0.0', '12.0.0.beta1']
 
     @Unroll
     void 'Test development mode with Vaadin #version'(String version) {
         setup:
             vaadinVersion = version
             buildFile << '''
+                    repositories {
+                        vaadin.prereleases()
+                    }
                     vaadin.autoconfigure()
                 '''.stripIndent()
             run 'vaadinCreateProject'
@@ -56,6 +59,9 @@ class VaadinVersionSmokeTest extends FunctionalTest {
         setup:
             vaadinVersion = version
             buildFile << '''
+                    repositories {
+                        vaadin.prereleases()
+                    }
                     vaadin.productionMode = true
                     vaadin.autoconfigure()
                 '''.stripIndent()
