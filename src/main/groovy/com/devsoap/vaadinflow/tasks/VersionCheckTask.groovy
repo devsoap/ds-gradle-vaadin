@@ -85,7 +85,6 @@ class VersionCheckTask extends DefaultTask {
      * @return
      *      the latest released version number
      */
-    @Memoized
     static VersionNumber getLatestReleaseVersion() {
         VersionNumber version = VersionNumber.UNKNOWN
         try {

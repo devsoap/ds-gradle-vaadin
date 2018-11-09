@@ -47,7 +47,6 @@ enum ProjectType {
      * @param project
      *      the project to get the project type for
      */
-    @Memoized
     static ProjectType get(Project project) {
         if (project.plugins.findPlugin('groovy')) {
             return GROOVY

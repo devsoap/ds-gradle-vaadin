@@ -100,7 +100,6 @@ class TemplateWriter {
     /**
      * Ensures that the string can be used as a Java Class Name
      */
-    @Memoized
     static String makeStringJavaCompatible(String string) {
         if (!string) {
             return null

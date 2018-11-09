@@ -29,7 +29,6 @@ import java.util.logging.Level
  */
 class LogUtils {
 
-    @Memoized
     static final OutputStream getLogOutputStream(Level level) {
         new LogOutputStream(level)
     }
