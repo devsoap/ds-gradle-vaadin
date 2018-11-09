@@ -42,7 +42,6 @@ enum ApplicationType {
      * @param project
      *      the project to get the type for
      */
-    @Memoized
     static ApplicationType get(Project project) {
         if (project.plugins.findPlugin('org.springframework.boot')) {
             return SPRING_BOOT
