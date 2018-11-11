@@ -115,7 +115,14 @@ class WebJarHelper {
             while ((entry = jarStream.nextJarEntry) != null) {
                 if (entry.name.endsWith(searchFileName)) {
                     String packageJsonFolder = entry.name - searchFileName
-                    String componentRootPackage = packageJsonFolder.split(SLASH).last()
+                    List<String> packages = packageJsonFolder.tokenize(SLASH)
+                    String componentRootPackage = null
+                    while (!componentRootPackage) {
+                        String pkg = packages.removeLast()
+                        if (!pkg.startsWith('.')) {
+                            componentRootPackage = pkg
+                        }
+                    }
                     result = new Tuple2<>(packageJsonFolder, componentRootPackage)
                     break
                 }
