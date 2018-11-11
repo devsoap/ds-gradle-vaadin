@@ -123,7 +123,7 @@ class WebJarHelper {
                             componentRootPackage = pkg
                         }
                     }
-                    result = new Tuple2<>(packageJsonFolder, componentRootPackage)
+                    result = new Tuple2<>(packages.join(SLASH) + SLASH + componentRootPackage, componentRootPackage)
                     break
                 }
             }
