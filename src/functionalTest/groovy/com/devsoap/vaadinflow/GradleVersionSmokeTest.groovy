@@ -29,7 +29,7 @@ import spock.lang.Unroll
 @Smoke
 class GradleVersionSmokeTest extends FunctionalTest {
 
-    private static final List<String> VERSIONS = ['5.0-milestone-1']
+    private static final List<String> VERSIONS = ['5.0']
 
     @Unroll
     void 'Test Gradle #version'(String version) {
