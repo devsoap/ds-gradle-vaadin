@@ -16,9 +16,13 @@
 package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
+import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.invocation.Gradle
+
+import javax.inject.Inject
 
 /**
  * Configures the Gretty plugin to be compatible
@@ -29,9 +33,21 @@ import org.gradle.api.Task
 @Log('LOGGER')
 class GrettyPluginAction extends PluginAction {
 
-    final String pluginId = 'org.akhikhl.gretty'
+    final String pluginId = 'org.gretty'
 
     private  static final String PREPARE_INPLACE_WEB_APP_FOLDER = 'prepareInplaceWebAppFolder'
+
+    @Override
+    void apply(Project project) {
+        project.ext.jetty94Version = Versions.rawVersion('gretty.jetty.version')
+        super.apply(project)
+    }
+
+    @Override
+    protected void execute(Project project) {
+        super.execute(project)
+        project.gretty.servletContainer = 'jetty9.4'
+    }
 
     @Override
     protected void executeAfterEvaluate(Project project) {
