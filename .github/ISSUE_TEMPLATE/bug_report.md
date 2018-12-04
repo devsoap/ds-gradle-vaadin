@@ -6,8 +6,9 @@ about: Create a report to help us improve
 
 **Desktop (please complete the following information):**
  - OS: [e.g. Windows, Ubuntu, iOS]
- - Gradle version [e.g. 4.10.2]
- - Vaadin Plugin version [e.g. 1.0.0.M6]
+ - JDK version: [e.g. 8,9,10,11,12] 
+ - Gradle version: [e.g. 4.10.2]
+ - Vaadin Plugin version: [e.g. 1.0.0.M6]
 
 **Describe the bug**
 A clear and concise description of what the bug is.
