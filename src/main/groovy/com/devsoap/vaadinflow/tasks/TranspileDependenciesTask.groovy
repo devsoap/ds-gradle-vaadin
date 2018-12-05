@@ -37,6 +37,8 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.hash.HashUtil
 
 import java.nio.file.Paths
+import java.util.logging.Logger
+import java.util.regex.Matcher
 
 /**
  * Transpiles web components to ES5 and ES6 production artifacts
@@ -178,6 +180,25 @@ class TranspileDependenciesTask extends DefaultTask {
             LOGGER.info( 'Copying html templates ...')
             project.copy { spec ->
                 spec.from(templatesDir.parentFile).include(TEMPLATES_GLOB).into(workingDir)
+            }
+
+            LOGGER.info('Validating html templates ...')
+            File templatesTargetDir = new File(workingDir, TEMPLATES)
+            Logger logger = LOGGER
+            project.fileTree(templatesTargetDir).each { File template ->
+                template.text.findAll('.*rel="import".*href="(.*)".*').collect {
+                    Matcher matcher = (it =~ /href=\"(.*)\"/)
+                    matcher ? matcher.group(1) : null
+                }.each { String importPath ->
+                   File importFile =  new File(templatesTargetDir, importPath)
+                   if (!importFile.exists()) {
+                       logger.severe("${workingDir.relativePath(template)}: ${project.relativePath(importFile)}" +
+                               ' not found on filesystem!')
+                       throw new GradleException(
+                                "Imported file '$importFile' in " +
+                                "${workingDir.relativePath(template)} does not exist!")
+                   }
+                }
             }
         }
 
