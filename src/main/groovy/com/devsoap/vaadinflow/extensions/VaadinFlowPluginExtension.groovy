@@ -259,6 +259,14 @@ class VaadinFlowPluginExtension {
     }
 
     /**
+     * Returns the production mode enabling module
+     */
+    Dependency enableProductionMode() {
+        String version = Versions.rawVersion('vaadin.production.mode.version')
+        dependencyHandler.create("com.vaadin:flow-server-production-mode:$version")
+    }
+
+    /**
      * Returns a compatible Groovy version
      */
     Dependency groovy() {
