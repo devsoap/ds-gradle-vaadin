@@ -60,6 +60,8 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
+    private static final String COMPILE_CONFIGURATION = 'compile'
+
     private final List<PluginAction> actions = []
 
     @Inject
@@ -104,6 +106,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
             afterEvaluate {
                 disableStatistics(project)
+                enableProductionMode(project)
             }
         }
     }
@@ -112,10 +115,18 @@ class VaadinFlowPlugin implements Plugin<Project> {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
         if (!vaadin.submitStatistics) {
             Dependency statistics = vaadin.disableStatistics()
-            project.configurations['compile'].dependencies.add(statistics)
+            project.configurations[COMPILE_CONFIGURATION].dependencies.add(statistics)
             project.configurations.all { DefaultConfiguration config ->
                 config.resolutionStrategy.force("${statistics.group}:${statistics.name}:${statistics.version}")
             }
+        }
+    }
+
+    private static void enableProductionMode(Project project) {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        if (vaadin.productionMode) {
+            Dependency productionMode = vaadin.enableProductionMode()
+            project.configurations[COMPILE_CONFIGURATION].dependencies.add(productionMode)
         }
     }
 
