@@ -98,9 +98,6 @@ class InstallYarnDependenciesTask extends DefaultTask {
         LOGGER.info('Creating package.json ...')
         yarnRunner.init()
 
-        LOGGER.info('Extracting webjars...')
-        WebJarHelper.unpackWebjars(workingDir, null, project, nodeModules.name, false)
-
         // Add dependencies to package.json
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
         VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
@@ -113,5 +110,7 @@ class InstallYarnDependenciesTask extends DefaultTask {
         LOGGER.info('Installing yarn dependencies...')
         yarnRunner.install()
 
+        LOGGER.info('Extracting node webjars...')
+        WebJarHelper.unpackWebjars(workingDir, null, project, nodeModules.name, false)
     }
 }
