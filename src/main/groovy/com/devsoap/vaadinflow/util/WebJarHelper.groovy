@@ -39,6 +39,14 @@ class WebJarHelper {
 
     private static final String SLASH = '/'
     private static final String FRONTEND_RESOURCES_META_DIR = 'META-INF/resources/frontend/'
+    private static final String PACKAGE_JSON = 'package.json'
+
+    /**
+     * Webjars which do not contain a bower.json BUT needs to be considered as bower dependencies when unpacking
+     */
+    private static final List<String> forcedBowerPackages = [
+            'shadycss'
+    ]
 
     /**
      * Unpacks WebJars into a target directory
@@ -76,12 +84,16 @@ class WebJarHelper {
                 jarFiles.each { File file ->
 
                     Tuple2<String, String> result = findFolderAndPath('bower.json', file)
-                    if (!bower) {
+                    if (bower) {
+                        if (!result && forcedBowerPackages.find { key -> file.name.startsWith(key) }) {
+                            result = findFolderAndPath(PACKAGE_JSON, file)
+                        }
+                    } else {
                         if (result) {
                             // Bower package found, skip it
                             result = null
                         } else {
-                            result = findFolderAndPath('package.json', file)
+                            result = findFolderAndPath(PACKAGE_JSON, file)
                         }
                     }
 
