@@ -20,9 +20,11 @@ import com.devsoap.vaadinflow.models.ClientPackage
 import com.moowork.gradle.node.yarn.YarnExecRunner
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.process.ExecSpec
 
+import java.nio.file.Paths
 import java.util.logging.Level
 
 /**
@@ -34,12 +36,15 @@ import java.util.logging.Level
 class VaadinYarnRunner extends YarnExecRunner {
 
     private static final String YARN_RC_FILENAME = '.yarnrc'
+    private static final String OFFLINE = '--offline'
     private static final String PREFER_OFFLINE = '--prefer-offline'
     private static final String INSTALL_COMMAND = 'install'
     private static final String POLYMER_COMMAND = 'polymer'
     private static final String BOWER_COMMAND = 'bower'
     private static final String POLYMER_BUNDLER_COMMAND = 'polymer-bundler'
     private static final String RUN_COMMAND = 'run'
+
+    private boolean isOffline = false
 
     /**
      * Creates a new Yarn runner
@@ -55,6 +60,7 @@ class VaadinYarnRunner extends YarnExecRunner {
                      OutputStream standardOutput = LogUtils.getLogOutputStream(Level.FINE)) {
         super(project)
         this.workingDir = workingDir
+        this.isOffline = project.gradle.startParameter.offline
         execOverrides = { ExecSpec spec ->
             spec.standardOutput = standardOutput
             spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
@@ -67,8 +73,17 @@ class VaadinYarnRunner extends YarnExecRunner {
      * https://yarnpkg.com/lang/en/docs/cli/install/
      */
     void install() {
+        if(isOffline) {
+            // The old lock file need to remain for offline install to work
+            File yarnLockFile = Paths.get(project.buildDir.canonicalPath, 'frontend','yarn.lock').toFile()
+            if(!yarnLockFile.exists()) {
+                throw new GradleException(
+                    "Cannot perform offline Yarn install without existing yarn.lock file in $yarnLockFile.parentFile")
+            }
+        }
+
         generateYarnRc()
-        arguments = [PREFER_OFFLINE, '--no-bin-links', INSTALL_COMMAND]
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, '--no-bin-links', INSTALL_COMMAND]
         execute().assertNormalExitValue()
     }
 
@@ -81,7 +96,7 @@ class VaadinYarnRunner extends YarnExecRunner {
         generateYarnRc()
 
         // Generator package.json
-        arguments = [PREFER_OFFLINE, 'init', '-y']
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, 'init', '-y']
         execute().assertNormalExitValue()
 
         // Set proper defaults for package.json
@@ -114,7 +129,11 @@ class VaadinYarnRunner extends YarnExecRunner {
      */
     void bowerInstall() {
         generateYarnRc()
-        arguments = [PREFER_OFFLINE, RUN_COMMAND, BOWER_COMMAND, INSTALL_COMMAND, '--config.interactive=false' ]
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, RUN_COMMAND, BOWER_COMMAND, INSTALL_COMMAND,
+                     '--config.interactive=false' ]
+        if(isOffline) {
+            arguments << OFFLINE
+        }
         execute().assertNormalExitValue()
     }
 
@@ -129,7 +148,7 @@ class VaadinYarnRunner extends YarnExecRunner {
      */
     void polymerBundle(File manifestJson, File htmlManifest, List<String> excludes=[]) {
         generateYarnRc()
-        arguments = [PREFER_OFFLINE, RUN_COMMAND, POLYMER_BUNDLER_COMMAND,
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, RUN_COMMAND, POLYMER_BUNDLER_COMMAND,
                     '--inline-scripts',
                     "--manifest-out=${manifestJson.canonicalPath}"]
         arguments.addAll(excludes.collect { "--exclude \"$it\"" })
@@ -141,7 +160,8 @@ class VaadinYarnRunner extends YarnExecRunner {
      * Polymer build
      */
     void transpile() {
-        arguments = [PREFER_OFFLINE, RUN_COMMAND, POLYMER_COMMAND, 'build', '--npm', '--module-resolution=node']
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, RUN_COMMAND, POLYMER_COMMAND,
+                     'build', '--npm', '--module-resolution=node']
         execute().assertNormalExitValue()
     }
 
