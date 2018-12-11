@@ -43,8 +43,9 @@ class VaadinYarnRunner extends YarnExecRunner {
     private static final String BOWER_COMMAND = 'bower'
     private static final String POLYMER_BUNDLER_COMMAND = 'polymer-bundler'
     private static final String RUN_COMMAND = 'run'
+    private static final String FRONTEND = 'frontend'
 
-    private boolean isOffline = false
+    private final boolean isOffline
 
     /**
      * Creates a new Yarn runner
@@ -73,10 +74,10 @@ class VaadinYarnRunner extends YarnExecRunner {
      * https://yarnpkg.com/lang/en/docs/cli/install/
      */
     void install() {
-        if(isOffline) {
+        if (isOffline) {
             // The old lock file need to remain for offline install to work
-            File yarnLockFile = Paths.get(project.buildDir.canonicalPath, 'frontend','yarn.lock').toFile()
-            if(!yarnLockFile.exists()) {
+            File yarnLockFile = Paths.get(project.buildDir.canonicalPath, FRONTEND, 'yarn.lock').toFile()
+            if (!yarnLockFile.exists()) {
                 throw new GradleException(
                     "Cannot perform offline Yarn install without existing yarn.lock file in $yarnLockFile.parentFile")
             }
@@ -104,7 +105,7 @@ class VaadinYarnRunner extends YarnExecRunner {
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
         pkg.main = ''
         pkg.version = '1.0.0'
-        pkg.name = 'frontend'
+        pkg.name = FRONTEND
 
         pkg.devDependencies['polymer-cli'] = Versions.rawVersion('polymer.cli.version')
         pkg.scripts[POLYMER_COMMAND] = './node_modules/polymer-cli/bin/polymer.js'
@@ -131,7 +132,7 @@ class VaadinYarnRunner extends YarnExecRunner {
         generateYarnRc()
         arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, RUN_COMMAND, BOWER_COMMAND, INSTALL_COMMAND,
                      '--config.interactive=false' ]
-        if(isOffline) {
+        if (isOffline) {
             arguments << OFFLINE
         }
         execute().assertNormalExitValue()
@@ -169,13 +170,24 @@ class VaadinYarnRunner extends YarnExecRunner {
         VaadinClientDependenciesExtension vaadinClient = project.extensions.getByType(VaadinClientDependenciesExtension)
         File yarnrc = new File(workingDir as File, YARN_RC_FILENAME)
         if (!yarnrc.exists()) {
+
+            Map<String, String> substitutions = [:]
+            substitutions['offlineCachePath'] = vaadinClient.offlineCachePath
+            substitutions['cacheFolder'] = './build/frontend/yarn-cache'
+
+            if (HttpUtils.httpsProxy) {
+                substitutions['httpsProxy'] = "https-proxy \"${HttpUtils.httpsProxy}\"".toString()
+            }
+
+            if (HttpUtils.httpProxy) {
+                substitutions['httpProxy'] = "proxy \"${HttpUtils.httpProxy}\"".toString()
+            }
+
             TemplateWriter.builder()
                     .targetDir(workingDir as File)
                     .templateFileName(YARN_RC_FILENAME)
-                    .substitutions([
-                        'offlineCachePath': vaadinClient.offlineCachePath,
-                        'cacheFolder': './build/frontend/yarn-cache'
-                    ]).build().write()
+                    .substitutions(substitutions)
+                    .build().write()
         }
     }
 }
