@@ -5,3 +5,5 @@ yarn-offline-mirror "${offlineCachePath}"
 yarn-offline-mirror-pruning true
 cache-folder "${cacheFolder}"
 disable-self-update-check true
+${ httpProxy ?: ''}
+${ httpsProxy ?: ''}
