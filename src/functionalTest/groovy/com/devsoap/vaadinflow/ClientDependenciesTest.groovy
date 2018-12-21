@@ -268,6 +268,55 @@ class ClientDependenciesTest extends FunctionalTest {
             polymerJson.text.contains('templates/hello.html')
     }
 
+    void 'inter-template import paths are validated correctly'() {
+        setup:
+            run 'vaadinCreateProject'
+            buildFile << '''
+                vaadin.productionMode = true
+
+                repositories {
+                    vaadin.repositories()
+                }
+
+                dependencies {
+                  implementation vaadin.bom()
+                  implementation vaadin.core()
+                  implementation vaadin.servletApi()
+                }
+            '''.stripIndent()
+
+            File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
+            File templates = Paths.get(webapp.absolutePath, 'frontend', 'templates').toFile()
+
+            File viewsFolder = new File(templates, "views")
+            viewsFolder.mkdirs()
+
+            File componentsFolder = new File(templates, 'components')
+            componentsFolder.mkdirs()
+
+            File componentTemplate = new File(componentsFolder, 'component.html')
+            componentTemplate.text = '''
+                <link rel="import" href="../../bower_components/polymer/polymer-element.html">
+            '''.stripIndent()
+
+            File viewTemplate = new File(viewsFolder, 'view.html')
+            viewTemplate.text = """
+                <link rel="import" href="../../bower_components/polymer/polymer-element.html">
+                <link rel="import" href="../components/$componentTemplate.name">
+            """.stripIndent()
+
+            File rootTemplate = new File(templates, 'root.html')
+            rootTemplate.text = """
+                <link rel="import" href="../bower_components/polymer/polymer-element.html">
+                <link rel="import" href="./components/$componentTemplate.name">
+                <link rel="import" href="./views/$viewTemplate.name">
+            """.stripIndent()
+        when:
+            BuildResult result = run('vaadinTranspileDependencies')
+        then:
+            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
+    }
+
     void 'exclude specific imports from bundle'() {
         setup:
             buildFile << '''
@@ -288,6 +337,9 @@ class ClientDependenciesTest extends FunctionalTest {
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
     }
+
+
+
 
     private static boolean bowerComponentExists(File frontend, String component) {
         File componentFile = Paths.get(frontend.canonicalPath, 'bower_components', component).toFile()
