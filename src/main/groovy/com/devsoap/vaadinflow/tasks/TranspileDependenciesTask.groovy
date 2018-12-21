@@ -35,6 +35,7 @@ import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.hash.HashUtil
 
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.logging.Logger
 import java.util.regex.Matcher
@@ -183,22 +184,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
             LOGGER.info('Validating html templates ...')
             File templatesTargetDir = new File(workingDir, TEMPLATES)
-            Logger logger = LOGGER
-            project.fileTree(templatesTargetDir).each { File template ->
-                template.text.findAll('.*rel="import".*href="(.*)".*').collect {
-                    Matcher matcher = (it =~ /href=\"(.*)\"/)
-                    matcher ? matcher.group(1) : null
-                }.each { String importPath ->
-                   File importFile =  new File(templatesTargetDir, importPath)
-                   if (!importFile.exists()) {
-                       logger.severe("${workingDir.relativePath(template)}: ${project.relativePath(importFile)}" +
-                               ' not found on filesystem!')
-                       throw new GradleException(
-                                "Imported file '$importFile' in " +
-                                "${workingDir.relativePath(template)} does not exist!")
-                   }
-                }
-            }
+            validateImports(templatesTargetDir)
         }
 
         LOGGER.info('Searching for HTML imports...')
@@ -388,6 +374,29 @@ class TranspileDependenciesTask extends DefaultTask {
                     writer.write("<script src='$path'></script>\n")
                 } else {
                     writer.write("<link rel='import' href='$path' >\n")
+                }
+            }
+        }
+    }
+
+    private void validateImports(File templatesTargetDir) {
+        Logger logger = LOGGER
+        project.fileTree(templatesTargetDir).each { File template ->
+            template.text.findAll('.*rel="import".*href="(.*)".*').collect {
+                Matcher matcher = (it =~ /href=\"(.*)\"/)
+                matcher ? matcher.group(1) : null
+            }.each { String importPath ->
+                Path templatePath = Paths.get(template.canonicalPath)
+                Path templateFolder = templatePath.parent
+                Path relativePath = Paths.get(importPath)
+                Path resolvedPath = templateFolder.resolve(relativePath)
+                File importFile =  resolvedPath.toFile()
+                if (!importFile.exists()) {
+                    logger.severe("${workingDir.relativePath(template)}: ${project.relativePath(importFile)}" +
+                            ' not found on filesystem!')
+                    throw new GradleException(
+                            "Imported file '$importFile' in " +
+                                    "${workingDir.relativePath(template)} does not exist!")
                 }
             }
         }

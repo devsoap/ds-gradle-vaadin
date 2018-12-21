@@ -288,7 +288,7 @@ class ClientDependenciesTest extends FunctionalTest {
             File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
             File templates = Paths.get(webapp.absolutePath, 'frontend', 'templates').toFile()
 
-            File viewsFolder = new File(templates, "views")
+            File viewsFolder = new File(templates, 'views')
             viewsFolder.mkdirs()
 
             File componentsFolder = new File(templates, 'components')
@@ -337,9 +337,6 @@ class ClientDependenciesTest extends FunctionalTest {
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
     }
-
-
-
 
     private static boolean bowerComponentExists(File frontend, String component) {
         File componentFile = Paths.get(frontend.canonicalPath, 'bower_components', component).toFile()
