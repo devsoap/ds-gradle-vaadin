@@ -272,7 +272,7 @@ class ClientDependenciesTest extends FunctionalTest {
         setup:
             buildFile << '''
                    vaadinTranspileDependencies {
-                       bundleExcludes ['https://www.gstatic.com/charts/loader.js']
+                       bundleExcludes = ['https://www.gstatic.com/charts/loader.js']
                    }
 
                    vaadin.productionMode = true
