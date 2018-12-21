@@ -149,10 +149,9 @@ class VaadinYarnRunner extends YarnExecRunner {
      */
     void polymerBundle(File manifestJson, File htmlManifest, List<String> excludes=[]) {
         generateYarnRc()
-        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, RUN_COMMAND, POLYMER_BUNDLER_COMMAND,
-                    '--inline-scripts',
-                    "--manifest-out=${manifestJson.canonicalPath}"]
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, RUN_COMMAND, POLYMER_BUNDLER_COMMAND]
         arguments.addAll(excludes.collect { "--exclude \"$it\"" })
+        arguments.addAll( ['--inline-scripts', "--manifest-out=${manifestJson.canonicalPath}"])
         arguments.add(htmlManifest.name)
         execute().assertNormalExitValue()
     }
