@@ -113,6 +113,16 @@ class SpringBootAction extends PluginAction {
         jar.from(webappGen) {
             it.into(SPRING_BOOT_RESOURCES_PATH)
         }
+
+        // Copy static frontend files into compilation result
+        VaadinFlowPluginExtension vaadin = task.project.extensions.getByType(VaadinFlowPluginExtension)
+        if (vaadin.productionMode) {
+            File frontend = new File(webappDir, 'frontend')
+            if (frontend.exists()) {
+                jar.from(frontend) { it.into(SPRING_BOOT_RESOURCES_PATH + '/frontend-es5') }
+                jar.from(frontend) { it.into(SPRING_BOOT_RESOURCES_PATH + '/frontend-es6') }
+            }
+        }
     }
 
     private static void configureBootWar(Task task) {
