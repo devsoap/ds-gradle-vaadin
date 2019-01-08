@@ -66,12 +66,13 @@ class CreateProjectTask extends DefaultTask {
         }
 
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-
+        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
         VaadinProject vaadinProject = new VaadinProject(
                 applicationName: applicationName ?: project.name.capitalize(),
                 applicationPackage : applicationPackage ?: "com.example.${project.name.toLowerCase()}",
                 applicationBaseTheme :applicationBaseTheme ?: LUMO,
                 rootDirectory : project.projectDir,
+                webappDirectory: assembleTask.webappDir,
                 productionMode : vaadin.productionMode,
                 projectType: ProjectType.get(project),
                 applicationType: ApplicationType.get(project)

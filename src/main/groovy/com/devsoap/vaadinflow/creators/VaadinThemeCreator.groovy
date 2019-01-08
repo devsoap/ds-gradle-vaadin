@@ -46,7 +46,6 @@ class VaadinThemeCreator {
     }
 
     private static File getStylesDir(VaadinProject vaadinProject) {
-        Paths.get(vaadinProject.rootDirectory.canonicalPath,
-                'src', 'main', 'webapp', 'frontend', 'styles').toFile()
+        Paths.get(vaadinProject.webappDirectory.canonicalPath, 'frontend', 'styles').toFile()
     }
 }

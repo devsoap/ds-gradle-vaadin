@@ -26,6 +26,8 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
+import java.nio.file.Paths
+
 /**
  * TPL to HTML converter task for frontend web templates
  *
@@ -37,11 +39,14 @@ class ConvertGroovyTemplatesToHTML extends DefaultTask {
 
     static final String NAME = 'vaadinConvertGroovyTemplatesToHtml'
 
-    static final String TEMPLATES_PATH = 'src/main/webapp/frontend/templates'
     static final String TEMPLATES_TARGET_PATH = 'webapp-gen/frontend/templates'
 
     @InputFiles
-    final FileTree templateFiles = project.fileTree(TEMPLATES_PATH).matching { it.include( '**/*.tpl') }
+    final Closure<FileTree> templateFiles = {
+        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+        File templatesPath = Paths.get(assembleTask.webappDir.canonicalPath, 'frontend', 'templates').toFile()
+        project.fileTree(templatesPath).matching { it.include( '**/*.tpl') }
+    }
 
     @OutputDirectory
     final File targetPath = new File(project.buildDir, TEMPLATES_TARGET_PATH)
@@ -56,7 +61,7 @@ class ConvertGroovyTemplatesToHTML extends DefaultTask {
     void run() {
         TemplateConfiguration config = new TemplateConfiguration()
         MarkupTemplateEngine engine = new MarkupTemplateEngine(config)
-        templateFiles.each {
+        templateFiles.call().each {
             LOGGER.info("Converting $it.name Groovy template into HTML")
             targetPath.mkdirs()
             File htmlFile = new File(targetPath, "${ it.name - '.tpl' }.html" )

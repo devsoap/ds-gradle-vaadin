@@ -39,10 +39,6 @@ class VaadinClientDependenciesExtension {
 
     static final String FRONTEND_BUILD_DIR = 'build/frontend'
 
-    static final String WEBAPP_DIR = 'src/main/webapp'
-
-    static final String FRONTEND_DIR = "$WEBAPP_DIR/frontend"
-
     private final Map<String, String> yarnDependencies = [:]
 
     private final Map<String, String> bowerDependencies = [:]

@@ -55,11 +55,13 @@ class CreateWebTemplateTask extends DefaultTask {
         templatePackage = templatePackage ?: 'com.example.' + project.name.toLowerCase()
         templateTag = templateTag ?: templateName.replaceAll(/\B[A-Z]/) { '-' + it }.toLowerCase()
 
+        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
         componentCreator.generate new WebTemplate(
                 componentName : templateName,
                 componentPackage : templatePackage,
                 componentTag : templateTag,
                 rootDirectory : project.projectDir,
+                webappDirectory: assembleTask.webappDir,
                 projectType: ProjectType.get(project)
         )
     }

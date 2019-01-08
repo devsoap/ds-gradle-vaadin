@@ -20,6 +20,9 @@ import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.file.CopySpec
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.TaskAction
 
@@ -35,16 +38,19 @@ class AssembleClientDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinAssembleClient'
 
-    final File frontendDir = project.file(VaadinClientDependenciesExtension.FRONTEND_DIR)
+    private static final String FRONTEND = 'frontend'
+
     final File frontendBuildDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final File sourceDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es5')
     final File sourceDirEs6 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es6')
 
     final File webAppGenDir = new File(project.buildDir, 'webapp-gen')
-    final File webAppGenFrontendDir = new File(webAppGenDir, 'frontend')
+    final File webAppGenFrontendDir = new File(webAppGenDir, FRONTEND)
 
     final File targetDirEs5 = new File(webAppGenDir, 'frontend-es5')
     final File targetDirEs6 = new File(webAppGenDir, 'frontend-es6')
+
+    final RegularFileProperty webappDir = project.objects.fileProperty()
 
     /**
      * Assembles the built client artifacts into the webapp frontend directories
@@ -109,6 +115,7 @@ class AssembleClientDependenciesTask extends DefaultTask {
                 'templates/**'
         ]
 
+        File frontendDir = new File(getWebappDir(), FRONTEND)
         VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
         if (client.compileFromSources) {
             if (!sourceDirEs5.exists()) {
@@ -118,18 +125,42 @@ class AssembleClientDependenciesTask extends DefaultTask {
                 throw new GradleException("ES6 compilation result does not exist in $sourceDirEs6")
             }
             frontendIncludes <<  'vaadin-flow-bundle-manifest.json'
-            project.with {
-                copy { spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs5) }
-                copy { spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs5) }
-                copy { spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
 
-                copy { spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs6) }
-                copy { spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs6) }
-                copy { spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
+            project.with {
+                copy { CopySpec spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs5) }
+                copy { CopySpec spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs5) }
+                copy { CopySpec spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
+
+                copy { CopySpec spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs6) }
+                copy { CopySpec spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs6) }
+                copy { CopySpec spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
             }
         } else {
-            project.copy { spec -> spec.from(frontendDir).include(frontendIncludes).into(webAppGenFrontendDir) }
-            project.copy { spec -> spec.from(frontendBuildDir).exclude(excludes).into(webAppGenFrontendDir) }
+            project.with {
+                copy { CopySpec spec -> spec.from(frontendDir).include(frontendIncludes).into(webAppGenFrontendDir) }
+                copy { CopySpec spec -> spec.from(frontendBuildDir).exclude(excludes).into(webAppGenFrontendDir) }
+            }
         }
+    }
+
+    /**
+     * Get the webapp directory which contains the frontend directory
+     */
+    File getWebappDir() {
+        webappDir.getOrElse(null)?.asFile ?: project.file('src/main/webapp')
+    }
+
+    /**
+     * Set the webapp directory which contains the frontend directory
+     */
+    void setWebappDir(String directory) {
+        webappDir.set(project.file(directory))
+    }
+
+    /**
+     * Has the webapp directory been set by the user?
+     */
+    boolean isWebappDirSet() {
+        webappDir.present
     }
 }

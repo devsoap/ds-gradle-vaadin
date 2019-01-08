@@ -89,9 +89,8 @@ class TranspileDependenciesTask extends DefaultTask {
     @Optional
     @InputDirectory
     final Closure<File> webTemplatesDir = {
-       Paths.get(project.projectDir.canonicalPath,
-               'src', 'main', 'webapp', FRONTEND, TEMPLATES)
-               .toFile().with { it.exists() ? it : null }
+        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+        Paths.get(assembleTask.webappDir.canonicalPath, FRONTEND, TEMPLATES).toFile().with { it.exists() ? it : null }
     }
 
     @InputDirectory

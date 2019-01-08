@@ -48,12 +48,34 @@ class WarArchiveTest extends FunctionalTest {
             files[1].name == "frontend/styles/${testProjectDir.root.name}-theme.html"
     }
 
+    void 'Styles are included when using custom webapp directory'() {
+        setup:
+            extraPlugins = ['war':'']
+            buildFile << '''
+                vaadinAssembleClient {
+                    webappDir 'src'
+                }
+                vaadin.autoconfigure()
+            '''.stripIndent()
+        when:
+            run CreateProjectTask.NAME
+            BuildResult result = run 'war'
+            List<ZipEntry> files = getFilesInFolder('frontend/styles')
+        then:
+            result.task(':war').outcome == TaskOutcome.SUCCESS
+            files.size() == 2
+            files[0].name == "frontend/styles/${testProjectDir.root.name}-theme.css"
+            files[1].name == "frontend/styles/${testProjectDir.root.name}-theme.html"
+    }
+
     private ZipFile getWarFile() {
         File libsDir = Paths.get(testProjectDir.root.canonicalPath, 'build', 'libs').toFile()
         new ZipFile(new File(libsDir, testProjectDir.root.name + '.war'))
     }
 
     private List<ZipEntry> getFilesInFolder(String folder) {
-        warFile.entries().findAll { ZipEntry entry -> !entry.directory && entry.name.startsWith(folder) }
+        warFile.entries()
+                .findAll { ZipEntry entry -> !entry.directory && entry.name.startsWith(folder) }
+                .sort { ZipEntry a, ZipEntry b -> a.name <=> b.name }
     }
 }

@@ -15,18 +15,18 @@
  */
 package com.devsoap.vaadinflow.actions
 
-import static com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension.WEBAPP_DIR
-
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.file.CopySpec
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.War
+
 import java.nio.file.Paths
 
 /**
@@ -51,24 +51,31 @@ class SpringBootAction extends PluginAction {
     protected void execute(Project project) {
         super.execute(project)
 
-        File webappDir = Paths.get(project.projectDir.canonicalPath, WEBAPP_DIR).toFile()
-        File webappGen = Paths.get(project.buildDir.canonicalPath, WEBAPP_GEN).toFile()
-
-        // Configure source set to include web resources
-        JavaPluginConvention javaPlugin =  project.convention.getPlugin(JavaPluginConvention)
-        SourceSet mainSourceSet = javaPlugin.sourceSets.main
-        mainSourceSet.resources.srcDir(webappDir)
-        mainSourceSet.resources.srcDir(webappGen)
-
         // Configure tasks
         project.tasks.with {
             findByName(BOOT_JAR_TASK)?.dependsOn(AssembleClientDependenciesTask.NAME)
             findByName(BOOT_WAR_TASK)?.dependsOn(AssembleClientDependenciesTask.NAME)
             findByName(BOOT_RUN_TASK)?.with {
                 dependsOn(AssembleClientDependenciesTask.NAME)
+                JavaPluginConvention javaPlugin =  project.convention.getPlugin(JavaPluginConvention)
+                SourceSet mainSourceSet = javaPlugin.sourceSets.main
                 sourceResources(mainSourceSet)
             }
         }
+    }
+
+    @Override
+    protected void executeAfterEvaluate(Project project) {
+        super.executeAfterEvaluate(project)
+
+        // Configure source set to include web resources
+        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+        JavaPluginConvention javaPlugin =  project.convention.getPlugin(JavaPluginConvention)
+        SourceSet mainSourceSet = javaPlugin.sourceSets.main
+        mainSourceSet.resources.srcDir(assembleTask.webappDir)
+
+        File webappGen = Paths.get(project.buildDir.canonicalPath, WEBAPP_GEN).toFile()
+        mainSourceSet.resources.srcDir(webappGen)
     }
 
     @Override
@@ -103,9 +110,10 @@ class SpringBootAction extends PluginAction {
         Project project = task.project
 
         // Include web-app dirs
-        File webappDir = Paths.get(project.projectDir.canonicalPath, WEBAPP_DIR).toFile()
-        jar.from(webappDir) {
-            it.into(SPRING_BOOT_RESOURCES_PATH)
+        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+        File webappDir = assembleTask.webappDir
+        jar.from(webappDir) { CopySpec spec ->
+            spec.into(SPRING_BOOT_RESOURCES_PATH)
         }
 
         // Include web-app gen
