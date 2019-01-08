@@ -31,6 +31,8 @@ class VaadinProject {
 
     File rootDirectory
 
+    File webappDirectory
+
     boolean productionMode
 
     ProjectType projectType

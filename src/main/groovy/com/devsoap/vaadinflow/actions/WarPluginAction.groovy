@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.actions
 
+import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.War
 
@@ -29,10 +30,14 @@ class WarPluginAction extends PluginAction {
     final String pluginId = 'war'
 
     @Override
-    protected void execute(Project project) {
-        super.execute(project)
+    protected void executeAfterEvaluate(Project project) {
+        super.executeAfterEvaluate(project)
         project.tasks.withType(War) { War task ->
             task.from(new File(project.buildDir, 'webapp-gen'))
+            AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+            if (assembleTask.webappDirSet) {
+                task.from(assembleTask.webappDir)
+            }
         }
     }
 }

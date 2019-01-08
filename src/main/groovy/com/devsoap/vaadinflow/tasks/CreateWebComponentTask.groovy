@@ -130,6 +130,7 @@ class CreateWebComponentTask extends DefaultTask {
             client.bower(dep)
         }
 
+        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
         webComponentCreator.generate new WebComponent(
                 componentName : componentName,
                 componentPackage : componentPackage,
@@ -137,6 +138,7 @@ class CreateWebComponentTask extends DefaultTask {
                 dependencyPackage : dependencyPackage,
                 dependencyHtml : dependencyHtml,
                 rootDirectory : project.projectDir,
+                webappDirectory: assembleTask.webappDir,
                 packageManager : componentDependency.startsWith('yarn') ? YARN : BOWER,
                 projectType: ProjectType.get(project)
         )

@@ -24,4 +24,6 @@ package com.devsoap.vaadinflow.models
 trait TemplateModel {
 
     File rootDirectory
+
+    File webappDirectory
 }

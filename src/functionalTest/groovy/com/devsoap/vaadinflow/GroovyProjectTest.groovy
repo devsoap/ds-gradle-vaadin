@@ -114,4 +114,38 @@ class GroovyProjectTest extends FunctionalTest {
             File polymerJson = new File(frontend, 'polymer.json')
             polymerJson.text.contains('templates/groovytemplate.html')
     }
+
+    void 'Groovy templates in custom webapp dir'() {
+        setup:
+            extraPlugins = ['groovy':'']
+
+            buildFile << '''
+                vaadinAssembleClient {
+                    webappDir 'src'
+                }
+            '''.stripIndent()
+
+            run 'vaadinCreateProject'
+            run 'vaadinCreateWebTemplate', '--name', 'groovytemplate'
+
+            buildFile << '''
+                vaadin.productionMode = true
+
+                repositories {
+                    vaadin.repositories()
+                }
+
+                dependencies {
+                  implementation vaadin.bom()
+                  implementation vaadin.core()
+                  implementation vaadin.servletApi()
+                }
+            '''.stripIndent()
+        when:
+            run('vaadinTranspileDependencies')
+        then:
+            File frontend = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'frontend').toFile()
+            File polymerJson = new File(frontend, 'polymer.json')
+            polymerJson.text.contains('templates/groovytemplate.html')
+    }
 }

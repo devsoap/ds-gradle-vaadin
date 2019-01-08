@@ -89,7 +89,7 @@ class ComponentCreator {
         ]).build().write()
 
         TemplateWriter.builder()
-                .targetDir(getTemplatesDir(root))
+                .targetDir(getTemplatesDir(webTemplate.webappDirectory))
                 .templateFileName("WebTemplate.$templateExtension")
                 .targetFileName("${componentClassName}.$templateExtension")
                 .substitutions([
@@ -153,7 +153,7 @@ class ComponentCreator {
         Paths.get(root.canonicalPath,  SRC, MAIN, projectType.sourceDir).toFile()
     }
 
-    private static File getTemplatesDir(File root) {
-        Paths.get(root.canonicalPath, SRC, MAIN, 'webapp', 'frontend', 'templates').toFile()
+    private static File getTemplatesDir(File webappDir) {
+        Paths.get(webappDir.canonicalPath, 'frontend', 'templates').toFile()
     }
 }
