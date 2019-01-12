@@ -370,6 +370,28 @@ class ClientDependenciesTest extends FunctionalTest {
             polymerJson.text.contains('templates/hello.html')
     }
 
+    void 'bundle caches are cleaned up'() {
+        setup:
+            buildFile << '''
+                       vaadin.productionMode = true
+                       vaadin.autoconfigure()
+                '''.stripIndent()
+
+            run 'vaadinCreateProject'
+            run 'vaadinAssembleClient'
+            buildFile << '''
+                vaadinClientDependencies {
+                    yarn '@polymer/paper-slider:0.0.3\'
+                }
+            '''.stripIndent()
+        when:
+            run 'vaadinAssembleClient'
+        then:
+            File frontend = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'frontend').toFile()
+            File[] files = frontend.listFiles({ dir, name -> name.endsWith '.cache.html' } as FilenameFilter)
+            files.size() == 1
+    }
+
     private static boolean bowerComponentExists(File frontend, String component) {
         File componentFile = Paths.get(frontend.canonicalPath, 'bower_components', component).toFile()
         File componentHTMLFile = new File(componentFile, "${component}.html")
