@@ -165,23 +165,23 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @TaskAction
     void run() {
-        LOGGER.info('Copying unpacked static resources')
+        LOGGER.info('Copying unpacked static resources...')
         project.copy { spec -> spec.from(unpackedStaticResources).into(workingDir) }
 
-        LOGGER.info( 'Copying generated styles....')
+        LOGGER.info( 'Copying generated styles...')
         project.copy { spec -> spec.from(webappGenFrontendDir).include('**/styles/**').into(workingDir) }
 
-        LOGGER.info( 'Copying generated templates....')
+        LOGGER.info( 'Copying generated templates...')
         project.copy { spec -> spec.from(webappGenFrontendDir).include(TEMPLATES_GLOB).into(workingDir) }
 
         File templatesDir = webTemplatesDir.call()
         if (templatesDir) {
-            LOGGER.info( 'Copying html templates ...')
+            LOGGER.info( 'Copying html templates...')
             project.copy { spec ->
                 spec.from(templatesDir.parentFile).include(TEMPLATES_GLOB).into(workingDir)
             }
 
-            LOGGER.info('Validating html templates ...')
+            LOGGER.info('Validating html templates...')
             File templatesTargetDir = new File(workingDir, TEMPLATES)
             validateImports(templatesTargetDir)
         }
@@ -363,6 +363,12 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private void initHtml(File html, List<String> imports) {
+        workingDir.listFiles({ File dir, String name -> name.endsWith '.cache.html' } as FilenameFilter).each {
+            if (html.canonicalPath != it.canonicalPath) {
+                it.delete()
+            }
+        }
+
         if (!html.exists()) {
             html.createNewFile()
         }
