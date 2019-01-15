@@ -1,7 +1,7 @@
 language: groovy
-jdk:
-  - oraclejdk8
-script: "./gradlew --stacktrace --info --parallel check -PTEST_CATEGORY=$TEST_CATEGORY"
+jdk: openjdk11
+install: ./gradlew --version
+script: "./gradlew --continue --stacktrace --info --parallel check -PTEST_CATEGORY=$TEST_CATEGORY"
 env:
   - TEST_CATEGORY=UncategorizedTests
   - TEST_CATEGORY=ClientTests
