@@ -392,6 +392,27 @@ class ClientDependenciesTest extends FunctionalTest {
             files.size() == 1
     }
 
+    void 'custom parameters in yarnrc'() {
+        setup:
+            buildFile << '''
+               vaadin.productionMode = true
+               vaadin.autoconfigure()
+
+               vaadinClientDependencies {
+                    customYarnProperties = ['strict-ssl' : false ]
+               }
+            '''.stripIndent()
+
+            run 'vaadinCreateProject'
+        when:
+            run 'vaadinInstallYarnDependencies'
+        then:
+            File frontend = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'frontend').toFile()
+            File yarnrc = new File(frontend, '.yarnrc')
+            yarnrc.text.contains('strict-ssl false')
+
+    }
+
     private static boolean bowerComponentExists(File frontend, String component) {
         File componentFile = Paths.get(frontend.canonicalPath, 'bower_components', component).toFile()
         File componentHTMLFile = new File(componentFile, "${component}.html")

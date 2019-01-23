@@ -170,22 +170,27 @@ class VaadinYarnRunner extends YarnExecRunner {
         File yarnrc = new File(workingDir as File, YARN_RC_FILENAME)
         if (!yarnrc.exists()) {
 
-            Map<String, String> substitutions = [:]
-            substitutions['offlineCachePath'] = vaadinClient.offlineCachePath
-            substitutions['cacheFolder'] = './build/frontend/yarn-cache'
+            Map<String, Object> params = [:]
+            params['lastUpdateCheck'] = 0
+            params['cache-folder'] = './build/frontend/yarn-cache'
+            params['yarn-offline-mirror'] = vaadinClient.offlineCachePath
+            params['yarn-offline-mirror-pruning'] = true
+            params['disable-self-update-check'] = true
 
             if (HttpUtils.httpsProxy) {
-                substitutions['httpsProxy'] = "https-proxy \"${HttpUtils.httpsProxy}\"".toString()
+                params['https-proxy'] = HttpUtils.httpsProxy
             }
 
             if (HttpUtils.httpProxy) {
-                substitutions['httpProxy'] = "proxy \"${HttpUtils.httpProxy}\"".toString()
+                params['proxy'] = HttpUtils.httpProxy
             }
+
+            params.putAll(vaadinClient.customYarnProperties)
 
             TemplateWriter.builder()
                     .targetDir(workingDir as File)
                     .templateFileName(YARN_RC_FILENAME)
-                    .substitutions(substitutions)
+                    .substitutions(['parameters' : params])
                     .build().write()
         }
     }

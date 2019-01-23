@@ -49,6 +49,8 @@ class VaadinClientDependenciesExtension {
 
     private final Property<String> offlineCachePath
 
+    private final Property<Map> customYarnProperties
+
     /**
      * Creates the extension
      *
@@ -59,6 +61,7 @@ class VaadinClientDependenciesExtension {
         this.project = project
         compileFromSources = project.objects.property(Boolean)
         offlineCachePath = project.objects.property(String)
+        customYarnProperties = project.objects.property(Map)
 
         File mirrorFolder = Paths.get(project.rootDir.absolutePath,
                 '.gradle', 'yarn', 'yarn-offline-mirror').toFile()
@@ -194,5 +197,19 @@ class VaadinClientDependenciesExtension {
      */
     void setOfflineCachePath(File file) {
         offlineCachePath.set(file.canonicalPath)
+    }
+
+    /**
+     * gets custom properties in .yarnrc
+     */
+    Map<String, Object> getCustomYarnProperties() {
+        customYarnProperties.getOrElse([:])
+    }
+
+    /**
+     * Sets custom properties in .yarnrc
+     */
+    void setCustomYarnProperties(Map<String, Object> properties) {
+        customYarnProperties.set(properties)
     }
 }
