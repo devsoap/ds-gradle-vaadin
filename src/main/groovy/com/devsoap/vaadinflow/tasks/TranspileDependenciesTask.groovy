@@ -37,6 +37,7 @@ import org.gradle.internal.hash.HashUtil
 
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.function.Predicate
 import java.util.logging.Logger
 import java.util.regex.Matcher
 
@@ -73,6 +74,8 @@ class TranspileDependenciesTask extends DefaultTask {
     final File webappGenFrontendDir = new File(webappGenDir, FRONTEND)
 
     private final ListProperty<String> bundleExcludes = project.objects.listProperty(String)
+
+    private final ListProperty<String> importExcludes = project.objects.listProperty(String)
 
     @Optional
     @InputDirectory
@@ -194,6 +197,8 @@ class TranspileDependenciesTask extends DefaultTask {
         // Replace Windows path back-slashes with forward slashes
         imports*.replace('\\', PATH_SEPARATOR)
 
+        getImportExcludes().each { filter -> imports.removeIf { it.matches(filter) } }
+
         File htmlFile = html.call()
         LOGGER.info("Creating ${htmlFile.name}...")
         initHtml(htmlFile, imports)
@@ -235,6 +240,22 @@ class TranspileDependenciesTask extends DefaultTask {
     @Incubating
     List<String> getBundleExcludes() {
         bundleExcludes.getOrElse([])
+    }
+
+    /**
+     * Get import exclusions
+     */
+    @Incubating
+    List<String> getImportExcludes() {
+        importExcludes.getOrElse([])
+    }
+
+    /**
+     * Get import exclusions
+     */
+    @Incubating
+    void setImportExcludes(List<String> excludes) {
+        importExcludes.set(excludes)
     }
 
     private static List<String> initModuleSources(List<String> imports) {
