@@ -413,6 +413,30 @@ class ClientDependenciesTest extends FunctionalTest {
 
     }
 
+    void 'custom filter html imports'() {
+        setup:
+            buildFile << '''
+              vaadin.productionMode = true
+              vaadin.autoconfigure()
+
+              vaadinTranspileDependencies {
+                importExcludes = [
+                    '.*/theme/material/.*',
+                    '.*/vaadin-material-styles/.*'
+                ]
+              }
+            '''.stripIndent()
+
+            run 'vaadinCreateProject'
+        when:
+            run 'vaadinTranspileDependencies'
+        then:
+            File frontend = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'frontend').toFile()
+            File polymerjson = new File(frontend, 'polymer.json')
+            !polymerjson.text.contains('/theme/material/')
+            !polymerjson.text.contains('/vaadin-material-styles/')
+    }
+
     private static boolean bowerComponentExists(File frontend, String component) {
         File componentFile = Paths.get(frontend.canonicalPath, 'bower_components', component).toFile()
         File componentHTMLFile = new File(componentFile, "${component}.html")

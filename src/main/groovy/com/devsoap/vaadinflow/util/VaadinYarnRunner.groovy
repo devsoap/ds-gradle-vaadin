@@ -154,6 +154,7 @@ class VaadinYarnRunner extends YarnExecRunner {
         arguments.addAll( ['--inline-scripts', "--manifest-out=${manifestJson.canonicalPath}"])
         arguments.add(htmlManifest.name)
         execute().assertNormalExitValue()
+        manifestJson.text = JsonOutput.prettyPrint(manifestJson.text)
     }
 
     /**
