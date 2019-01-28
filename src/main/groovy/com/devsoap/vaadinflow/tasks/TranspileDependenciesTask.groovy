@@ -16,6 +16,7 @@
 package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.PolymerBuild
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonOutput
@@ -197,6 +198,24 @@ class TranspileDependenciesTask extends DefaultTask {
         // Replace Windows path back-slashes with forward slashes
         imports*.replace('\\', PATH_SEPARATOR)
 
+        // Remove all other themes than the selected one
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        String baseTheme = vaadin.baseTheme
+
+        logger.info("Using ${baseTheme.capitalize()} as base theme...")
+        List<String> themeImports = imports.findAll {
+            it.matches('.*/theme/.*') || it.matches('.*vaadin-.*-styles.*')
+        }
+
+        logger.info("Filtering ${themeImports.size()} theme imports...")
+        imports.removeAll(themeImports)
+        themeImports.retainAll {
+            it.matches(".*/theme/$baseTheme/.*") || it.matches(".*/vaadin-$baseTheme-styles.*")
+        }
+        logger.info("Found ${themeImports.size()} theme imports")
+        imports.addAll(themeImports)
+
+        // Remove custom excludes
         getImportExcludes().each { filter -> imports.removeIf { it.matches(filter) } }
 
         File htmlFile = html.call()

@@ -43,10 +43,12 @@ class VaadinFlowPluginExtension {
     private static final String COMPILE = 'compile'
     private static final String BOM_ARTIFACT_NAME = 'bom'
     public static final String VAADIN_VERSION_PROPERTY = 'vaadinVersion'
+    public static final String LUMO = 'lumo'
 
     private final Property<String> version
     private final Property<Boolean> productionMode
     private final Property<Boolean> submitStatistics
+    private final Property<String> baseTheme
 
     private final DependencyHandler dependencyHandler
     private final RepositoryHandler repositoryHandler
@@ -63,6 +65,13 @@ class VaadinFlowPluginExtension {
         version = project.objects.property(String)
         productionMode = project.objects.property(Boolean)
         submitStatistics = project.objects.property(Boolean)
+        baseTheme = project.objects.property(String)
+
+        project.afterEvaluate {
+            if (baseTheme.isEmpty()) {
+                project.logger.warn('No base theme is set, rendering views might fail!')
+            }
+        }
     }
 
     /**
@@ -133,6 +142,20 @@ class VaadinFlowPluginExtension {
     }
 
     /**
+     * Retrieve the base theme for this application
+     */
+    String getBaseTheme() {
+        baseTheme.getOrElse(LUMO)
+    }
+
+    /**
+     * Set the base theme for this application
+     */
+    void setBaseTheme(String theme) {
+        baseTheme.set(theme)
+    }
+
+    /**
      * Autoconfigures repositories and dependencies
      */
     void autoconfigure() {
@@ -141,7 +164,7 @@ class VaadinFlowPluginExtension {
         repositoryHandler.add(snapshots())
         dependencyHandler.add(COMPILE, bom())
         dependencyHandler.add(COMPILE, platform())
-
+        dependencyHandler.add(COMPILE, lumoTheme())
         dependencyHandler.add('compileOnly', servletApi())
 
         DependencyHandler dh = dependencyHandler // Because Groovy bug hiding this private field from closure
@@ -209,14 +232,31 @@ class VaadinFlowPluginExtension {
      * Adds the Vaadin platform dependency which contains all dependencies both commercial and open source
      */
     Dependency platform() {
-        dependency(VAADIN)
+        dependency(VAADIN, !bomApplied, excludeThemesConfiguration)
     }
 
     /**
      * Add the core dependency with the open source components
      */
     Dependency core() {
-        dependency('core')
+        dependency('core', !bomApplied, excludeThemesConfiguration)
+    }
+
+    /**
+     * The Lumo Vaadin theme
+     */
+    Dependency lumoTheme() {
+        baseTheme.set(LUMO)
+        dependency('lumo-theme')
+    }
+
+    /**
+     * The material theme
+     * @return
+     */
+    Dependency materialTheme() {
+        baseTheme.set('material')
+        dependency('material-theme')
     }
 
     /**
@@ -286,7 +326,7 @@ class VaadinFlowPluginExtension {
      * @return
      *      the dependency
      */
-    Dependency dependency(String name, boolean useVersion=!bomApplied) {
+    Dependency dependency(String name, boolean useVersion=!bomApplied, Closure<Void> config = { } ) {
         List<String> dependency = [GROUP]
 
         if (name == VAADIN) {
@@ -306,7 +346,7 @@ class VaadinFlowPluginExtension {
         }
 
         dependencyApplied = true
-        dependencyHandler.create(dependency.join(COLON))
+        dependencyHandler.create(dependency.join(COLON), config)
     }
 
     /**
@@ -322,5 +362,13 @@ class VaadinFlowPluginExtension {
             repository.name = name
             repository.url = url
         }
+    }
+
+    /**
+     * Provides a clusure that will exclude all Vaadin theme dependencies
+     */
+    private final Closure<Void> excludeThemesConfiguration = {
+        exclude group: GROUP, module: 'vaadin-material-theme'
+        exclude group: GROUP, module: 'vaadin-lumo-theme'
     }
 }

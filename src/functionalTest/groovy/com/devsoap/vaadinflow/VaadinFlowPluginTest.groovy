@@ -64,7 +64,9 @@ class VaadinFlowPluginTest extends FunctionalTest {
                     vaadin.prereleases()
                 }
                 dependencies {
+                    implementation vaadin.bom()
                     implementation vaadin.core()
+                    implementation vaadin.lumoTheme()
                     compileOnly vaadin.servletApi()
                 }
             '''.stripIndent()
@@ -84,7 +86,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
                     }
                     dependencies {
                         implementation vaadin.bom()
-                        implementation vaadin.dependency('lumo-theme', false)
+                        implementation vaadin.lumoTheme()
                         implementation vaadin.dependency('ordered-layout-flow', false)
                         implementation vaadin.dependency('button-flow', false)
                         implementation vaadin.dependency('core', false)
