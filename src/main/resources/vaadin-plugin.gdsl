@@ -40,12 +40,15 @@ contributor(vaadinCtx, {
         method name: 'slf4j', type: gradleDependencyType
         method name: 'disableStatistics', type: gradleDependencyType
         method name: 'groovy', type: gradleDependencyType
+        method name: 'lumoTheme', type: gradleDependencyType
+        method name: 'materialTheme', type: gradleDependencyType
 
     } else if(!enclosingMember()){
         method name: 'autoconfigure', type: Void.name, params: [:]
         property name: "version", type:  String.name
         property name: 'productionMode', type: Boolean.name
         property name: 'submitStatistics', type: Boolean.name
+        property name: 'baseTheme', type: String.name
     }
 })
 
@@ -57,6 +60,7 @@ contributor(closureCtx, {
         property name: "version", type: String.name
         property name: 'productionMode', type: Boolean.name
         property name: 'submitStatistics', type: Boolean.name
+        property name: 'baseTheme', type: String.name
     }
     if(enclosingCall('vaadinClientDependencies')) {
         property name: 'offlineCachePath', type: String.name

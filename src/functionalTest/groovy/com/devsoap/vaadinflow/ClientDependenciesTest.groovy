@@ -196,6 +196,7 @@ class ClientDependenciesTest extends FunctionalTest {
                 dependencies {
                   implementation vaadin.bom()
                   implementation vaadin.core()
+                  implementation vaadin.lumoTheme()
                   implementation vaadin.servletApi()
                 }
 
