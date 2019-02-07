@@ -393,7 +393,7 @@ class ClientDependenciesTest extends FunctionalTest {
             files.size() == 1
     }
 
-    void 'custom parameters in yarnrc'() {
+    void 'custom parameters in yarnrc and npmrc'() {
         setup:
             buildFile << '''
                vaadin.productionMode = true
@@ -401,6 +401,7 @@ class ClientDependenciesTest extends FunctionalTest {
 
                vaadinClientDependencies {
                     customYarnProperties = ['strict-ssl' : false ]
+                    customNpmProperties = ['strict-ssl' : false ]
                }
             '''.stripIndent()
 
@@ -411,7 +412,8 @@ class ClientDependenciesTest extends FunctionalTest {
             File frontend = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'frontend').toFile()
             File yarnrc = new File(frontend, '.yarnrc')
             yarnrc.text.contains('strict-ssl false')
-
+            File npmrc = new File(frontend, '.npmrc')
+            npmrc.text.contains('strict-ssl=false')
     }
 
     void 'custom filter html imports'() {

@@ -16,13 +16,15 @@
 package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.util.HttpUtils
+import com.devsoap.vaadinflow.util.TemplateWriter
 import com.devsoap.vaadinflow.util.Versions
 import com.moowork.gradle.node.NodeExtension
 import com.moowork.gradle.node.NodePlugin
+import com.moowork.gradle.node.yarn.YarnSetupTask
 import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.dsl.DependencyHandler
 
 /**
  * Action taken when the Node plugin is applied to a project
@@ -34,6 +36,8 @@ import org.gradle.api.artifacts.dsl.DependencyHandler
 class NodePluginAction extends PluginAction {
 
     final String pluginId = 'com.moowork.node'
+
+    private static final String NPM_RC_FILENAME = '.npmrc'
 
     @Override
     void apply(Project project) {
@@ -61,5 +65,40 @@ class NodePluginAction extends PluginAction {
         nodeExtension.npmVersion = Versions.rawVersion('npm.version')
         nodeExtension.yarnVersion = Versions.rawVersion('yarn.version')
         nodeExtension.version = Versions.rawVersion('node.version')
+    }
+
+    @Override
+    protected void executeAfterEvaluate(Project project) {
+        super.executeAfterEvaluate(project)
+        File frontend = new File(project.buildDir, 'frontend')
+        if (!frontend.exists()) {
+            frontend.mkdirs()
+        }
+        File npmrc = new File(frontend, NPM_RC_FILENAME)
+        if (!npmrc.exists()) {
+            Map<String, Object> params = [:]
+
+            if (HttpUtils.httpsProxy) {
+                params['https-proxy'] = HttpUtils.httpsProxy
+            }
+
+            if (HttpUtils.httpProxy) {
+                params['proxy'] = HttpUtils.httpProxy
+            }
+
+            VaadinClientDependenciesExtension vaadinClient = project.extensions
+                    .getByType(VaadinClientDependenciesExtension)
+            params.putAll(vaadinClient.customNpmProperties)
+
+            TemplateWriter.builder()
+                    .targetDir(frontend)
+                    .templateFileName(NPM_RC_FILENAME)
+                    .substitutions(['parameters' : params])
+                    .build().write()
+        }
+
+        YarnSetupTask yarnSetup = project.tasks.getByName(YarnSetupTask.NAME)
+        yarnSetup.args.add(2, '--userconfig')
+        yarnSetup.args.add(3, npmrc.canonicalPath)
     }
 }

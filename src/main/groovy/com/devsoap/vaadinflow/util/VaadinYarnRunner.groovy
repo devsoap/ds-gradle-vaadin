@@ -44,6 +44,7 @@ class VaadinYarnRunner extends YarnExecRunner {
     private static final String POLYMER_BUNDLER_COMMAND = 'polymer-bundler'
     private static final String RUN_COMMAND = 'run'
     private static final String FRONTEND = 'frontend'
+    private static final String WORK_DIR_OPTION = '--cwd'
 
     private final boolean isOffline
 
@@ -84,7 +85,8 @@ class VaadinYarnRunner extends YarnExecRunner {
         }
 
         generateYarnRc()
-        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, '--no-bin-links', INSTALL_COMMAND]
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, '--no-bin-links', WORK_DIR_OPTION, workingDir,
+                     INSTALL_COMMAND]
         execute().assertNormalExitValue()
     }
 
@@ -94,14 +96,20 @@ class VaadinYarnRunner extends YarnExecRunner {
      * https://yarnpkg.com/en/docs/cli/init
      */
     void init() {
+
+        File frontendDir = workingDir as File
+        if (!frontendDir.exists()) {
+            frontendDir.mkdirs()
+        }
+
         generateYarnRc()
 
-        // Generator package.json
-        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, 'init', '-y']
+        // Generate package.json
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, 'init', '-y']
         execute().assertNormalExitValue()
 
         // Set proper defaults for package.json
-        File packageJson = new File(workingDir as File, 'package.json')
+        File packageJson = new File(frontendDir, 'package.json')
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
         pkg.main = ''
         pkg.version = '1.0.0'
@@ -130,7 +138,8 @@ class VaadinYarnRunner extends YarnExecRunner {
      */
     void bowerInstall() {
         generateYarnRc()
-        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, RUN_COMMAND, BOWER_COMMAND, INSTALL_COMMAND,
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir,
+                     RUN_COMMAND, BOWER_COMMAND, INSTALL_COMMAND,
                      '--config.interactive=false' ]
         if (isOffline) {
             arguments << OFFLINE
@@ -149,7 +158,8 @@ class VaadinYarnRunner extends YarnExecRunner {
      */
     void polymerBundle(File manifestJson, File htmlManifest, List<String> excludes=[]) {
         generateYarnRc()
-        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, RUN_COMMAND, POLYMER_BUNDLER_COMMAND]
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, RUN_COMMAND,
+                     POLYMER_BUNDLER_COMMAND]
         arguments.addAll(excludes.collect { "--exclude \"$it\"" })
         arguments.addAll( ['--inline-scripts', "--manifest-out=${manifestJson.canonicalPath}"])
         arguments.add(htmlManifest.name)
@@ -161,7 +171,7 @@ class VaadinYarnRunner extends YarnExecRunner {
      * Polymer build
      */
     void transpile() {
-        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, RUN_COMMAND, POLYMER_COMMAND,
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, RUN_COMMAND, POLYMER_COMMAND,
                      'build', '--npm', '--module-resolution=node']
         execute().assertNormalExitValue()
     }
