@@ -190,4 +190,31 @@ class ClientProductionModeTest extends FunctionalTest {
             File[] files = frontend.listFiles({ dir, name -> name.endsWith '.cache.html' } as FilenameFilter)
             files.size() == 1
     }
+
+    void 'extra files in webapp frontend are included'() {
+        setup:
+        buildFile << '''
+                vaadin.productionMode = true
+                vaadin.autoconfigure()
+            '''.stripIndent()
+            run 'vaadinCreateProject'
+            File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
+            File frontend = new File(webapp, 'frontend')
+            File fooDir = new File(frontend, 'foo')
+            fooDir.mkdirs()
+            File barFile = new File(fooDir, 'bar.txt')
+            barFile << 'Hello world'
+        when:
+            BuildResult result = run('vaadinAssembleClient')
+        then:
+            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
+
+            File webappGen = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'webapp-gen').toFile()
+
+            File frontend5 = new File(webappGen, 'frontend-es5')
+            Paths.get(frontend5.canonicalPath, fooDir.name, barFile.name).toFile().exists()
+
+            File frontend6 = new File(webappGen, 'frontend-es6')
+            Paths.get(frontend6.canonicalPath, fooDir.name, barFile.name).toFile().exists()
+    }
 }
