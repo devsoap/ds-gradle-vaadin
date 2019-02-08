@@ -116,6 +116,17 @@ class AssembleClientDependenciesTask extends DefaultTask {
         ]
 
         File frontendDir = new File(getWebappDir(), FRONTEND)
+
+        File bowerComponents = new File(frontendDir, 'bower_components')
+        if (bowerComponents.exists()) {
+            warnOfDependencyInFrontend(bowerComponents)
+        }
+
+        File nodeModules = new File(frontendDir, 'node_modules')
+        if (nodeModules.exists()) {
+            warnOfDependencyInFrontend(nodeModules)
+        }
+
         VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
         if (client.compileFromSources) {
             if (!sourceDirEs5.exists()) {
@@ -127,17 +138,17 @@ class AssembleClientDependenciesTask extends DefaultTask {
             frontendIncludes <<  'vaadin-flow-bundle-manifest.json'
 
             project.with {
-                copy { CopySpec spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs5) }
+                copy { CopySpec spec -> spec.from(frontendDir).into(targetDirEs5) }
                 copy { CopySpec spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs5) }
                 copy { CopySpec spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
 
-                copy { CopySpec spec -> spec.from(frontendDir).include(frontendIncludes).into(targetDirEs6) }
+                copy { CopySpec spec -> spec.from(frontendDir).into(targetDirEs6) }
                 copy { CopySpec spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs6) }
                 copy { CopySpec spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
             }
         } else {
             project.with {
-                copy { CopySpec spec -> spec.from(frontendDir).include(frontendIncludes).into(webAppGenFrontendDir) }
+                copy { CopySpec spec -> spec.from(frontendDir).into(webAppGenFrontendDir) }
                 copy { CopySpec spec -> spec.from(frontendBuildDir).exclude(excludes).into(webAppGenFrontendDir) }
             }
         }
@@ -162,5 +173,11 @@ class AssembleClientDependenciesTask extends DefaultTask {
      */
     boolean isWebappDirSet() {
         webappDir.present
+    }
+
+    private void warnOfDependencyInFrontend(File file) {
+        logger.warn("WARNING: $file might overwrite resolved dependencies. " +
+                'Instead define dependencies described in ' +
+                'https://github.com/devsoap/gradle-vaadin-flow/wiki/Client-dependencies#managing-client-dependencies')
     }
 }
