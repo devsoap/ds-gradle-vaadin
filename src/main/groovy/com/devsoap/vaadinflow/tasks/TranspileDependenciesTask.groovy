@@ -204,13 +204,23 @@ class TranspileDependenciesTask extends DefaultTask {
 
         logger.info("Using ${baseTheme.capitalize()} as base theme...")
         List<String> themeImports = imports.findAll {
-            it.matches('.*/theme/.*') || it.matches('.*vaadin-.*-styles.*')
+            // Unix / Mac
+            it.matches(/.*\/theme\/.*/)                    ||
+            it.matches(/.*\/vaadin-.*-styles}\/.*/)        ||
+            // Windows
+            it.matches(/.*\\theme\\.*/)                    ||
+            it.matches(/.*\\vaadin-.*-styles}\\.*/)
         }
 
         logger.info("Filtering ${themeImports.size()} theme imports...")
         imports.removeAll(themeImports)
         themeImports.retainAll {
-            it.matches(".*/theme/$baseTheme/.*") || it.matches(".*/vaadin-$baseTheme-styles.*")
+            // Unix / Mac
+            it.matches(/.*\/theme\/$baseTheme\/.*/)        ||
+            it.matches(/.*\/vaadin-$baseTheme-styles\/.*/) ||
+            // Windows
+            it.matches(/.*\\theme\\$baseTheme\\.*/)        ||
+            it.matches(/.*\\vaadin-$baseTheme-styles\\.*/)
         }
         logger.info("Found ${themeImports.size()} theme imports")
         imports.addAll(themeImports)
