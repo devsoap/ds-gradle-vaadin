@@ -13,21 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.devsoap.spock
+import com.devsoap.vaadinflow.ClientDependenciesTest
 
-import java.lang.annotation.ElementType
-import java.lang.annotation.Inherited
-import java.lang.annotation.Retention
-import java.lang.annotation.RetentionPolicy
-import java.lang.annotation.Target
-
-/**
- * Annotation marking tests that will run the client side stack
- *
- * @author John Ahlroos
- * @since 1.0
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target([ElementType.TYPE, ElementType.METHOD])
-@Inherited
-@interface Client { }
+runner {
+    include ClientDependenciesTest
+}
