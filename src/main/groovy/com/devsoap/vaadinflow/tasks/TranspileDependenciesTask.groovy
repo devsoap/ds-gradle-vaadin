@@ -206,10 +206,10 @@ class TranspileDependenciesTask extends DefaultTask {
         List<String> themeImports = imports.findAll {
             // Unix / Mac
             it.matches(/.*\/theme\/.*/)                    ||
-            it.matches(/.*\/vaadin-.*-styles}\/.*/)        ||
+            it.matches(/.*\/vaadin-.*-styles\/.*/)        ||
             // Windows
             it.matches(/.*\\theme\\.*/)                    ||
-            it.matches(/.*\\vaadin-.*-styles}\\.*/)
+            it.matches(/.*\\vaadin-.*-styles\\.*/)
         }
 
         logger.info("Filtering ${themeImports.size()} theme imports...")
