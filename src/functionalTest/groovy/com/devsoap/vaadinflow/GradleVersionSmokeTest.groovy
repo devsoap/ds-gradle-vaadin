@@ -29,14 +29,14 @@ import spock.lang.Unroll
 @Smoke
 class GradleVersionSmokeTest extends FunctionalTest {
 
-    private static final List<String> VERSIONS = ['5.0']
+    private static final List<String> VERSIONS = ['5.0', '5.1', '5.2']
 
     @Unroll
     void 'Test Gradle #version'(String version) {
         setup:
             buildFile << '''
-                    vaadin.autoconfigure()
-                '''.stripIndent()
+                vaadin.autoconfigure()
+            '''.stripIndent()
             run( { it.withGradleVersion(version) }, 'vaadinCreateProject')
         when:
             BuildResult result = run( { it.withGradleVersion(version) }, 'jar')
