@@ -152,7 +152,7 @@ groovydoc {
  *
  ***********************************************************************************************************************/
 task functionalTest(type: Test) {
-    dependsOn test
+    dependsOn test, jar
     group = 'Verification'
 
     systemProperties = System.properties as Map
