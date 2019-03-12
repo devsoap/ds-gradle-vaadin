@@ -20,6 +20,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.jvm.tasks.Jar
 import org.gradle.util.GFileUtils
 
 import java.nio.file.Files
@@ -40,6 +41,7 @@ class WebJarHelper {
     private static final String SLASH = '/'
     private static final String FRONTEND_RESOURCES_META_DIR = 'META-INF/resources/frontend/'
     private static final String PACKAGE_JSON = 'package.json'
+    private static final String JAR_EXTENSION = '.jar'
 
     /**
      * Webjars which do not contain a bower.json BUT needs to be considered as bower dependencies when unpacking
@@ -69,17 +71,20 @@ class WebJarHelper {
             componentsDir.mkdirs()
         }
 
-        List<Configuration> configs = project.configurations
-                .findAll { ['compile', 'implementation'].contains(it.name) }
-                .collect { it.canBeResolved ? it : it.copy().with { canBeResolved = true; it } }
-
+        List<Configuration> configs = findConfigurations(project)
         configs.each { Configuration conf ->
 
-            Set<Dependency> artifactDependencies = conf.allDependencies.findAll { !(it instanceof ProjectDependency) }
+            conf.allDependencies.each { Dependency dependency ->
 
-            artifactDependencies.each { Dependency dependency ->
-
-                Set<File> jarFiles = conf.files(dependency).findAll { it.file && it.name.endsWith('.jar') }
+                Set<File> jarFiles = []
+                if (dependency instanceof ProjectDependency) {
+                    Project dependantProject = dependency.dependencyProject
+                    dependantProject.tasks.withType(Jar).each {
+                       jarFiles += it.archivePath
+                    }
+                } else {
+                     jarFiles += conf.files(dependency).findAll { it.file && it.name.endsWith(JAR_EXTENSION) }
+                }
 
                 jarFiles.each { File file ->
 
@@ -106,7 +111,7 @@ class WebJarHelper {
                             GFileUtils.deleteDirectory(componentRoot)
                         }
 
-                        LOGGER.info("Undpacking frontend component in $file.name into $componentRoot")
+                        LOGGER.info("Unpacking frontend component in $file.name into $componentRoot")
                         copyJarToFolder(file, packageJsonFolder, componentRoot)
                     }
 
@@ -119,6 +124,30 @@ class WebJarHelper {
         }
     }
 
+    /**
+     * Searches the project for dependant JAR tasks
+     *
+     * @param project
+     *      The project which dependencies should be searched
+     * @return
+     *      A list of jar tasks
+     */
+    static List<Jar> findDependantJarTasks(Project project) {
+        List<Jar> jarTasks = []
+        findConfigurations(project).each { Configuration conf ->
+            conf.allDependencies.each { Dependency dependency ->
+                if (dependency instanceof ProjectDependency) {
+                    Project dependantProject = dependency.dependencyProject
+                    println dependantProject.tasks
+                    dependantProject.tasks.withType(Jar).each {
+                        jarTasks << it
+                    }
+                }
+            }
+        }
+        jarTasks
+    }
+
     private static Tuple2<String, String> findFolderAndPath(String searchFileName, File jarFile) {
         Tuple2<String, String> result = null
         jarFile.withInputStream { InputStream stream ->
@@ -128,6 +157,11 @@ class WebJarHelper {
                 if (entry.name.endsWith(searchFileName)) {
                     String packageJsonFolder = entry.name - searchFileName
                     List<String> packages = packageJsonFolder.tokenize(SLASH)
+                    if (packages.empty) {
+                        result = new Tuple2<>(SLASH, jarFile.name - JAR_EXTENSION)
+                        break
+                    }
+
                     String componentRootPackage = null
                     while (!componentRootPackage) {
                         String pkg = packages.removeLast()
@@ -165,9 +199,11 @@ class WebJarHelper {
             JarEntry entry
             JarFile jarFile = new JarFile(file)
             while ((entry = jarStream.nextJarEntry) != null) {
-                if (entry.name.startsWith(packageJsonFolder) &&
+                if (packageJsonFolder == SLASH ||
+                        entry.name.startsWith(packageJsonFolder) &&
                         entry.name != packageJsonFolder) {
-                    String filename = entry.name[packageJsonFolder.length()..-1]
+                    String filename = packageJsonFolder == SLASH ?
+                            entry.name : entry.name[packageJsonFolder.length()..-1]
                     if (filename) {
                         File f = Paths.get(componentRoot.canonicalPath, filename.split(SLASH)).toFile()
                         if (!f.parentFile.exists()) {
@@ -185,5 +221,11 @@ class WebJarHelper {
                 }
             }
         }
+    }
+
+    private static List<Configuration> findConfigurations(Project project) {
+        project.configurations
+                .findAll { ['compile', 'implementation'].contains(it.name) }
+                .collect { it.canBeResolved ? it : it.copy().with { canBeResolved = true; it } }
     }
 }

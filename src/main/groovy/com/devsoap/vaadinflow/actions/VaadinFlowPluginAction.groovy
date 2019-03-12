@@ -20,8 +20,11 @@ import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
 import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
 import com.devsoap.vaadinflow.tasks.ConvertGroovyTemplatesToHTML
+import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
+import com.devsoap.vaadinflow.tasks.InstallYarnDependenciesTask
 import com.devsoap.vaadinflow.tasks.VersionCheckTask
 import com.devsoap.vaadinflow.util.Versions
+import com.devsoap.vaadinflow.util.WebJarHelper
 import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
@@ -68,6 +71,15 @@ class VaadinFlowPluginAction extends PluginAction {
                 description = 'Gradle Vaadin Plugin'
             }
             configurations['compileOnly'].dependencies.add(vaadin)
+        }
+    }
+
+    @Override
+    protected void executeAfterAllEvaluations() {
+        super.executeAfterAllEvaluations()
+        WebJarHelper.findDependantJarTasks(project).each {
+            project.tasks[InstallYarnDependenciesTask.NAME].dependsOn(it)
+            project.tasks[InstallBowerDependenciesTask.NAME].dependsOn(it)
         }
     }
 

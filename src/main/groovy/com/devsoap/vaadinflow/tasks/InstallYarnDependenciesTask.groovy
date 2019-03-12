@@ -17,11 +17,8 @@ package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.models.ClientPackage
-import com.devsoap.vaadinflow.util.LogUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
-import com.devsoap.vaadinflow.util.Versions
 import com.devsoap.vaadinflow.util.WebJarHelper
-import com.moowork.gradle.node.yarn.YarnExecRunner
 import com.moowork.gradle.node.yarn.YarnSetupTask
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
@@ -31,10 +28,6 @@ import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.gradle.process.ExecSpec
-
-import java.nio.file.Paths
-import java.util.logging.Level
 
 /**
  * Installs yarn dependencies into the webapp frontend

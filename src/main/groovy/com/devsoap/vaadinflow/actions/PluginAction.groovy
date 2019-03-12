@@ -33,6 +33,8 @@ abstract class PluginAction {
 
     private final TaskListener taskListener = new TaskListener()
 
+    protected Project project
+
     /**
      * The unique identifer for the plugin
      */
@@ -57,6 +59,13 @@ abstract class PluginAction {
      */
     protected void executeAfterEvaluate(Project project) {
         project.logger.debug("Executing afterEvaluate hook for ${getClass().simpleName}")
+    }
+
+    /**
+     * This is called after all projects have been evaluated
+     */
+    protected void executeAfterAllEvaluations() {
+        project.logger.debug("Executing afterAllEvaulations hook for ${getClass().simpleName}")
     }
 
     /**
@@ -91,9 +100,13 @@ abstract class PluginAction {
      *      the project to apply the plugin action to
      */
     void apply(Project project) {
+        this.project = project
         project.plugins.withId(pluginId) {
             project.gradle.taskGraph.removeTaskExecutionListener(taskListener)
             project.gradle.taskGraph.addTaskExecutionListener(taskListener)
+            project.gradle.projectsEvaluated {
+                executeAfterAllEvaluations()
+            }
             execute(project)
             project.afterEvaluate {
                 executeAfterEvaluate(project)
