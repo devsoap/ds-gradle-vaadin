@@ -16,29 +16,17 @@
 package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
-import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ClientPackage
-import com.devsoap.vaadinflow.util.LogUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import com.devsoap.vaadinflow.util.WebJarHelper
-import com.moowork.gradle.node.npm.NpmExecRunner
-import com.moowork.gradle.node.npm.NpmSetupTask
-import com.moowork.gradle.node.yarn.YarnExecRunner
-import com.sun.security.ntlm.Client
 import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
-import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.TaskAction
-import org.gradle.process.ExecSpec
-
-import java.util.logging.Level
 
 /**
  * Installs Bower dependencies into the webapp frontend

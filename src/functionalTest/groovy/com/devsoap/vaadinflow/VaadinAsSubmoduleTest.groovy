@@ -17,8 +17,6 @@ package com.devsoap.vaadinflow
 
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
-
-import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
@@ -115,5 +113,23 @@ class VaadinAsSubmoduleTest extends MultimoduleFunctionalTest {
         then:
             result.task(':vaadinProject:vaadinConvertGroovyTemplatesToHtml').outcome == TaskOutcome.SUCCESS
             compiledTemplate.exists()
+    }
+
+    void 'include dependant Java projects in transpilation'() {
+        setup:
+            vaadinProjectBuildFile << 'vaadin.productionMode = true'
+            File bowerJson = Paths.get(libraryProject.canonicalPath,
+                    'src', 'main', 'resources', 'bower.json').toFile()
+            bowerJson.parentFile.mkdirs()
+            bowerJson.createNewFile()
+            File unpackedJar = Paths.get(vaadinProject.canonicalPath,
+                    'build', 'frontend', 'bower_components', 'libraryProject').toFile()
+            File unpackedBowerJson = new File(unpackedJar, 'bower.json')
+        when:
+            run(':vaadinProject:vaadinCreateProject')
+            BuildResult result = run(':vaadinProject:vaadinInstallBowerDependencies')
+        then:
+            result.output.contains('Unpacking frontend component in libraryProject.jar')
+            unpackedBowerJson.exists()
     }
 }
