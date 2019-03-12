@@ -20,10 +20,12 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.plugins.BasePlugin
 import org.gradle.jvm.tasks.Jar
 import org.gradle.util.GFileUtils
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
@@ -42,6 +44,7 @@ class WebJarHelper {
     private static final String FRONTEND_RESOURCES_META_DIR = 'META-INF/resources/frontend/'
     private static final String PACKAGE_JSON = 'package.json'
     private static final String JAR_EXTENSION = '.jar'
+    private static final String BOWER_JSON = 'bower.json'
 
     /**
      * Webjars which do not contain a bower.json BUT needs to be considered as bower dependencies when unpacking
@@ -79,8 +82,25 @@ class WebJarHelper {
                 Set<File> jarFiles = []
                 if (dependency instanceof ProjectDependency) {
                     Project dependantProject = dependency.dependencyProject
+
+                    // Java projects
                     dependantProject.tasks.withType(Jar).each {
                        jarFiles += it.archivePath
+                    }
+
+                    // Other projects
+                    dependantProject.plugins.withType(BasePlugin).each {
+                        File bowerJson = new File(dependantProject.projectDir, BOWER_JSON)
+                        File packageJson = new File(dependantProject.projectDir, PACKAGE_JSON)
+                        // bower.json or package.json MUST be in the root of the project to qualify
+                        if ((bower && bowerJson.exists()) || (!bower && packageJson.exists())) {
+                            File componentRoot = new File(componentsDir, dependantProject.name)
+                            if (componentRoot.exists()) {
+                                GFileUtils.deleteDirectory(componentRoot)
+                            }
+                            LOGGER.info("Unpacking frontend component in $dependantProject into $componentRoot")
+                            GFileUtils.copyDirectory(dependantProject.projectDir, componentRoot)
+                        }
                     }
                 } else {
                      jarFiles += conf.files(dependency).findAll { it.file && it.name.endsWith(JAR_EXTENSION) }
@@ -88,7 +108,7 @@ class WebJarHelper {
 
                 jarFiles.each { File file ->
 
-                    Tuple2<String, String> result = findFolderAndPath('bower.json', file)
+                    Tuple2<String, String> result = findFolderAndPath(BOWER_JSON, file)
                     if (bower) {
                         if (!result && forcedBowerPackages.find { key -> file.name.startsWith(key) }) {
                             result = findFolderAndPath(PACKAGE_JSON, file)

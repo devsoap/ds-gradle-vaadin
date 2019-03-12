@@ -132,4 +132,21 @@ class VaadinAsSubmoduleTest extends MultimoduleFunctionalTest {
             result.output.contains('Unpacking frontend component in libraryProject.jar')
             unpackedBowerJson.exists()
     }
+
+    void 'include dependant resource projects in transpilation'() {
+        setup:
+            vaadinProjectBuildFile << 'vaadin.productionMode = true'
+            libraryProjectBuildFile.text = "apply plugin: 'base'"
+            File bowerJson = Paths.get(libraryProject.canonicalPath, 'bower.json').toFile()
+            bowerJson.createNewFile()
+            File unpackedProject = Paths.get(vaadinProject.canonicalPath,
+                    'build', 'frontend', 'bower_components', 'libraryProject').toFile()
+            File unpackedBowerJson = new File(unpackedProject, 'bower.json')
+        when:
+            run(':vaadinProject:vaadinCreateProject')
+            BuildResult result = run(':vaadinProject:vaadinInstallBowerDependencies')
+        then:
+            result.output.contains("Unpacking frontend component in project ':libraryProject'")
+            unpackedBowerJson.exists()
+    }
 }
