@@ -35,6 +35,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.hash.HashUtil
+import org.gradle.util.GFileUtils
 
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -134,15 +135,6 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @OutputDirectory
     final File templatesDir = new File(workingDir, TEMPLATES)
-
-    @OutputFiles
-    final Closure<Map<String, File>> staticResources = {
-        Map<String, File> map = [:]
-        project.fileTree(unpackedStaticResources).each {
-            map[it.name] = new File(workingDir, it.name)
-        }
-        map
-    }
 
     TranspileDependenciesTask() {
         dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME, ConvertCssToHtmlStyleTask.NAME,
@@ -253,6 +245,18 @@ class TranspileDependenciesTask extends DefaultTask {
                     "Transpile did not generate ES6 result in $es6dir. Run with --info to get more information.")
         }
         LOGGER.info('Transpiling done successfully.')
+
+        LOGGER.info( 'Cleaning up unpacked static resources...')
+        project.fileTree(unpackedStaticResources).each {
+            String relativePath = it.path - workingDir.path - "static${File.separator}"
+            String absolutePath = workingDir.canonicalPath + relativePath
+            File file = new File(absolutePath)
+            GFileUtils.deleteFileQuietly(file)
+            while (file.parentFile.listFiles().length == 0) {
+                file = file.parentFile
+                GFileUtils.deleteDirectory(file)
+            }
+        }
     }
 
     /**
@@ -371,17 +375,12 @@ class TranspileDependenciesTask extends DefaultTask {
 
     private List<String> initResourceImports() {
         List<String> imports = []
-
-        LOGGER.info("Searching for resource HTML/JS imports in $workingDir")
-        workingDir.listFiles ({ File file, String name ->
-            name.endsWith(HTML_FILE_TYPE) || name.endsWith(JAVASCRIPT_FILE_TYPE)
-        } as FilenameFilter).each {
-            if (!it.name.startsWith('vaadin-flow-bundle')) {
-                String path = (it.path - workingDir.path).substring(1)
-                imports.add(path)
-            }
+        LOGGER.info("Searching for resource imports in $unpackedStaticResources")
+        project.fileTree(unpackedStaticResources).each {
+            String path = (it.path - unpackedStaticResources.path).substring(1)
+            imports.add(path)
         }
-
+        LOGGER.info("Found ${imports.size()} resource imports")
         imports
     }
 
