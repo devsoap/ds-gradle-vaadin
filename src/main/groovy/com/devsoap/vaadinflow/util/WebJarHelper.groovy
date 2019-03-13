@@ -158,7 +158,6 @@ class WebJarHelper {
             conf.allDependencies.each { Dependency dependency ->
                 if (dependency instanceof ProjectDependency) {
                     Project dependantProject = dependency.dependencyProject
-                    println dependantProject.tasks
                     dependantProject.tasks.withType(Jar).each {
                         jarTasks << it
                     }
