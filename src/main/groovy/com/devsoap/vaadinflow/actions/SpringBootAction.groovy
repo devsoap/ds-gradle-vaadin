@@ -21,6 +21,7 @@ import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.CopySpec
+import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.SourceSet
@@ -59,7 +60,7 @@ class SpringBootAction extends PluginAction {
                 dependsOn(AssembleClientDependenciesTask.NAME)
                 JavaPluginConvention javaPlugin =  project.convention.getPlugin(JavaPluginConvention)
                 SourceSet mainSourceSet = javaPlugin.sourceSets.main
-                sourceResources(mainSourceSet)
+                it.sourceResources(mainSourceSet)
             }
         }
     }
@@ -69,13 +70,16 @@ class SpringBootAction extends PluginAction {
         super.executeAfterEvaluate(project)
 
         // Configure source set to include web resources
-        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
-        JavaPluginConvention javaPlugin =  project.convention.getPlugin(JavaPluginConvention)
-        SourceSet mainSourceSet = javaPlugin.sourceSets.main
-        mainSourceSet.resources.srcDir(assembleTask.webappDir)
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        if (!vaadin.productionMode) {
+            AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+            JavaPluginConvention javaPlugin =  project.convention.getPlugin(JavaPluginConvention)
+            SourceSet mainSourceSet = javaPlugin.sourceSets.main
+            mainSourceSet.resources.srcDir(assembleTask.webappDir)
 
-        File webappGen = Paths.get(project.buildDir.canonicalPath, WEBAPP_GEN).toFile()
-        mainSourceSet.resources.srcDir(webappGen)
+            File webappGen = Paths.get(project.buildDir.canonicalPath, WEBAPP_GEN).toFile()
+            mainSourceSet.resources.srcDir(webappGen)
+        }
     }
 
     @Override
@@ -106,6 +110,7 @@ class SpringBootAction extends PluginAction {
     }
 
     private static void configureBootJar(Task task) {
+
         Jar jar = (Jar) task
         Project project = task.project
 
@@ -113,13 +118,15 @@ class SpringBootAction extends PluginAction {
         AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
         File webappDir = assembleTask.webappDir
         jar.from(webappDir) { CopySpec spec ->
+            spec.duplicatesStrategy = DuplicatesStrategy.EXCLUDE
             spec.into(SPRING_BOOT_RESOURCES_PATH)
         }
 
         // Include web-app gen
         File webappGen = Paths.get(project.buildDir.canonicalPath, WEBAPP_GEN).toFile()
-        jar.from(webappGen) {
-            it.into(SPRING_BOOT_RESOURCES_PATH)
+        jar.from(webappGen) { CopySpec spec ->
+            spec.duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            spec.into(SPRING_BOOT_RESOURCES_PATH)
         }
 
         // Copy static frontend files into compilation result
@@ -127,8 +134,14 @@ class SpringBootAction extends PluginAction {
         if (vaadin.productionMode) {
             File frontend = new File(webappDir, 'frontend')
             if (frontend.exists()) {
-                jar.from(frontend) { it.into(SPRING_BOOT_RESOURCES_PATH + '/frontend-es5') }
-                jar.from(frontend) { it.into(SPRING_BOOT_RESOURCES_PATH + '/frontend-es6') }
+                jar.from(frontend) { CopySpec spec ->
+                    spec.duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+                    spec.into(SPRING_BOOT_RESOURCES_PATH + '/frontend-es5')
+                }
+                jar.from(frontend) { CopySpec spec ->
+                    spec.duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+                    spec.into(SPRING_BOOT_RESOURCES_PATH + '/frontend-es6')
+                }
             }
         }
     }
