@@ -16,13 +16,16 @@
 package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
+import com.devsoap.vaadinflow.util.PackagingUtil
 import com.devsoap.vaadinflow.util.Versions
+import com.devsoap.vaadinflow.util.WebJarHelper
 import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.invocation.Gradle
-
-import javax.inject.Inject
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.file.CopySpec
+import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.tasks.bundling.Jar
 
 /**
  * Configures the Gretty plugin to be compatible
@@ -35,7 +38,11 @@ class GrettyPluginAction extends PluginAction {
 
     final String pluginId = 'org.gretty'
 
-    private  static final String PREPARE_INPLACE_WEB_APP_FOLDER = 'prepareInplaceWebAppFolder'
+    private static final String PREPARE_INPLACE_WEB_APP_FOLDER_TASK = 'prepareInplaceWebAppFolder'
+    private static final String SERVLET_CONTAINER = 'jetty9.4'
+    private static final String JAR_TASK = 'jar'
+
+    private boolean buildingProduct = false
 
     @Override
     void apply(Project project) {
@@ -46,23 +53,52 @@ class GrettyPluginAction extends PluginAction {
     @Override
     protected void execute(Project project) {
         super.execute(project)
-        project.gretty.servletContainer = 'jetty9.4'
+        project.gretty.servletContainer = SERVLET_CONTAINER
+        buildingProduct = project.gradle.startParameter.taskNames.find { it.contains('buildProduct') }.size() > 0
     }
 
     @Override
     protected void executeAfterEvaluate(Project project) {
         super.executeAfterEvaluate(project)
-        project.tasks[PREPARE_INPLACE_WEB_APP_FOLDER].dependsOn(AssembleClientDependenciesTask.NAME)
+        project.tasks[PREPARE_INPLACE_WEB_APP_FOLDER_TASK].dependsOn(AssembleClientDependenciesTask.NAME)
+        if (buildingProduct) {
+            project.tasks[JAR_TASK].dependsOn(AssembleClientDependenciesTask.NAME)
+        }
     }
 
     @Override
     protected void afterTaskExecuted(Task task) {
         super.afterTaskExecuted(task)
-        if (task.name == PREPARE_INPLACE_WEB_APP_FOLDER) {
+        if (task.name == PREPARE_INPLACE_WEB_APP_FOLDER_TASK) {
             LOGGER.info('Copying generated web-app resources into extracted webapp')
             task.project.copy { copy ->
                     copy.from("${task.project.buildDir.canonicalPath}/webapp-gen")
                             .into("${task.project.buildDir.canonicalPath}/inplaceWebapp")
+            }
+        }
+    }
+
+    @Override
+    protected void beforeTaskExecuted(Task task) {
+        super.beforeTaskExecuted(task)
+        if (task.name == JAR_TASK && buildingProduct) {
+            Jar jar = (Jar) task
+
+            // Include resources
+            PackagingUtil.includeResourcesInJar(jar, '/')
+
+            // Include classes
+            jar.from(jar.project.sourceSets.main.output) { CopySpec spec ->
+                spec.into('/WEB-INF/classes')
+            }
+
+            // Include dependencies
+            List<Configuration> configurations = WebJarHelper.findConfigurations(jar.project)
+            configurations.each {
+                jar.from(it) { CopySpec spec ->
+                    spec.duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+                    spec.into('/WEB-INF/lib')
+                }
             }
         }
     }
