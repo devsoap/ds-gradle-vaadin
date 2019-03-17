@@ -167,6 +167,20 @@ class WebJarHelper {
         jarTasks
     }
 
+    /**
+     * Find class configurations in the project that can be iterated
+     *
+     * @param project
+     *      the project to get configurations from
+     * @return
+     *      a list of configurations
+     */
+    static List<Configuration> findConfigurations(Project project) {
+        project.configurations
+                .findAll { ['compile', 'implementation'].contains(it.name) }
+                .collect { it.canBeResolved ? it : it.copy().with { canBeResolved = true; it } }
+    }
+
     private static Tuple2<String, String> findFolderAndPath(String searchFileName, File jarFile) {
         Tuple2<String, String> result = null
         jarFile.withInputStream { InputStream stream ->
@@ -240,11 +254,5 @@ class WebJarHelper {
                 }
             }
         }
-    }
-
-    private static List<Configuration> findConfigurations(Project project) {
-        project.configurations
-                .findAll { ['compile', 'implementation'].contains(it.name) }
-                .collect { it.canBeResolved ? it : it.copy().with { canBeResolved = true; it } }
     }
 }
