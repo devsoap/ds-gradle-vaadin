@@ -54,7 +54,7 @@ class GrettyPluginAction extends PluginAction {
     protected void execute(Project project) {
         super.execute(project)
         project.gretty.servletContainer = SERVLET_CONTAINER
-        buildingProduct = project.gradle.startParameter.taskNames.find { it.contains('buildProduct') }.size() > 0
+        buildingProduct = project.gradle.startParameter.taskNames.findAll { it.contains('buildProduct') }.size() > 0
     }
 
     @Override
