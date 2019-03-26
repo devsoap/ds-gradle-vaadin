@@ -15,12 +15,12 @@
  */
 package com.devsoap.vaadinflow.actions
 
+import com.devsoap.vaadinflow.NodePlugin
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.util.HttpUtils
 import com.devsoap.vaadinflow.util.TemplateWriter
 import com.devsoap.vaadinflow.util.Versions
 import com.moowork.gradle.node.NodeExtension
-import com.moowork.gradle.node.NodePlugin
 import com.moowork.gradle.node.yarn.YarnSetupTask
 import groovy.util.logging.Log
 import org.gradle.api.Project
@@ -41,8 +41,22 @@ class NodePluginAction extends PluginAction {
 
     @Override
     void apply(Project project) {
-        super.apply(project)
+        this.project = project
         project.with {
+
+            // Can't use super.apply() as it uses plugins.withId() which will return the mooworks plugin
+            plugins.withType(NodePlugin) {
+                project.gradle.taskGraph.removeTaskExecutionListener(taskListener)
+                project.gradle.taskGraph.addTaskExecutionListener(taskListener)
+                project.gradle.projectsEvaluated {
+                    executeAfterAllEvaluations()
+                }
+                execute(project)
+                project.afterEvaluate {
+                    executeAfterEvaluate(project)
+                }
+            }
+
             pluginManager.apply(NodePlugin)
 
             String nodeDependnecy =
@@ -70,6 +84,7 @@ class NodePluginAction extends PluginAction {
     @Override
     protected void executeAfterEvaluate(Project project) {
         super.executeAfterEvaluate(project)
+
         File frontend = new File(project.buildDir, 'frontend')
         if (!frontend.exists()) {
             frontend.mkdirs()

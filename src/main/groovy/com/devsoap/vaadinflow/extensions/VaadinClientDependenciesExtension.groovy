@@ -17,7 +17,9 @@ package com.devsoap.vaadinflow.extensions
 
 import groovy.util.logging.Log
 import org.gradle.api.Project
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.util.RelativePathUtil
 
 import java.nio.file.Paths
@@ -49,9 +51,9 @@ class VaadinClientDependenciesExtension {
 
     private final Property<String> offlineCachePath
 
-    private final Property<Map> customYarnProperties
+    private final Provider<Map> customYarnProperties
 
-    private final Property<Map> customNpmProperties
+    private final Provider<Map> customNpmProperties
 
     /**
      * Creates the extension
@@ -63,8 +65,15 @@ class VaadinClientDependenciesExtension {
         this.project = project
         compileFromSources = project.objects.property(Boolean)
         offlineCachePath = project.objects.property(String)
-        customYarnProperties = project.objects.property(Map)
-        customNpmProperties = project.objects.property(Map)
+
+        if (ObjectFactory.metaClass.respondsTo(project.objects, 'mapProperty', Class, Class)) {
+            customYarnProperties = project.objects.mapProperty(String, Object)
+            customNpmProperties = project.objects.mapProperty(String, Object)
+        } else {
+            // Gradle 5.0
+            customYarnProperties = project.objects.property(Map)
+            customNpmProperties = project.objects.property(Map)
+        }
 
         File mirrorFolder = Paths.get(project.rootDir.absolutePath,
                 '.gradle', 'yarn', 'yarn-offline-mirror').toFile()

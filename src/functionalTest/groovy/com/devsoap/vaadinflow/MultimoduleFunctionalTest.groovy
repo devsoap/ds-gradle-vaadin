@@ -89,7 +89,6 @@ class MultimoduleFunctionalTest extends Specification {
 
         settingsFile = rootProjectDir.newFile('settings.gradle')
         settingsFile << '''
-            enableFeaturePreview('IMPROVED_POM_SUPPORT')
             include 'libraryProject', 'vaadinProject'
         '''.stripIndent()
 

@@ -154,9 +154,6 @@ class FunctionalTest extends Specification {
 
     private void initSettingsFile() {
         settingsFile = testProjectDir.newFile('settings.gradle')
-        settingsFile << '''
-            enableFeaturePreview('IMPROVED_POM_SUPPORT')
-        '''.stripIndent()
     }
 
     private String getOfflineCachePath() {
