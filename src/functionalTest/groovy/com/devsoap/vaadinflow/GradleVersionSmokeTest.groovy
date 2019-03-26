@@ -42,6 +42,8 @@ class GradleVersionSmokeTest extends FunctionalTest {
             BuildResult result = run( { it.withGradleVersion(version) }, 'jar')
         then:
             result.task(':jar').outcome == TaskOutcome.SUCCESS
+            !result.output.contains('Deprecated Gradle features')
+
         where:
             version << VERSIONS
     }
