@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.util
 
+import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -25,7 +26,6 @@ import org.gradle.jvm.tasks.Jar
 import org.gradle.util.GFileUtils
 
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.jar.JarEntry
 import java.util.jar.JarFile
@@ -110,6 +110,7 @@ class WebJarHelper {
 
                     Tuple2<String, String> result = findFolderAndPath(BOWER_JSON, file)
                     if (bower) {
+                        // If bower but no bower.json found, fallback to reading package.jsom
                         if (!result && forcedBowerPackages.find { key -> file.name.startsWith(key) }) {
                             result = findFolderAndPath(PACKAGE_JSON, file)
                         }
@@ -202,7 +203,10 @@ class WebJarHelper {
                             componentRootPackage = pkg
                         }
                     }
-                    result = new Tuple2<>(packages.join(SLASH) + SLASH + componentRootPackage, componentRootPackage)
+
+                    Object json = new JsonSlurper().parse(new JarFile(jarFile).getInputStream(entry))
+                    String name = json.name.toString().split(SLASH).last()
+                    result = new Tuple2<>(packages.join(SLASH) + SLASH + componentRootPackage, name)
                     break
                 }
             }
