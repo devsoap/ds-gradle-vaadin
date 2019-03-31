@@ -64,6 +64,7 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String TEMPLATES_GLOB = '**/templates/**'
     private static final String BOWER_JSON = 'bower.json'
     private static final String HTML_FILE_TYPE = '.html'
+    private static final String CSS_FILE_TYPE = '.css'
     private static final String JAVASCRIPT_FILE_TYPE = '.js'
     private static final String STYLES = 'styles'
     private static final String TEMPLATES = 'templates'
@@ -331,7 +332,10 @@ class TranspileDependenciesTask extends DefaultTask {
                     } else {
                         entrypoints.add(bowerJson.main as String)
                     }
-                    entrypoints.findAll { it?.endsWith(TranspileDependenciesTask.HTML_FILE_TYPE) }.each {
+                    entrypoints.findAll {
+                        it?.endsWith(TranspileDependenciesTask.HTML_FILE_TYPE) ||
+                        it?.endsWith(TranspileDependenciesTask.CSS_FILE_TYPE)
+                    }.each {
                         File resourceFile = new File(dir, it)
                         String path = (resourceFile.path - workingDir.path).substring(1)
                         imports.add(path)
