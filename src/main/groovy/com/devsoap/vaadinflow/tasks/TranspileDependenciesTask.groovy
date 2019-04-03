@@ -60,6 +60,7 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String BUILD = 'build'
     private static final String FRONTEND = 'frontend'
     private static final String TEMPLATES_GLOB = '**/templates/**'
+    private static final String STYLES_GLOB = '**/styles/**'
     private static final String JAVASCRIPT_FILE_TYPE = '.js'
     private static final String STYLES = 'styles'
     private static final String TEMPLATES = 'templates'
@@ -92,6 +93,13 @@ class TranspileDependenciesTask extends DefaultTask {
     final Closure<File> webTemplatesDir = {
         AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
         Paths.get(assembleTask.webappDir.canonicalPath, FRONTEND, TEMPLATES).toFile().with { it.exists() ? it : null }
+    }
+
+    @Optional
+    @InputDirectory
+    final Closure<File> webStylesDir = {
+        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+        Paths.get(assembleTask.webappDir.canonicalPath, FRONTEND, STYLES).toFile().with { it.exists() ? it : null }
     }
 
     @InputDirectory
@@ -161,7 +169,7 @@ class TranspileDependenciesTask extends DefaultTask {
         project.copy { spec -> spec.from(unpackedStaticResources).into(workingDir) }
 
         LOGGER.info( 'Copying generated styles...')
-        project.copy { spec -> spec.from(webappGenFrontendDir).include('**/styles/**').into(workingDir) }
+        project.copy { spec -> spec.from(webappGenFrontendDir).include(STYLES_GLOB).into(workingDir) }
 
         LOGGER.info( 'Copying generated templates...')
         project.copy { spec -> spec.from(webappGenFrontendDir).include(TEMPLATES_GLOB).into(workingDir) }
@@ -178,8 +186,21 @@ class TranspileDependenciesTask extends DefaultTask {
             validateImports(templatesTargetDir)
         }
 
+        File stylesDir = webStylesDir.call()
+        if (stylesDir) {
+            LOGGER.info( 'Copying html styles...')
+            project.copy { spec ->
+                spec.from(stylesDir.parentFile).include(STYLES_GLOB).into(workingDir)
+            }
+
+            LOGGER.info('Validating html styles...')
+            File templatesTargetDir = new File(workingDir, STYLES)
+            validateImports(templatesTargetDir)
+        }
+
         LOGGER.info('Searching for HTML imports...')
         List<String> imports = initHTMLImportsFromComponents()
+        imports += initWebappImports()
         imports += initGeneratedHTMLImports()
         imports += initResourceImports()
 
@@ -187,34 +208,7 @@ class TranspileDependenciesTask extends DefaultTask {
         imports*.replace('\\', PATH_SEPARATOR)
 
         // Remove all other themes than the selected one
-        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        String baseTheme = vaadin.baseTheme
-
-        logger.info("Using ${baseTheme.capitalize()} as base theme...")
-        List<String> themeImports = imports.findAll {
-            // Unix / Mac
-            it.matches(/.*\/theme\/.*/)                    ||
-            it.matches(/.*\/vaadin-.*-styles\/.*/)         ||
-            // Windows
-            it.matches(/.*\\theme\\.*/)                    ||
-            it.matches(/.*\\vaadin-.*-styles\\.*/)
-        }
-
-        logger.info("Filtering ${themeImports.size()} theme imports...")
-        imports.removeAll(themeImports)
-        themeImports.retainAll {
-            // Unix / Mac
-            it.matches(/.*\/theme\/$baseTheme\/.*/)        ||
-            it.matches(/.*\/vaadin-$baseTheme-styles\/.*/) ||
-            // Windows
-            it.matches(/.*\\theme\\$baseTheme\\.*/)        ||
-            it.matches(/.*\\vaadin-$baseTheme-styles\\.*/)
-        }
-        logger.info("Found ${themeImports.size()} theme imports")
-        imports.addAll(themeImports)
-
-        // Remove custom excludes
-        getImportExcludes().each { filter -> imports.removeIf { it.matches(filter) } }
+        excludeNonBaseThemes(imports)
 
         File htmlFile = html.call()
         LOGGER.info("Creating ${htmlFile.name}...")
@@ -305,34 +299,25 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private List<String> initGeneratedHTMLImports() {
-
         List<File> scanDirs = []
-
         if (webappGenFrontendStylesDir.call()) {
             scanDirs.add(webappGenFrontendStylesDir.call())
         }
-
         if (webappGenFrontendTemplatesDir.call()) {
             scanDirs.add(webappGenFrontendTemplatesDir.call())
         }
+        findImportsInDirectories(scanDirs)
+    }
 
+    private List<String> initWebappImports() {
+        List<File> scanDirs = []
         if (webTemplatesDir.call()) {
             scanDirs.add(webTemplatesDir.call())
         }
-
-        List<String> imports = []
-        scanDirs.each { File dir ->
-            LOGGER.info("Searching for html imports in $dir")
-            dir.eachFile { File fileOrDir ->
-                project.fileTree(fileOrDir)
-                        .include('**/*.html')
-                        .each { File htmlFile ->
-                    String path = (htmlFile.path - dir.parentFile.path).substring(1)
-                    imports.add(path)
-                }
-            }
+        if (webStylesDir.call()) {
+            scanDirs.add(webStylesDir.call())
         }
-        imports
+        findImportsInDirectories(scanDirs)
     }
 
     private List<String> initResourceImports() {
@@ -416,5 +401,53 @@ class TranspileDependenciesTask extends DefaultTask {
                 }
             }
         }
+    }
+
+    private List<String> findImportsInDirectories(List<File> scanDirs) {
+        List<String> imports = []
+        scanDirs.each { File dir ->
+            LOGGER.info("Searching for html imports in $dir")
+            dir.eachFile { File fileOrDir ->
+                project.fileTree(fileOrDir)
+                        .include('**/*.html', '**/*.css', '**/*.js')
+                        .each { File htmlFile ->
+                    String path = (htmlFile.path - dir.parentFile.path).substring(1)
+                    imports.add(path)
+                }
+            }
+        }
+        imports
+    }
+
+    private void excludeNonBaseThemes(List<String> imports) {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        String baseTheme = vaadin.baseTheme
+
+        logger.info("Using ${baseTheme.capitalize()} as base theme...")
+        List<String> themeImports = imports.findAll {
+            // Unix / Mac
+            it.matches(/.*\/theme\/.*/)                    ||
+            it.matches(/.*\/vaadin-.*-styles\/.*/)         ||
+            // Windows
+            it.matches(/.*\\theme\\.*/)                    ||
+            it.matches(/.*\\vaadin-.*-styles\\.*/)
+        }
+
+        logger.info("Filtering ${themeImports.size()} theme imports...")
+        imports.removeAll(themeImports)
+        themeImports.retainAll {
+            // Unix / Mac
+            it.matches(/.*\/theme\/$baseTheme\/.*/)        ||
+            it.matches(/.*\/vaadin-$baseTheme-styles\/.*/) ||
+            // Windows
+            it.matches(/.*\\theme\\$baseTheme\\.*/)        ||
+            it.matches(/.*\\vaadin-$baseTheme-styles\\.*/)
+        }
+
+        logger.info("Found ${themeImports.size()} theme imports")
+        imports.addAll(themeImports)
+
+        // Remove custom excludes
+        getImportExcludes().each { filter -> imports.removeIf { it.matches(filter) } }
     }
 }
