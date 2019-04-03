@@ -107,6 +107,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
             afterEvaluate {
                 disableStatistics(project)
                 enableProductionMode(project)
+                validateVaadinVersion(project)
             }
         }
     }
@@ -136,6 +137,17 @@ class VaadinFlowPlugin implements Plugin<Project> {
         if ( version.baseVersion < requiredVersion ) {
             throw new UnsupportedVersionException("Your gradle version ($version) is too old. " +
                     "Plugin requires Gradle $requiredVersion+")
+        }
+    }
+
+    private static void validateVaadinVersion(Project project) {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        String[] supportedVersions = Versions.rawVersion('vaadin.supported.versions').split(',')
+        boolean isSupportedVersion = vaadin.version.startsWithAny(supportedVersions)
+        if (!isSupportedVersion) {
+            throw new UnsupportedVersionException(
+                    "The Vaadin version ($vaadin.version) you have selected is not supported by the plugin. " +
+                            "Please pick one of the following supported Vaadin versions $supportedVersions.")
         }
     }
 }
