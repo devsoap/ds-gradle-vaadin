@@ -17,6 +17,7 @@ package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.models.ClientPackage
+import com.devsoap.vaadinflow.util.ClientPackageUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import com.devsoap.vaadinflow.util.WebJarHelper
 import com.moowork.gradle.node.yarn.YarnSetupTask
@@ -105,5 +106,14 @@ class InstallYarnDependenciesTask extends DefaultTask {
 
         LOGGER.info('Extracting node webjars...')
         WebJarHelper.unpackWebjars(workingDir, null, project, nodeModules.name, false)
+
+        LOGGER.info('Validating node modules...')
+        List<String> imports = ClientPackageUtils.findHTMLImportsFromComponents(
+                nodeModules, null, workingDir)
+        deps.yarnDependencies.keySet().each { dep ->
+            if ( imports.findAll { it.contains( dep.split('/').last()) }.isEmpty()) {
+                logger.error('HTML entrypoint file for {} not found, is it a Polymer 2 component?', dep)
+            }
+        }
     }
 }

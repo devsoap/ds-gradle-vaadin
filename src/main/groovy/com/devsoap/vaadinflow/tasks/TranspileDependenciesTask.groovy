@@ -18,9 +18,9 @@ package com.devsoap.vaadinflow.tasks
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.PolymerBuild
+import com.devsoap.vaadinflow.util.ClientPackageUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
@@ -32,14 +32,12 @@ import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
-import org.gradle.api.tasks.OutputFiles
 import org.gradle.api.tasks.TaskAction
 import org.gradle.internal.hash.HashUtil
 import org.gradle.util.GFileUtils
 
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.function.Predicate
 import java.util.logging.Logger
 import java.util.regex.Matcher
 
@@ -62,9 +60,6 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String BUILD = 'build'
     private static final String FRONTEND = 'frontend'
     private static final String TEMPLATES_GLOB = '**/templates/**'
-    private static final String BOWER_JSON = 'bower.json'
-    private static final String HTML_FILE_TYPE = '.html'
-    private static final String CSS_FILE_TYPE = '.css'
     private static final String JAVASCRIPT_FILE_TYPE = '.js'
     private static final String STYLES = 'styles'
     private static final String TEMPLATES = 'templates'
@@ -306,44 +301,7 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private List<String> initHTMLImportsFromComponents() {
-        List<String> imports = []
-
-        List<File> scanDirs = []
-        if (nodeModules.exists()) {
-            scanDirs.add(nodeModules)
-        }
-        if (bowerComponents.exists()) {
-            scanDirs.add(bowerComponents)
-        }
-
-        scanDirs.each {
-
-            LOGGER.info("Searching for html imports in $it")
-            it.eachDir { dir ->
-                File bowerJsonFile = new File(dir, '.bower.json')
-                if (!bowerJsonFile.exists()) {
-                    bowerJsonFile = new File(dir, TranspileDependenciesTask.BOWER_JSON)
-                }
-                if (bowerJsonFile.exists()) {
-                    Object bowerJson = new JsonSlurper().parse(bowerJsonFile)
-                    List<String> entrypoints = []
-                    if (bowerJson.main instanceof List) {
-                        entrypoints.addAll(bowerJson.main as List)
-                    } else {
-                        entrypoints.add(bowerJson.main as String)
-                    }
-                    entrypoints.findAll {
-                        it?.endsWith(TranspileDependenciesTask.HTML_FILE_TYPE) ||
-                        it?.endsWith(TranspileDependenciesTask.CSS_FILE_TYPE)
-                    }.each {
-                        File resourceFile = new File(dir, it)
-                        String path = (resourceFile.path - workingDir.path).substring(1)
-                        imports.add(path)
-                    }
-                }
-            }
-        }
-        imports
+        ClientPackageUtils.findHTMLImportsFromComponents(nodeModules, bowerComponents, workingDir)
     }
 
     private List<String> initGeneratedHTMLImports() {
