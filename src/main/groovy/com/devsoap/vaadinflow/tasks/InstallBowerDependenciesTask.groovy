@@ -17,6 +17,7 @@ package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.models.ClientPackage
+import com.devsoap.vaadinflow.util.ClientPackageUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import com.devsoap.vaadinflow.util.WebJarHelper
 import groovy.json.JsonOutput
@@ -83,7 +84,8 @@ class InstallBowerDependenciesTask extends DefaultTask {
 
         LOGGER.info('Creating bower.json...')
         VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
-        ClientPackage bowerModel = new ClientPackage(name: 'frontend', version: '1.0.0').with { model ->
+        ClientPackage bowerModel = new ClientPackage(name: project.name.toLowerCase(), version: project.version)
+                .with { model ->
             deps.bowerDependencies.each { String name, String version ->
                 model.dependencies[name] = version
             }
@@ -96,6 +98,15 @@ class InstallBowerDependenciesTask extends DefaultTask {
 
         LOGGER.info('Extracting bower webjars...')
         WebJarHelper.unpackWebjars(workingDir, staticResourcesDir, project, bowerComponents.name, true)
+
+        LOGGER.info('Validating bower modules...')
+        List<String> imports = ClientPackageUtils.findHTMLImportsFromComponents(
+                null, bowerComponents, workingDir)
+        deps.bowerDependencies.keySet().each { dep ->
+            if ( imports.findAll { it.contains( dep.split('/').last()) }.isEmpty()) {
+                logger.error('HTML entrypoint file for {} not found, is it a Polymer 2 component?', dep)
+            }
+        }
 
     }
 }
