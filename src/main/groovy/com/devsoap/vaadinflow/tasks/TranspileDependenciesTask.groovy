@@ -21,6 +21,7 @@ import com.devsoap.vaadinflow.models.PolymerBuild
 import com.devsoap.vaadinflow.util.ClientPackageUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
@@ -65,6 +66,7 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String STYLES = 'styles'
     private static final String TEMPLATES = 'templates'
     private static final String PATH_SEPARATOR = '/'
+    private static final String MISSING_PROPERTY = '_missing'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
@@ -222,8 +224,11 @@ class TranspileDependenciesTask extends DefaultTask {
         VaadinYarnRunner yarnBundleRunner = new VaadinYarnRunner(project, workingDir, new ByteArrayOutputStream())
         yarnBundleRunner.polymerBundle(manifestJson, htmlFile, getBundleExcludes())
 
+        LOGGER.info('Checking for missing dependencies...')
+        checkForMissingDependencies()
+
         LOGGER.info('Transpiling...')
-        yarnRunner.transpile()
+        yarnRunner.transpile(getBundleExcludes())
 
         LOGGER.info('Validating transpilation...')
         if (!es5dir.exists()) {
@@ -383,9 +388,12 @@ class TranspileDependenciesTask extends DefaultTask {
     private void validateImports(File templatesTargetDir) {
         Logger logger = LOGGER
         project.fileTree(templatesTargetDir).each { File template ->
-            template.text.findAll('.*rel="import".*href="(.*)".*').collect {
+            template.text.findAll('.*rel="import".*href="(.*)".*')
+            .collect {
                 Matcher matcher = (it =~ /href=\"(.*)\"/)
                 matcher ? matcher.group(1) : null
+            }.findAll { String importPath ->
+                !importPath?.startsWith('http')
             }.each { String importPath ->
                 Path templatePath = Paths.get(template.canonicalPath)
                 Path templateFolder = templatePath.parent
@@ -449,5 +457,33 @@ class TranspileDependenciesTask extends DefaultTask {
 
         // Remove custom excludes
         getImportExcludes().each { filter -> imports.removeIf { it.matches(filter) } }
+    }
+
+    private void checkForMissingDependencies() {
+        Map<String, Object> manifest = new JsonSlurper().parse(manifestJson) as Map
+        if (manifest[MISSING_PROPERTY]) {
+            List<String> missing = manifest[MISSING_PROPERTY] as List
+            missing.removeAll(getBundleExcludes())
+            if (!missing.empty) {
+                missing.each {
+                    LOGGER.severe("HTML import '${it}' could not be resolved.")
+                }
+                LOGGER.severe('Please check that you have included the necessary dependencies or ' +
+                        'alternatively exclude them with:\n')
+                LOGGER.severe('vaadinTranspileDependencies.bundleExcludes = [')
+                missing.each {
+                    if (missing.last() == it) {
+                        LOGGER.severe("\t'$it'")
+                    } else {
+                        LOGGER.severe("\t'$it',")
+                    }
+                }
+                LOGGER.severe(']')
+                throw new GradleException('Manifest contains imports to missing dependencies. ' +
+                        'Run with --info to get more information.')
+            }
+            manifest.remove(MISSING_PROPERTY)
+            manifestJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(manifest))
+        }
     }
 }

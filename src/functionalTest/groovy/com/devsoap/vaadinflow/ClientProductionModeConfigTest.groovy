@@ -28,25 +28,61 @@ import java.nio.file.Paths
  */
 class ClientProductionModeConfigTest extends FunctionalTest {
 
-    void 'exclude specific imports from bundle'() {
+    void 'missing imports fail the build'() {
         setup:
             buildFile << '''
-               vaadinTranspileDependencies {
-                   bundleExcludes = ['https://www.gstatic.com/charts/loader.js']
-               }
-
                vaadin.productionMode = true
                vaadin.autoconfigure()
             '''.stripIndent()
 
             run 'vaadinCreateProject'
+
+            File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
+            File templates = Paths.get(webapp.absolutePath, 'frontend', 'templates').toFile()
+
+            File htmlImport = Paths.get(templates.absolutePath, 'hello.html').toFile()
+            htmlImport.parentFile.mkdirs()
+            htmlImport.createNewFile()
+            htmlImport.text = '''
+                <link rel="import" href="../bower_components/polymer/polymer-element.html">
+                <link rel="import" href="http://localhost/foo.js">
+            '''.stripIndent()
         when:
-            BuildResult result = run 'vaadinAssembleClient'
+            BuildResult result = runAndFail'vaadinTranspileDependencies'
+        then:
+            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.FAILED
+            result.output.contains("HTML import 'http://localhost/foo.js' could not be resolved.")
+    }
+
+    void 'exclude specific imports from bundle'() {
+        setup:
+            buildFile << '''
+               vaadin.productionMode = true
+               vaadin.autoconfigure()
+               vaadinTranspileDependencies.bundleExcludes = [
+                    'http://localhost/foo.js'
+               ]
+            '''.stripIndent()
+
+            run 'vaadinCreateProject'
+
+            File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
+            File templates = Paths.get(webapp.absolutePath, 'frontend', 'templates').toFile()
+
+            File htmlImport = Paths.get(templates.absolutePath, 'hello.html').toFile()
+            htmlImport.parentFile.mkdirs()
+            htmlImport.createNewFile()
+            htmlImport.text = '''
+                    <link rel="import" href="../bower_components/polymer/polymer-element.html">
+                '''.stripIndent()
+        when:
+            BuildResult result = run'vaadinTranspileDependencies'
         then:
             result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
-            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
     }
 
     void 'assemble from custom webapp directory'() {
