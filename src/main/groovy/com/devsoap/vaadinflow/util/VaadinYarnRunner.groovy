@@ -170,9 +170,10 @@ class VaadinYarnRunner extends YarnExecRunner {
     /**
      * Polymer build
      */
-    void transpile() {
-        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, RUN_COMMAND, POLYMER_COMMAND,
-                     'build', '--npm', '--module-resolution=node']
+    void transpile(List<String> excludes=[]) {
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, RUN_COMMAND, POLYMER_COMMAND]
+        arguments.addAll(excludes.collect { "--exclude \"$it\"" })
+        arguments.addAll(['build', '--npm', '--module-resolution=node'])
         execute().assertNormalExitValue()
     }
 
