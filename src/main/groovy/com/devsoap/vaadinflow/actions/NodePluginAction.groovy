@@ -17,14 +17,20 @@ package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.NodePlugin
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.tasks.NodeSetupTask
 import com.devsoap.vaadinflow.util.HttpUtils
+import com.devsoap.vaadinflow.util.LogUtils
 import com.devsoap.vaadinflow.util.TemplateWriter
 import com.devsoap.vaadinflow.util.Versions
 import com.moowork.gradle.node.NodeExtension
+import com.moowork.gradle.node.npm.NpmSetupTask
 import com.moowork.gradle.node.yarn.YarnSetupTask
 import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
+import org.gradle.process.ExecSpec
+
+import java.util.logging.Level
 
 /**
  * Action taken when the Node plugin is applied to a project
@@ -115,5 +121,15 @@ class NodePluginAction extends PluginAction {
         YarnSetupTask yarnSetup = project.tasks.getByName(YarnSetupTask.NAME)
         yarnSetup.args.add(2, '--userconfig')
         yarnSetup.args.add(3, npmrc.canonicalPath)
+        yarnSetup.execOverrides = { ExecSpec spec ->
+            spec.standardOutput = LogUtils.getLogOutputStream(Level.INFO)
+            spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
+        }
+
+        NpmSetupTask npmSetup = project.tasks.getByName(NpmSetupTask.NAME)
+        npmSetup.execOverrides = { ExecSpec spec ->
+            spec.standardOutput = LogUtils.getLogOutputStream(Level.INFO)
+            spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
+        }
     }
 }
