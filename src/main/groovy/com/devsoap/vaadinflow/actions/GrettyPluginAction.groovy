@@ -16,6 +16,7 @@
 package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
+import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
 import com.devsoap.vaadinflow.util.PackagingUtil
 import com.devsoap.vaadinflow.util.Versions
 import com.devsoap.vaadinflow.util.WebJarHelper
@@ -61,6 +62,8 @@ class GrettyPluginAction extends PluginAction {
     protected void executeAfterEvaluate(Project project) {
         super.executeAfterEvaluate(project)
         project.tasks[PREPARE_INPLACE_WEB_APP_FOLDER_TASK].dependsOn(AssembleClientDependenciesTask.NAME)
+        project.tasks[PREPARE_INPLACE_WEB_APP_FOLDER_TASK].dependsOn(ConvertCssToHtmlStyleTask.NAME)
+
         if (buildingProduct) {
             project.tasks[JAR_TASK].dependsOn(AssembleClientDependenciesTask.NAME)
         }
@@ -69,7 +72,9 @@ class GrettyPluginAction extends PluginAction {
     @Override
     protected void afterTaskExecuted(Task task) {
         super.afterTaskExecuted(task)
-        if (task.name == PREPARE_INPLACE_WEB_APP_FOLDER_TASK) {
+        if (task.name in [PREPARE_INPLACE_WEB_APP_FOLDER_TASK,
+                          ConvertCssToHtmlStyleTask.NAME,
+                          AssembleClientDependenciesTask.NAME]) {
             LOGGER.info('Copying generated web-app resources into extracted webapp')
             task.project.copy { copy ->
                     copy.from("${task.project.buildDir.canonicalPath}/webapp-gen")

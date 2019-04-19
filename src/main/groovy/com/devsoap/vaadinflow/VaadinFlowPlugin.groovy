@@ -19,6 +19,8 @@ import com.devsoap.vaadinflow.actions.GrettyDeprecatedPluginAction
 import com.devsoap.vaadinflow.actions.GrettyPluginAction
 import com.devsoap.vaadinflow.actions.NodePluginAction
 import com.devsoap.vaadinflow.actions.PluginAction
+import com.devsoap.vaadinflow.actions.SassJavaPluginAction
+import com.devsoap.vaadinflow.actions.SassWarPluginAction
 import com.devsoap.vaadinflow.actions.SpringBootAction
 import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
 import com.devsoap.vaadinflow.actions.WarPluginAction
@@ -74,6 +76,8 @@ class VaadinFlowPlugin implements Plugin<Project> {
         actions << instantiator.newInstance(GrettyDeprecatedPluginAction)
         actions << instantiator.newInstance(GrettyPluginAction)
         actions << instantiator.newInstance(SpringBootAction)
+        actions << instantiator.newInstance(SassJavaPluginAction)
+        actions << instantiator.newInstance(SassWarPluginAction)
     }
 
     @Override
