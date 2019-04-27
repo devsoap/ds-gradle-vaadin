@@ -87,6 +87,7 @@ dependencies {
     compile localGroovy()
 
     compile group: 'com.moowork.node', name: 'com.moowork.node.gradle.plugin', version: '1.3.1'
+    compile 'io.github.classgraph:classgraph:4.8.26'
 
     testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
         exclude group: 'org.codehaus.groovy'

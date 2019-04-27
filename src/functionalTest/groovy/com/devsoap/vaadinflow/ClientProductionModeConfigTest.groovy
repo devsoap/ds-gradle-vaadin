@@ -37,6 +37,7 @@ class ClientProductionModeConfigTest extends FunctionalTest {
 
             run 'vaadinCreateProject'
 
+            File java = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'java').toFile()
             File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
             File templates = Paths.get(webapp.absolutePath, 'frontend', 'templates').toFile()
 
@@ -47,6 +48,8 @@ class ClientProductionModeConfigTest extends FunctionalTest {
                 <link rel="import" href="../bower_components/polymer/polymer-element.html">
                 <link rel="import" href="http://localhost/foo.js">
             '''.stripIndent()
+
+            makeWebComponent(java, 'Hello.java', 'hello.html')
         when:
             BuildResult result = runAndFail'vaadinTranspileDependencies'
         then:
@@ -68,6 +71,7 @@ class ClientProductionModeConfigTest extends FunctionalTest {
 
             run 'vaadinCreateProject'
 
+            File java = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'java').toFile()
             File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
             File templates = Paths.get(webapp.absolutePath, 'frontend', 'templates').toFile()
 
@@ -77,6 +81,8 @@ class ClientProductionModeConfigTest extends FunctionalTest {
             htmlImport.text = '''
                     <link rel="import" href="../bower_components/polymer/polymer-element.html">
                 '''.stripIndent()
+
+            makeWebComponent(java, 'Hello.java', 'hello.html')
         when:
             BuildResult result = run'vaadinTranspileDependencies'
         then:
@@ -98,12 +104,16 @@ class ClientProductionModeConfigTest extends FunctionalTest {
 
             run 'vaadinCreateProject'
 
+            File java = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'java').toFile()
             File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src').toFile()
             File templates = Paths.get(webapp.absolutePath, 'frontend', 'templates').toFile()
 
             File htmlImport = Paths.get(templates.absolutePath, 'hello.html').toFile()
             htmlImport.parentFile.mkdirs()
             htmlImport.createNewFile()
+
+            makeWebComponent(java, 'Hello.java', 'hello.html')
+
         when:
             BuildResult result = run 'vaadinAssembleClient'
         then:
@@ -162,5 +172,22 @@ class ClientProductionModeConfigTest extends FunctionalTest {
             File polymerjson = new File(frontend, 'polymer.json')
             !polymerjson.text.contains('/theme/material/')
             !polymerjson.text.contains('/vaadin-material-styles/')
+    }
+
+    private static File makeWebComponent(File javaDir, String filename, String templateName) {
+        File java = Paths.get(javaDir.canonicalPath, filename).toFile()
+        java.parentFile.mkdirs()
+        java << """
+            import com.vaadin.flow.component.Component;
+            import com.vaadin.flow.component.Tag;
+            import com.vaadin.flow.component.dependency.HtmlImport;
+
+            @Tag("example-web-component")
+            @HtmlImport("frontend://templates/$templateName")
+            public class ${filename - '.java'} extends Component {
+                public ${filename - '.java'}() {}
+            }
+        """.stripIndent()
+        java
     }
 }

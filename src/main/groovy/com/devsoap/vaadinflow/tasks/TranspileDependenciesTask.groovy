@@ -18,14 +18,14 @@ package com.devsoap.vaadinflow.tasks
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.PolymerBuild
-import com.devsoap.vaadinflow.util.ClientPackageUtils
+import com.devsoap.vaadinflow.util.ClassIntrospectionUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
+import io.github.classgraph.ScanResult
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
-import org.gradle.api.Incubating
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
@@ -55,7 +55,6 @@ class TranspileDependenciesTask extends DefaultTask {
     static final String NAME = 'vaadinTranspileDependencies'
 
     private static final String PACKAGE_JSON_FILE = 'package.json'
-    private static final String SLASH = PATH_SEPARATOR
     private static final String BOWER_COMPONENTS = 'bower_components'
     private static final String NODE_MODULES = 'node_modules'
     private static final String BUILD = 'build'
@@ -65,7 +64,6 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String JAVASCRIPT_FILE_TYPE = '.js'
     private static final String STYLES = 'styles'
     private static final String TEMPLATES = 'templates'
-    private static final String PATH_SEPARATOR = '/'
     private static final String MISSING_PROPERTY = '_missing'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
@@ -143,8 +141,13 @@ class TranspileDependenciesTask extends DefaultTask {
     final File templatesDir = new File(workingDir, TEMPLATES)
 
     TranspileDependenciesTask() {
-        dependsOn(InstallBowerDependenciesTask.NAME, InstallYarnDependenciesTask.NAME, ConvertCssToHtmlStyleTask.NAME,
-                ConvertGroovyTemplatesToHTML.NAME)
+        dependsOn(
+                'classes',
+                InstallBowerDependenciesTask.NAME,
+                InstallYarnDependenciesTask.NAME,
+                ConvertCssToHtmlStyleTask.NAME,
+                ConvertGroovyTemplatesToHTML.NAME
+        )
         onlyIf {
             project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
         }
@@ -202,22 +205,15 @@ class TranspileDependenciesTask extends DefaultTask {
 
         LOGGER.info('Searching for HTML imports...')
         List<String> imports = initHTMLImportsFromComponents()
-        imports += initWebappImports()
-        imports += initGeneratedHTMLImports()
-        imports += initResourceImports()
 
-        // Replace Windows path back-slashes with forward slashes
-        imports*.replace('\\', PATH_SEPARATOR)
-
-        // Remove all other themes than the selected one
-        excludeNonBaseThemes(imports)
+        LOGGER.info( 'Removing excluded HTML imports..')
+        getImportExcludes().each { filter -> imports.removeIf { it.matches(filter) } }
 
         File htmlFile = html.call()
         LOGGER.info("Creating ${htmlFile.name}...")
         initHtml(htmlFile, imports)
 
         LOGGER.info("Creating ${polymerJson.name}...")
-        initModuleSources(imports)
         initPolymerJson(htmlFile, imports)
 
         LOGGER.info("Creating ${manifestJson.name}...")
@@ -257,7 +253,6 @@ class TranspileDependenciesTask extends DefaultTask {
     /**
      * Sets the bundle exclusions
      */
-    @Incubating
     void setBundleExcludes(List<String> excludes) {
         bundleExcludes.set(excludes)
     }
@@ -265,7 +260,6 @@ class TranspileDependenciesTask extends DefaultTask {
     /**
      * Get bundle exclusions
      */
-    @Incubating
     List<String> getBundleExcludes() {
         bundleExcludes.getOrElse([])
     }
@@ -273,7 +267,6 @@ class TranspileDependenciesTask extends DefaultTask {
     /**
      * Get import exclusions
      */
-    @Incubating
     List<String> getImportExcludes() {
         importExcludes.getOrElse([])
     }
@@ -281,59 +274,18 @@ class TranspileDependenciesTask extends DefaultTask {
     /**
      * Get import exclusions
      */
-    @Incubating
     void setImportExcludes(List<String> excludes) {
         importExcludes.set(excludes)
     }
 
-    private static List<String> initModuleSources(List<String> imports) {
-        Set<String> sources = imports.collect { htmlPath ->
-            String path = htmlPath.split(SLASH).dropRight(1).join(SLASH)
-            if (path.startsWith(NODE_MODULES) || path.startsWith(BOWER_COMPONENTS)) {
-                path += '/src/**/*'
-            } else {
-                path += '/**/*'
-            }
-            path
-        }
-        Collections.unmodifiableList(new ArrayList(sources))
-    }
-
     private List<String> initHTMLImportsFromComponents() {
-        ClientPackageUtils.findHTMLImportsFromComponents(nodeModules, bowerComponents, workingDir)
-    }
-
-    private List<String> initGeneratedHTMLImports() {
-        List<File> scanDirs = []
-        if (webappGenFrontendStylesDir.call()) {
-            scanDirs.add(webappGenFrontendStylesDir.call())
-        }
-        if (webappGenFrontendTemplatesDir.call()) {
-            scanDirs.add(webappGenFrontendTemplatesDir.call())
-        }
-        findImportsInDirectories(scanDirs)
-    }
-
-    private List<String> initWebappImports() {
-        List<File> scanDirs = []
-        if (webTemplatesDir.call()) {
-            scanDirs.add(webTemplatesDir.call())
-        }
-        if (webStylesDir.call()) {
-            scanDirs.add(webStylesDir.call())
-        }
-        findImportsInDirectories(scanDirs)
-    }
-
-    private List<String> initResourceImports() {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        ScanResult scan = ClassIntrospectionUtils.getAnnotationScan(project)
         List<String> imports = []
-        LOGGER.info("Searching for resource imports in $unpackedStaticResources")
-        project.fileTree(unpackedStaticResources).each {
-            String path = (it.path - unpackedStaticResources.path).substring(1)
-            imports.add(path)
-        }
-        LOGGER.info("Found ${imports.size()} resource imports")
-        imports
+        imports += ClassIntrospectionUtils.findHtmlImports(project, scan, vaadin.baseTheme)
+        imports += ClassIntrospectionUtils.findJsImports(scan)
+        imports += ClassIntrospectionUtils.findStylesheetImports(scan)
+        imports.sort()
     }
 
     private void initPolymerJson(File html, List<String> sources) {
@@ -409,54 +361,6 @@ class TranspileDependenciesTask extends DefaultTask {
                 }
             }
         }
-    }
-
-    private List<String> findImportsInDirectories(List<File> scanDirs) {
-        List<String> imports = []
-        scanDirs.each { File dir ->
-            LOGGER.info("Searching for html imports in $dir")
-            dir.eachFile { File fileOrDir ->
-                project.fileTree(fileOrDir)
-                        .include('**/*.html', '**/*.css', '**/*.js')
-                        .each { File htmlFile ->
-                    String path = (htmlFile.path - dir.parentFile.path).substring(1)
-                    imports.add(path)
-                }
-            }
-        }
-        imports
-    }
-
-    private void excludeNonBaseThemes(List<String> imports) {
-        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        String baseTheme = vaadin.baseTheme
-
-        logger.info("Using ${baseTheme.capitalize()} as base theme...")
-        List<String> themeImports = imports.findAll {
-            // Unix / Mac
-            it.matches(/.*\/theme\/.*/)                    ||
-            it.matches(/.*\/vaadin-.*-styles\/.*/)         ||
-            // Windows
-            it.matches(/.*\\theme\\.*/)                    ||
-            it.matches(/.*\\vaadin-.*-styles\\.*/)
-        }
-
-        logger.info("Filtering ${themeImports.size()} theme imports...")
-        imports.removeAll(themeImports)
-        themeImports.retainAll {
-            // Unix / Mac
-            it.matches(/.*\/theme\/$baseTheme\/.*/)        ||
-            it.matches(/.*\/vaadin-$baseTheme-styles\/.*/) ||
-            // Windows
-            it.matches(/.*\\theme\\$baseTheme\\.*/)        ||
-            it.matches(/.*\\vaadin-$baseTheme-styles\\.*/)
-        }
-
-        logger.info("Found ${themeImports.size()} theme imports")
-        imports.addAll(themeImports)
-
-        // Remove custom excludes
-        getImportExcludes().each { filter -> imports.removeIf { it.matches(filter) } }
     }
 
     private void checkForMissingDependencies() {

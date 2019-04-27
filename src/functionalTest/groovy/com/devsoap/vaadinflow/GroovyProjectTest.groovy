@@ -105,6 +105,8 @@ class GroovyProjectTest extends FunctionalTest {
                   implementation vaadin.bom()
                   implementation vaadin.core()
                   implementation vaadin.servletApi()
+                  implementation vaadin.lumoTheme()
+                  implementation vaadin.groovy()
                 }
             '''.stripIndent()
         when:
@@ -139,6 +141,8 @@ class GroovyProjectTest extends FunctionalTest {
                   implementation vaadin.bom()
                   implementation vaadin.core()
                   implementation vaadin.servletApi()
+                  implementation vaadin.groovy()
+                  implementation vaadin.lumoTheme()
                 }
             '''.stripIndent()
         when:
