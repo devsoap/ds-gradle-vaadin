@@ -57,8 +57,9 @@ class VaadinFlowPluginAction extends PluginAction {
                 dependsOn(VersionCheckTask.NAME)
                 dependsOn(ConvertCssToHtmlStyleTask.NAME)
                 dependsOn(ConvertGroovyTemplatesToHTML.NAME)
-                dependsOn(AssembleClientDependenciesTask.NAME)
             }
+
+            tasks['jar'].dependsOn(AssembleClientDependenciesTask.NAME)
 
             repositories.maven { repository ->
                 repository.name = 'Gradle Plugin Portal'

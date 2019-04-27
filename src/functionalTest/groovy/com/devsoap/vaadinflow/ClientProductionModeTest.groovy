@@ -97,10 +97,12 @@ class ClientProductionModeTest extends FunctionalTest {
                 dependencies {
                   implementation vaadin.bom()
                   implementation vaadin.core()
+                  implementation vaadin.lumoTheme()
                   implementation vaadin.servletApi()
                 }
             '''.stripIndent()
 
+            File java = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'java').toFile()
             File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
             File templates = Paths.get(webapp.absolutePath, 'frontend', 'templates').toFile()
 
@@ -108,9 +110,14 @@ class ClientProductionModeTest extends FunctionalTest {
             htmlImport.parentFile.mkdirs()
             htmlImport.createNewFile()
 
+            makeWebComponent(java, 'Hello.java', 'hello.html')
+
             File deepHTMLImport = Paths.get(templates.absolutePath, 'foo', 'bar', 'baz.html').toFile()
             deepHTMLImport.parentFile.mkdirs()
             deepHTMLImport.createNewFile()
+
+            makeWebComponent(java, 'FooBar.java', 'foo/bar/baz.html')
+
         when:
             run('vaadinTranspileDependencies')
         then:
@@ -133,10 +140,12 @@ class ClientProductionModeTest extends FunctionalTest {
                 dependencies {
                   implementation vaadin.bom()
                   implementation vaadin.core()
+                  implementation vaadin.lumoTheme()
                   implementation vaadin.servletApi()
                 }
             '''.stripIndent()
 
+            File java = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'java').toFile()
             File webapp = Paths.get(buildFile.parentFile.canonicalPath, 'src', 'main', 'webapp').toFile()
             File templates = Paths.get(webapp.absolutePath, 'frontend', 'templates').toFile()
 
@@ -163,6 +172,9 @@ class ClientProductionModeTest extends FunctionalTest {
                     <link rel="import" href="./components/$componentTemplate.name">
                     <link rel="import" href="./views/$viewTemplate.name">
                 """.stripIndent()
+
+            makeWebComponent(java, 'Root.java', 'root.html')
+
         when:
             BuildResult result = run('vaadinTranspileDependencies')
         then:
@@ -217,4 +229,22 @@ class ClientProductionModeTest extends FunctionalTest {
             File frontend6 = new File(webappGen, 'frontend-es6')
             Paths.get(frontend6.canonicalPath, fooDir.name, barFile.name).toFile().exists()
     }
+
+    private static File makeWebComponent(File javaDir, String filename, String templateName) {
+        File java = Paths.get(javaDir.canonicalPath, filename).toFile()
+        java.parentFile.mkdirs()
+        java << """
+            import com.vaadin.flow.component.Component;
+            import com.vaadin.flow.component.Tag;
+            import com.vaadin.flow.component.dependency.HtmlImport;
+
+            @Tag("example-web-component")
+            @HtmlImport("frontend://templates/$templateName")
+            public class ${filename - '.java'} extends Component {
+                public ${filename - '.java'}() {}
+            }
+        """.stripIndent()
+        java
+    }
+
 }
