@@ -69,6 +69,14 @@ class ClientProductionModeTest extends FunctionalTest {
                     id '$PLUGIN_ID'
                 }
 
+                repositories {
+                   flatDir {
+                       dirs '${pluginJar.parentFile.canonicalPath}'
+                   }
+                }
+
+                vaadin.version = '$DEFAULT_TEST_VAADIN_VERSION'
+
                 vaadinClientDependencies {
                     yarn '@polymer/paper-slider:0.0.3'
                 }

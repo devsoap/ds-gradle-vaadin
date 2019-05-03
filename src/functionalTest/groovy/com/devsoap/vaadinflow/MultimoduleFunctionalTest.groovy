@@ -34,8 +34,6 @@ class MultimoduleFunctionalTest extends Specification {
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
-    static final String TEST_VAADIN_VERSION = '10.0.4'
-
     @Rule
     protected TemporaryFolder rootProjectDir
     protected File libraryProject
@@ -49,9 +47,15 @@ class MultimoduleFunctionalTest extends Specification {
 
     private long testStart
 
+    protected String vaadinVersion = FunctionalTest.DEFAULT_TEST_VAADIN_VERSION
+
     protected String getOfflineCachePath() {
         System.getProperty('yarn.cache.dir',
                 Paths.get(rootProjectDir.root.canonicalPath, 'yarn-cache').toFile().canonicalPath)
+    }
+
+    protected File getPluginJar() {
+        Paths.get(System.getProperty('plugin.jar.path')).toFile()
     }
 
     protected void setup() {
@@ -77,11 +81,24 @@ class MultimoduleFunctionalTest extends Specification {
         vaadinProjectBuildFile << """
             apply plugin: '$PLUGIN_ID'
 
+            vaadin.version = '$vaadinVersion'
+
+            repositories {
+               flatDir {
+                   dirs '${pluginJar.parentFile.canonicalPath}'
+               }
+               vaadin.repositories()
+            }
+
             vaadinClientDependencies {
                 offlineCachePath = "$offlineCachePath"
             }
 
             dependencies {
+                compile vaadin.bom()
+                compile vaadin.core()
+                compile vaadin.lumoTheme()
+                compile vaadin.servletApi()
                 implementation project(':libraryProject')
             }
 
@@ -114,10 +131,12 @@ class MultimoduleFunctionalTest extends Specification {
      *      the result of the build
      */
     protected BuildResult run(File projectDir=rootProjectDir.root, ConfigureRunner config = { }, String... args) {
+
         GradleRunner runner = GradleRunner.create()
                 .withProjectDir(projectDir)
                 .withArguments(['--stacktrace', '--info'] + (args as List))
                 .withPluginClasspath()
+
         config.run(runner)
         println "Running gradle ${runner.arguments.join(' ')}"
         runner.build()

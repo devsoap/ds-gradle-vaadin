@@ -15,6 +15,9 @@
  */
 package com.devsoap.vaadinflow.tasks
 
+import static com.devsoap.vaadinflow.util.ClassIntrospectionUtils.findNpmPackages
+import static com.devsoap.vaadinflow.util.ClassIntrospectionUtils.getAnnotationScan
+
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.util.ClientPackageUtils
@@ -62,10 +65,13 @@ class InstallYarnDependenciesTask extends DefaultTask {
      * Creates an installation task
      */
     InstallYarnDependenciesTask() {
-        dependsOn( YarnSetupTask.NAME )
+        dependsOn( YarnSetupTask.NAME, 'classes' )
         onlyIf {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !client.yarnDependencies.isEmpty() || !client.bowerDependencies.isEmpty() || client.compileFromSources
+            !client.yarnDependencies.empty ||
+            !client.bowerDependencies.empty ||
+            client.compileFromSources //||
+            //!findNpmPackages(getAnnotationScan(project)).empty
         }
 
         description = 'Installs Vaadin yarn dependencies'
@@ -82,6 +88,10 @@ class InstallYarnDependenciesTask extends DefaultTask {
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
         }
+
+        //inputs.property('npmDependencies') {
+         //   findNpmPackages(getAnnotationScan(project))
+        //}
     }
 
     /**
@@ -92,8 +102,14 @@ class InstallYarnDependenciesTask extends DefaultTask {
         LOGGER.info('Creating package.json ...')
         yarnRunner.init()
 
-        // Add dependencies to package.json
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
+
+        // Add classpath dependencies to package.json
+        findNpmPackages(getAnnotationScan(project)).each { String name, String version ->
+            pkg.dependencies[name] = version
+        }
+
+        // Add dependencies to package.json
         VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
         deps.yarnDependencies.each { String name, String version ->
             pkg.dependencies[name] = version

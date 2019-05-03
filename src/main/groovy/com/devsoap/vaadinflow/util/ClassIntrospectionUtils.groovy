@@ -37,6 +37,7 @@ class ClassIntrospectionUtils {
     private static final String HTML_IMPORT_FQN = 'com.vaadin.flow.component.dependency.HtmlImport'
     private static final String JS_IMPORT_FQN = 'com.vaadin.flow.component.dependency.JavaScript'
     private static final String STYLE_IMPORT_FQN = 'com.vaadin.flow.component.dependency.Stylesheet'
+    private static final String NPM_PACKAGE_IMPORT_FQN = 'com.vaadin.flow.component.dependency.NpmPackage'
     private static final String ABSTRACT_THEME_FQN = 'com.vaadin.flow.theme.AbstractTheme'
     private static final String FRONTEND_PROTOCOL = 'frontend://'
     private static final String FRONTEND_DIR = 'frontend'
@@ -99,6 +100,26 @@ class ClassIntrospectionUtils {
             }
         }
         styleImports
+    }
+
+    /**
+     * Get all NPM dependencies from classpath
+     *
+     * @param scan
+     *      The classpath scan with the annotations
+     * @return
+     *      the Npm packages as a packageName -> version mapping
+     */
+    static final Map<String,String> findNpmPackages(ScanResult scan) {
+        Map<String,String> npmPackages = [:]
+        scan.getClassesWithAnnotation(NPM_PACKAGE_IMPORT_FQN).each {
+            it.getAnnotationInfo(NPM_PACKAGE_IMPORT_FQN).each {
+                String packageName = it.parameterValues.getValue('value')
+                String version = it.parameterValues.getValue('version')
+                npmPackages.put(packageName, version)
+            }
+        }
+        npmPackages
     }
 
     /**

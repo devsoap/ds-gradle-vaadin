@@ -46,6 +46,7 @@ contributor(vaadinCtx, {
     } else if(!enclosingMember()){
         method name: 'autoconfigure', type: Void.name, params: [:]
         property name: "version", type:  String.name
+        property name: "unsupportedVersion", type:  Boolean.name
         property name: 'productionMode', type: Boolean.name
         property name: 'submitStatistics', type: Boolean.name
         property name: 'baseTheme', type: String.name
@@ -58,6 +59,7 @@ contributor(closureCtx, {
     }
     if(enclosingCall(vaadinProperty)) {
         property name: "version", type: String.name
+        property name: "unsupportedVersion", type:  Boolean.name
         property name: 'productionMode', type: Boolean.name
         property name: 'submitStatistics', type: Boolean.name
         property name: 'baseTheme', type: String.name
