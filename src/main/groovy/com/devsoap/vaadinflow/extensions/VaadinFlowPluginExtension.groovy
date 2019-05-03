@@ -46,6 +46,7 @@ class VaadinFlowPluginExtension {
     public static final String LUMO = 'lumo'
 
     private final Property<String> version
+    private final Property<Boolean> unsupportedVersion
     private final Property<Boolean> productionMode
     private final Property<Boolean> submitStatistics
     private final Property<String> baseTheme
@@ -63,6 +64,7 @@ class VaadinFlowPluginExtension {
         dependencyHandler = project.dependencies
         repositoryHandler = project.repositories
         version = project.objects.property(String)
+        unsupportedVersion = project.objects.property(Boolean)
         productionMode = project.objects.property(Boolean)
         submitStatistics = project.objects.property(Boolean)
         baseTheme = project.objects.property(String)
@@ -94,6 +96,36 @@ class VaadinFlowPluginExtension {
             throw new GradleException('Cannot set vaadin.version after dependencies have been added')
         }
         this.version.set(version)
+    }
+
+    /**
+     * Allow Vaadin version that the plugin does not officially support
+     *
+     * @since 1.1.2
+     * @param allow
+     *      Should version be allowed
+     */
+    void setUnsupportedVersion(boolean allow) {
+        this.unsupportedVersion.set(allow)
+    }
+
+    /**
+     * Is the selected Vaadin version an allowed unsupported version
+     *
+     * @since 1.1.2
+     */
+    boolean isUnSupportedVersion() {
+        !supportedVersion && this.unsupportedVersion.getOrElse(false)
+    }
+
+    /**
+     * Is the selected Vaadin version a supported version
+     *
+     * @since 1.1.2
+     */
+    boolean isSupportedVersion() {
+        String[] supportedVersions = Versions.rawVersion('vaadin.supported.versions').split(',')
+        getVersion().startsWithAny(supportedVersions)
     }
 
     /**
