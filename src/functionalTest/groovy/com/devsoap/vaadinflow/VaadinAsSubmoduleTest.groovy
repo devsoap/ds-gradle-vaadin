@@ -59,6 +59,8 @@ class VaadinAsSubmoduleTest extends MultimoduleFunctionalTest {
                  project(':vaadinProject') {
                     apply plugin: '$PLUGIN_ID'
 
+                    vaadin.version = '$vaadinVersion'
+
                     vaadinClientDependencies {
                         offlineCachePath = "$offlineCachePath"
                     }

@@ -34,7 +34,7 @@ class FunctionalTest extends Specification {
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
-    private static final String DEFAULT_TEST_VAADIN_VERSION = '12.0.0'
+    static final String DEFAULT_TEST_VAADIN_VERSION = '12.0.0'
 
     @Rule
     protected TemporaryFolder testProjectDir
@@ -48,6 +48,10 @@ class FunctionalTest extends Specification {
     protected Map<String, String> extraPlugins
 
     protected String vaadinVersion
+
+    protected File getPluginJar() {
+        Paths.get(System.getProperty('plugin.jar.path')).toFile()
+    }
 
     /**
      * Sets up the test
@@ -131,7 +135,6 @@ class FunctionalTest extends Specification {
     }
 
     private void initBuildFile() {
-        String gradlePluginDirectory =  Paths.get('.', 'build', 'libs').toFile().canonicalPath
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << """
             plugins {
@@ -146,7 +149,9 @@ class FunctionalTest extends Specification {
             }
 
             repositories {
-                flatDir dirs: "$gradlePluginDirectory"
+               flatDir {
+                   dirs '${pluginJar.parentFile.canonicalPath}'
+               }
             }
 
         """.stripIndent()

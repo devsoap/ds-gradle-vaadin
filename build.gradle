@@ -165,6 +165,10 @@ task functionalTest(type: Test) {
         systemProperty 'yarn.cache.dir', new File(project.rootProject.projectDir, 'yarn-cache').canonicalPath
     }
 
+    if (!systemProperties['plugin.jar.path']) {
+        systemProperty 'plugin.jar.path', jar.archivePath.canonicalPath
+    }
+
     testClassesDirs = sourceSets.functionalTest.output.classesDirs
     classpath = sourceSets.functionalTest.runtimeClasspath
     maxParallelForks = 1
@@ -203,6 +207,12 @@ plugins.withType(GroovyBasePlugin) {
         }
     }
 }
+
+pluginUnderTestMetadata {
+    pluginClasspath.from(files(jar.archivePath))
+
+}
+
 /***********************************************************************************************************************
  *
  * Deployment
