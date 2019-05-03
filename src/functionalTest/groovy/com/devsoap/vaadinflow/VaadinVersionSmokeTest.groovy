@@ -30,6 +30,7 @@ import spock.lang.Unroll
 class VaadinVersionSmokeTest extends FunctionalTest {
 
     private static final List<String> VERSIONS = ['10.0.4', '11.0.0', '12.0.0', '13.0.0']
+    private static final String NEXT_VERSION = '14.0.0.alpha2'
 
     @Unroll
     void 'Test development mode with Vaadin #version'(String version) {
@@ -66,6 +67,47 @@ class VaadinVersionSmokeTest extends FunctionalTest {
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
         where:
             version << VERSIONS
+    }
+
+    @Unroll
+    void 'Test development mode with unsupported Vaadin #version'(String version) {
+        setup:
+            vaadinVersion = version
+            buildFile << '''
+                repositories { vaadin.prereleases() }
+                vaadin.unsupportedVersion = true
+                vaadin.autoconfigure()
+            '''.stripIndent()
+            run 'vaadinCreateProject'
+        when:
+            BuildResult result = run 'jar'
+            BuildResult depInsightResult = run('dependencyInsight', '--dependency', 'com.vaadin:flow-server')
+        then:
+            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SKIPPED
+            result.task(':jar').outcome == TaskOutcome.SUCCESS
+            depInsightResult.task(':dependencyInsight').outcome == TaskOutcome.SUCCESS
+            depInsightResult.output.contains("com.vaadin:vaadin-core:$version")
+        where:
+            version = NEXT_VERSION
+    }
+
+    @Unroll
+    void 'Test production mode with unsupported Vaadin #version'(String version) {
+        setup:
+            vaadinVersion = version
+            buildFile << '''
+                repositories { vaadin.prereleases() }
+                vaadin.unsupportedVersion = true
+                vaadin.productionMode = true
+                vaadin.autoconfigure()
+            '''.stripIndent()
+            run 'vaadinCreateProject'
+        when:
+            BuildResult result = run 'vaadinAssembleClient'
+        then:
+            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
+        where:
+            version = NEXT_VERSION
     }
 
 }

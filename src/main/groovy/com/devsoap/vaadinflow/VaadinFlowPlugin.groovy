@@ -142,9 +142,13 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     private static void validateVaadinVersion(Project project) {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        String[] supportedVersions = Versions.rawVersion('vaadin.supported.versions').split(',')
-        boolean isSupportedVersion = vaadin.version.startsWithAny(supportedVersions)
-        if (!isSupportedVersion) {
+        if (vaadin.unSupportedVersion) {
+            LOGGER.severe(
+                    "The Vaadin version ($vaadin.version) you have selected is not supported by the plugin. " +
+                            'Since vaadin.unsupportedVersion is set to True, continuing anyway. You are on your own.')
+
+        } else if (!vaadin.isSupportedVersion()) {
+            String[] supportedVersions = Versions.rawVersion('vaadin.supported.versions').split(',')
             throw new UnsupportedVersionException(
                     "The Vaadin version ($vaadin.version) you have selected is not supported by the plugin. " +
                             "Please pick one of the following supported Vaadin versions $supportedVersions.")
