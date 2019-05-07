@@ -155,7 +155,9 @@ class VaadinFlowPlugin implements Plugin<Project> {
             String[] supportedVersions = Versions.rawVersion('vaadin.supported.versions').split(',')
             throw new UnsupportedVersionException(
                     "The Vaadin version ($vaadin.version) you have selected is not supported by the plugin. " +
-                            "Please pick one of the following supported Vaadin versions $supportedVersions.")
+                        "Please pick one of the following supported Vaadin versions $supportedVersions. " +
+                        'Alternatively you can add vaadin.unsupportedVersion=true to your build.gradle to override ' +
+                        'this check but there is no guarantee it will work or that the build will be stable.')
         }
     }
 }
