@@ -17,6 +17,7 @@ package com.devsoap.vaadinflow.util
 
 import groovy.util.logging.Log
 import io.github.classgraph.ClassGraph
+import io.github.classgraph.ClassInfo
 import io.github.classgraph.ClassInfoList
 import io.github.classgraph.ScanResult
 import org.gradle.api.Project
@@ -39,6 +40,7 @@ class ClassIntrospectionUtils {
     private static final String STYLE_IMPORT_FQN = 'com.vaadin.flow.component.dependency.Stylesheet'
     private static final String NPM_PACKAGE_IMPORT_FQN = 'com.vaadin.flow.component.dependency.NpmPackage'
     private static final String ABSTRACT_THEME_FQN = 'com.vaadin.flow.theme.AbstractTheme'
+    private static final String JS_MODULE_FQN = 'com.vaadin.flow.component.dependency.JsModule'
     private static final String FRONTEND_PROTOCOL = 'frontend://'
     private static final String FRONTEND_DIR = 'frontend'
 
@@ -120,6 +122,24 @@ class ClassIntrospectionUtils {
             }
         }
         npmPackages
+    }
+
+    /**
+     * Find all JsModules in project
+     *
+     * @param scan
+     *      the classpath scan with the annotations
+     * @return
+     *      the values of the js modules
+     */
+    static final Map<String, String> findJsModules(ScanResult scan) {
+        Map<String, String> modules = [:]
+        scan.getClassesWithAnnotation(JS_MODULE_FQN).each { ClassInfo ci ->
+            ci.getAnnotationInfoRepeatable(JS_MODULE_FQN).each {
+                modules[it.parameterValues.value.value.toString()] = ci.name
+            }
+        }
+        modules
     }
 
     /**

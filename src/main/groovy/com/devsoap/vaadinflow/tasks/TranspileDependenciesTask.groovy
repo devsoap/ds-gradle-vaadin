@@ -19,6 +19,7 @@ import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.PolymerBuild
 import com.devsoap.vaadinflow.util.ClassIntrospectionUtils
+import com.devsoap.vaadinflow.util.LogUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
@@ -65,6 +66,7 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String STYLES = 'styles'
     private static final String TEMPLATES = 'templates'
     private static final String MISSING_PROPERTY = '_missing'
+    private static final String VAADIN_ROOT_PACKAGE = 'com.vaadin'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
@@ -203,8 +205,25 @@ class TranspileDependenciesTask extends DefaultTask {
             validateImports(templatesTargetDir)
         }
 
+        LOGGER.info('Performing annotation scan...')
+        ScanResult scan = LogUtils.measureTime('Scan completed') {
+            ClassIntrospectionUtils.getAnnotationScan(project)
+        }
+
         LOGGER.info('Searching for HTML imports...')
-        List<String> imports = initHTMLImportsFromComponents()
+        List<String> imports = initHTMLImportsFromComponents(scan)
+
+        LOGGER.info('Searching for JS modules...')
+        Map<String, String> modules = ClassIntrospectionUtils.findJsModules(scan)
+
+        //FIXME Generate index.js out of these Js Modules
+        modules.findAll { m, c-> !c.startsWith(VAADIN_ROOT_PACKAGE) }.each { m, c ->
+            LOGGER.warning(
+            "JS Module $m in $c not applied. @JSModule not yet supported by the plugin. Use @HTMLImport instead.")
+        }
+        modules.findAll { m, c-> c.startsWith(VAADIN_ROOT_PACKAGE) }.each { m, c ->
+            LOGGER.debug("Vaadin JS Module $m in $c not applied.")
+        }
 
         LOGGER.info( 'Removing excluded HTML imports..')
         getImportExcludes().each { filter -> imports.removeIf { it.matches(filter) } }
@@ -278,9 +297,8 @@ class TranspileDependenciesTask extends DefaultTask {
         importExcludes.set(excludes)
     }
 
-    private List<String> initHTMLImportsFromComponents() {
+    private List<String> initHTMLImportsFromComponents(ScanResult scan) {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        ScanResult scan = ClassIntrospectionUtils.getAnnotationScan(project)
         List<String> imports = []
         imports += ClassIntrospectionUtils.findHtmlImports(project, scan, vaadin.baseTheme)
         imports += ClassIntrospectionUtils.findJsImports(scan)

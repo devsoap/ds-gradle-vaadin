@@ -133,12 +133,13 @@ class WebJarHelper {
                         }
 
                         LOGGER.info("Unpacking frontend component in $file.name into $componentRoot")
-                        copyJarToFolder(file, packageJsonFolder, componentRoot)
+                        copyJarToFolder(file, packageJsonFolder, componentRoot, [])
                     }
 
                     if (resourceTargetDir && findFolder(FRONTEND_RESOURCES_META_DIR, file)) {
                         LOGGER.info("Unpacking frontend resources in $file.name into $resourceTargetDir")
-                        copyJarToFolder(file, FRONTEND_RESOURCES_META_DIR, resourceTargetDir)
+                        copyJarToFolder(file, FRONTEND_RESOURCES_META_DIR, resourceTargetDir,
+                                [PACKAGE_JSON, BOWER_JSON])
                     }
                 }
             }
@@ -229,7 +230,8 @@ class WebJarHelper {
         found
     }
 
-    private static void copyJarToFolder(File file, String packageJsonFolder, File componentRoot) {
+    private static void copyJarToFolder(File file, String packageJsonFolder, File componentRoot,
+                                        List<String> copyBlackList) {
         componentRoot.mkdirs()
         file.withInputStream { InputStream stream ->
             JarInputStream jarStream = new JarInputStream(stream)
@@ -249,7 +251,7 @@ class WebJarHelper {
 
                         if (entry.directory && !f.exists()) {
                             f.mkdirs()
-                        } else if (!f.exists()) {
+                        } else if (!f.exists() && !copyBlackList.contains(f.name)) {
                             jarFile.getInputStream(entry).with { is ->
                                 Files.copy(is, f.toPath())
                             }

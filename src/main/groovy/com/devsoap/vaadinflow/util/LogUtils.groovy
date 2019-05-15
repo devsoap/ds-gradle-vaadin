@@ -15,6 +15,8 @@
  */
 package com.devsoap.vaadinflow.util
 
+import groovy.time.TimeCategory
+import groovy.time.TimeDuration
 import groovy.transform.Memoized
 import groovy.util.logging.Log
 
@@ -27,10 +29,20 @@ import java.util.logging.Level
  * @author John Ahlroos
  * @since 1.0
  */
+@Log('LOGGER')
 class LogUtils {
 
     static final OutputStream getLogOutputStream(Level level) {
         new LogOutputStream(level)
+    }
+
+    static final <T> T measureTime(String description, Closure<T> closure) {
+        Date start = new Date()
+        T result = closure.call()
+        Date end = new Date()
+        TimeDuration duration = TimeCategory.minus(end, start)
+        LOGGER.info("$description. It took $duration")
+        result
     }
 
     @Log('LOGGER')
