@@ -228,7 +228,7 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info( 'Removing excluded HTML imports..')
         getImportExcludes().each { filter -> imports.removeIf { it.matches(filter) } }
 
-        File htmlFile = html.call()s
+        File htmlFile = html.call()
         LOGGER.info("Creating ${htmlFile.name}...")
         initHtml(htmlFile, imports)
 
