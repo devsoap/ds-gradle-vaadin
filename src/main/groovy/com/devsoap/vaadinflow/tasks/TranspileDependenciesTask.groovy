@@ -222,7 +222,7 @@ class TranspileDependenciesTask extends DefaultTask {
             "JS Module $m in $c not applied. @JSModule not yet supported by the plugin. Use @HTMLImport instead.")
         }
         modules.findAll { m, c-> c.startsWith(VAADIN_ROOT_PACKAGE) }.each { m, c ->
-            LOGGER.debug("Vaadin JS Module $m in $c not applied.")
+            LOGGER.fine("Vaadin JS Module $m in $c not applied. @JSModule not yet supported by the plugin.")
         }
 
         LOGGER.info( 'Removing excluded HTML imports..')
