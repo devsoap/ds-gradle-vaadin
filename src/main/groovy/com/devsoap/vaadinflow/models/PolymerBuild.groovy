@@ -38,7 +38,7 @@ class PolymerBuild {
 
     static class CustomBuild implements Build {
         String name
-        boolean bundle = true
+        BundleConfiguration bundle = new BundleConfiguration()
         BuildConfiguration js = new BuildConfiguration()
         BuildConfiguration css = new BuildConfiguration()
         BuildConfiguration html = new BuildConfiguration()
@@ -52,5 +52,15 @@ class PolymerBuild {
         boolean minify = true
 
         boolean compile = false
+    }
+
+    /**
+     * The bundle configuration
+     */
+    static class BundleConfiguration {
+
+        boolean rewriteUrlsInTemplates = false
+
+        boolean stripComments = true
     }
 }
