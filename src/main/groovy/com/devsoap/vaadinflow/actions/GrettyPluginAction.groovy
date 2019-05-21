@@ -15,6 +15,8 @@
  */
 package com.devsoap.vaadinflow.actions
 
+import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
 import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
 import com.devsoap.vaadinflow.util.PackagingUtil
@@ -56,6 +58,16 @@ class GrettyPluginAction extends PluginAction {
         super.execute(project)
         project.gretty.servletContainer = SERVLET_CONTAINER
         buildingProduct = project.gradle.startParameter.taskNames.findAll { it.contains('buildProduct') }.size() > 0
+    }
+
+    @Override
+    protected void executeAfterAllEvaluations() {
+        super.executeAfterAllEvaluations()
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        project.gretty.jvmArgs = (project.gretty.jvmArgs ?: []) + [
+            "-Dvaadin.productionMode=$vaadin.productionMode".toString(),
+            '-Dvaadin.bowerMode=true'
+        ]
     }
 
     @Override
