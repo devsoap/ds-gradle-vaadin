@@ -1,4 +1,4 @@
-# Gradle Vaadin Flow Plugin
+# DS Vaadin Flow Gradle Plugin
 
 The Gradle Vaadin Flow plugin allows you to easily build Vaadin 10+ projects with Gradle. It allows you to create a new 
 projects from pre-made project templates, themes and components. It handles cross-compiling for older browsers which do 
