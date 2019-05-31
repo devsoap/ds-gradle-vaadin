@@ -111,7 +111,7 @@ jar {
     manifest{
         attributes(
                 'Vaadin-Package-Version': 1,
-                'Implementation-Title': 'Vaadin Flow Plugin for Gradle',
+                'Implementation-Title': 'DS Vaadin Flow Gradle Plugin',
                 'Implementation-Version': version,
                 'Implementation-Vendor': 'Devsoap Inc.',
         )
@@ -141,9 +141,9 @@ artifacts {
  * API documentation
  */
 groovydoc {
-    docTitle = "Gradle Vaadin Flow Plugin $version API"
-    windowTitle = "Gradle Vaadin Flow Plugin Version $version"
-    footer = "Gradle Vaadin Flow Plugin is maintained by <a href=\"https://github.com/johndevs/\">@johndevs</a>. Copyright © 2018"
+    docTitle = "DS Vaadin Flow Gradle Plugin $version API"
+    windowTitle = "DS Vaadin Flow Gradle Plugin $version"
+    footer = "DS Vaadin Flow Gradle Plugin is maintained by <a href=\"https://github.com/johndevs/\">@johndevs</a>. Copyright © 2018"
 }
 
 
@@ -236,7 +236,7 @@ pluginBundle {
     plugins {
         vaadinPlugin {
             id = gradlePlugin.plugins.vaadinPlugin.id
-            displayName = 'Gradle Vaadin Flow plugin'
+            displayName = 'DS Vaadin Flow Gradle Plugin'
         }
     }
     mavenCoordinates {
