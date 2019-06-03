@@ -16,7 +16,7 @@ To get started using the plugin have a look a the plugin Wiki at https://github.
 
 Support this project by becoming a sponsor. Your logo will show up here with a link to your website. To find out more about becoming a sponsor see the [Become a sponsor](https://devsoap.com/gradle-vaadin-flow-plugin/#supporttheproject) page.
 
-[<img src="https://github.com/devsoap/gradle-vaadin-flow/raw/master/docs/sponsors/vaadin.com.png" />](https://vaadin.com) [<img src="https://github.com/devsoap/gradle-vaadin-flow/raw/master/docs/sponsors/safri.net.png" />](https://www.safri.net/)
+[<img src="https://github.com/devsoap/gradle-vaadin-flow/raw/master/docs/sponsors/vaadin.com.png?03062019" />](https://vaadin.com) [<img src="https://github.com/devsoap/gradle-vaadin-flow/raw/master/docs/sponsors/safri.net.png?03062019" />](https://www.safri.net/)
 
 # License
 
