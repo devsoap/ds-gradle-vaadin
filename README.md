@@ -10,7 +10,7 @@ not yet support ES6 and helps with integrating with other useful Gradle plugins.
 
 # Getting started
 
-To get started using the plugin have a look a the plugin Wiki at https://github.com/devsoap/gradle-vaadin-flow/wiki
+To get started using the plugin have a look a the plugin documentation at https://docs.devsoap.com/vaadin_flow_gradle_plugin
 
 # Sponsors
 
