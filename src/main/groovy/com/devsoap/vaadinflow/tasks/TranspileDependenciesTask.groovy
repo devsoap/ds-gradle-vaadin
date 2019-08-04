@@ -66,7 +66,8 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String STYLES = 'styles'
     private static final String TEMPLATES = 'templates'
     private static final String MISSING_PROPERTY = '_missing'
-    private static final String VAADIN_ROOT_PACKAGE = 'com.vaadin'
+    private static final String IMPORTS_JS_FILE = 'index.js'
+    private static final String SLASH = '/'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
@@ -113,11 +114,23 @@ class TranspileDependenciesTask extends DefaultTask {
     @InputDirectory
     final File unpackedStaticResources = new File(workingDir, 'static')
 
+    @OutputDirectory
+    final File javascriptSources = new File(workingDir, 'src')
+
     @InputFile
     final File packageJson = new File(workingDir, PACKAGE_JSON_FILE)
 
     @OutputFile
     final File polymerJson = new File(workingDir, 'polymer.json')
+
+    @OutputFile
+    final File importsJs = new File(javascriptSources, IMPORTS_JS_FILE)
+
+    @OutputDirectory
+    final File distDirectory = new File(workingDir, 'dist')
+
+    @OutputFile
+    final File bundleJs = new File(distDirectory, 'main.js')
 
     @OutputFile
     final Closure<File> html = {
@@ -174,6 +187,7 @@ class TranspileDependenciesTask extends DefaultTask {
     void run() {
         LOGGER.info('Copying unpacked static resources...')
         project.copy { spec -> spec.from(unpackedStaticResources).into(workingDir) }
+        project.copy { spec -> spec.from(unpackedStaticResources).include('**/*.js').into(javascriptSources) }
 
         LOGGER.info( 'Copying generated styles...')
         project.copy { spec -> spec.from(webappGenFrontendDir).include(STYLES_GLOB).into(workingDir) }
@@ -216,14 +230,12 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Searching for JS modules...')
         Map<String, String> modules = ClassIntrospectionUtils.findJsModules(scan)
 
-        //FIXME Generate index.js out of these Js Modules
-        modules.findAll { m, c-> !c.startsWith(VAADIN_ROOT_PACKAGE) }.each { m, c ->
-            LOGGER.warning(
-            "JS Module $m in $c not applied. @JSModule not yet supported by the plugin. Use @HTMLImport instead.")
-        }
-        modules.findAll { m, c-> c.startsWith(VAADIN_ROOT_PACKAGE) }.each { m, c ->
-            LOGGER.fine("Vaadin JS Module $m in $c not applied. @JSModule not yet supported by the plugin.")
-        }
+        LOGGER.info( 'Validating JS module imports...')
+        removeInvalidModules(modules)
+
+        LOGGER.info("Creating ${importsJs.name}...")
+        importsJs.text = ''
+        modules.each { m, c -> importsJs << "import '$m';\n" }
 
         LOGGER.info( 'Removing excluded HTML imports..')
         getImportExcludes().each { filter -> imports.removeIf { it.matches(filter) } }
@@ -243,18 +255,17 @@ class TranspileDependenciesTask extends DefaultTask {
         checkForMissingDependencies()
 
         LOGGER.info('Transpiling...')
-        yarnRunner.transpile(getBundleExcludes())
+        LogUtils.measureTime('Transpiling done successfully') {
+            yarnRunner.transpile(getBundleExcludes())
+        }
 
         LOGGER.info('Validating transpilation...')
-        if (!es5dir.exists()) {
-            throw new GradleException(
-                    "Transpile did not generate ES5 result in $es5dir. Run with --info to get more information.")
+        validateTranspilation()
+
+        LOGGER.info('Bundling...')
+        LogUtils.measureTime('Bundling completed') {
+            yarnRunner.webpackBundle()
         }
-        if (!es6dir.exists()) {
-            throw new GradleException(
-                    "Transpile did not generate ES6 result in $es6dir. Run with --info to get more information.")
-        }
-        LOGGER.info('Transpiling done successfully.')
 
         LOGGER.info( 'Cleaning up unpacked static resources...')
         project.fileTree(unpackedStaticResources).each {
@@ -267,6 +278,7 @@ class TranspileDependenciesTask extends DefaultTask {
                 GFileUtils.deleteDirectory(file)
             }
         }
+        GFileUtils.deleteDirectory(javascriptSources)
     }
 
     /**
@@ -406,6 +418,34 @@ class TranspileDependenciesTask extends DefaultTask {
             }
             manifest.remove(MISSING_PROPERTY)
             manifestJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(manifest))
+        }
+    }
+
+    private void removeInvalidModules(Map<String,String> modules) {
+        modules.removeAll { m, c ->
+            File nodeDependency = Paths.get(nodeModules.canonicalPath, m.split(SLASH)).toFile()
+            File staticFile = Paths.get(javascriptSources.canonicalPath, m.split(SLASH)).toFile()
+            boolean exists = nodeDependency.exists() || staticFile.exists()
+            if (!exists) {
+                LOGGER.warning("No Javascript module with the name '$m' could be found. Module ignored.")
+                return true
+            }
+            if (!nodeDependency.exists() && staticFile.exists() && !m.startsWith('./')) {
+                LOGGER.warning("Static file Javascript module '$m' does not start with './'. Module ignored.")
+                return true
+            }
+            false
+        }
+    }
+
+    private void validateTranspilation() {
+        if (!es5dir.exists()) {
+            throw new GradleException(
+                    "Transpile did not generate ES5 result in $es5dir. Run with --info to get more information.")
+        }
+        if (!es6dir.exists()) {
+            throw new GradleException(
+                    "Transpile did not generate ES6 result in $es6dir. Run with --info to get more information.")
         }
     }
 }

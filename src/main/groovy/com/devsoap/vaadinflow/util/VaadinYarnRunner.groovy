@@ -42,6 +42,8 @@ class VaadinYarnRunner extends YarnExecRunner {
     private static final String POLYMER_COMMAND = 'polymer'
     private static final String BOWER_COMMAND = 'bower'
     private static final String POLYMER_BUNDLER_COMMAND = 'polymer-bundler'
+    private static final String WEBPACK_COMMAND = 'webpack'
+    private static final String WEBPACK_CLI_COMMAND = 'webpack-cli'
     private static final String RUN_COMMAND = 'run'
     private static final String FRONTEND = 'frontend'
     private static final String WORK_DIR_OPTION = '--cwd'
@@ -112,7 +114,7 @@ class VaadinYarnRunner extends YarnExecRunner {
         File packageJson = new File(frontendDir, 'package.json')
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
         pkg.main = ''
-        pkg.version = '1.0.0'
+        pkg.version = project.version
         pkg.name = FRONTEND
 
         pkg.devDependencies['polymer-cli'] = Versions.rawVersion('polymer.cli.version')
@@ -123,6 +125,10 @@ class VaadinYarnRunner extends YarnExecRunner {
 
         pkg.devDependencies[BOWER_COMMAND] = Versions.rawVersion('bower.version')
         pkg.scripts[BOWER_COMMAND] = './node_modules/bower/bin/bower'
+
+        pkg.devDependencies[WEBPACK_COMMAND] = Versions.rawVersion('webpack.version')
+        pkg.devDependencies[WEBPACK_CLI_COMMAND] = Versions.rawVersion('webpack.cli.version')
+        pkg.scripts[WEBPACK_COMMAND] = './node_modules/webpack/bin/webpack.js'
 
         if (this.variant.windows) {
             pkg.scripts.replaceAll { key, value -> this.variant.nodeExec + ' ' + value }
@@ -165,6 +171,16 @@ class VaadinYarnRunner extends YarnExecRunner {
         arguments.add(htmlManifest.name)
         execute().assertNormalExitValue()
         manifestJson.text = JsonOutput.prettyPrint(manifestJson.text)
+    }
+
+    /**
+     * Webpack bundle
+     *
+     * @since 1.3
+     */
+    void webpackBundle() {
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, RUN_COMMAND, WEBPACK_COMMAND]
+        execute().assertNormalExitValue()
     }
 
     /**
