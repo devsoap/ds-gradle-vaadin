@@ -68,6 +68,7 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String MISSING_PROPERTY = '_missing'
     private static final String IMPORTS_JS_FILE = 'index.js'
     private static final String SLASH = '/'
+    private static final String VAADIN = 'VAADIN'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
@@ -114,8 +115,9 @@ class TranspileDependenciesTask extends DefaultTask {
     @InputDirectory
     final File unpackedStaticResources = new File(workingDir, 'static')
 
-    @OutputDirectory
+    // Temporary directory to store Javascript sources. Removed after build.
     final File javascriptSources = new File(workingDir, 'src')
+    final File importsJs = new File(javascriptSources, IMPORTS_JS_FILE)
 
     @InputFile
     final File packageJson = new File(workingDir, PACKAGE_JSON_FILE)
@@ -124,13 +126,11 @@ class TranspileDependenciesTask extends DefaultTask {
     final File polymerJson = new File(workingDir, 'polymer.json')
 
     @OutputFile
-    final File importsJs = new File(javascriptSources, IMPORTS_JS_FILE)
-
-    @OutputDirectory
-    final File distDirectory = new File(workingDir, 'dist')
+    final File statsJson = Paths.get(project.buildDir.canonicalPath, 'resources',
+            'main', 'META-INF', VAADIN, 'config', 'stats.json').toFile()
 
     @OutputFile
-    final File bundleJs = new File(distDirectory, 'main.js')
+    final File mainJs = Paths.get(webappGenDir.canonicalPath, VAADIN, 'main.js').toFile()
 
     @OutputFile
     final Closure<File> html = {
@@ -264,7 +264,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
         LOGGER.info('Bundling...')
         LogUtils.measureTime('Bundling completed') {
-            yarnRunner.webpackBundle()
+            yarnRunner.webpackBundle(statsJson, mainJs)
         }
 
         LOGGER.info( 'Cleaning up unpacked static resources...')

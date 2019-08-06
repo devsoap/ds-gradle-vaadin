@@ -23,6 +23,7 @@ import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.util.ClientPackageUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import com.devsoap.vaadinflow.util.WebJarHelper
+import com.devsoap.vaadinflow.util.Versions
 import com.moowork.gradle.node.yarn.YarnSetupTask
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
@@ -103,6 +104,9 @@ class InstallYarnDependenciesTask extends DefaultTask {
         yarnRunner.init()
 
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
+
+        // Requirement for building Vaadin 14+
+        pkg.dependencies['@webcomponents/webcomponentsjs'] = Versions.rawVersion('webcomponentsjs.version')
 
         // Add classpath dependencies to package.json
         findNpmPackages(getAnnotationScan(project)).each { String name, String version ->

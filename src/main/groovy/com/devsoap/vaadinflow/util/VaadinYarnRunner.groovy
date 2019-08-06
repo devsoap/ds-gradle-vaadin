@@ -178,9 +178,41 @@ class VaadinYarnRunner extends YarnExecRunner {
      *
      * @since 1.3
      */
-    void webpackBundle() {
-        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, RUN_COMMAND, WEBPACK_COMMAND]
+    void webpackBundle(File statsFile, File bundleFile) {
+
+        generateWebpackConfig(bundleFile)
+
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, RUN_COMMAND, WEBPACK_COMMAND,
+                     '--profile', '--json']
+
+        ByteArrayOutputStream statsStream = new ByteArrayOutputStream()
+
+        Closure oldExecOverrides = execOverrides
+        execOverrides = { ExecSpec spec ->
+            spec.standardOutput = statsStream
+            spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
+        }
+
         execute().assertNormalExitValue()
+
+        execOverrides = oldExecOverrides
+
+        new ByteArrayInputStream(statsStream.toByteArray()).with { stream ->
+            boolean jsonStartFound = false
+            boolean jsonEndFound = false
+            statsFile.withWriter { writer ->
+                stream.filterLine(writer) { line ->
+                    if (!jsonStartFound && line.startsWith('{')) {
+                        jsonStartFound = true
+                        return true
+                    } else if (!jsonEndFound && line.startsWith('}')) {
+                        jsonEndFound = true
+                        return true
+                    }
+                    jsonStartFound && !jsonEndFound
+                }
+            }
+        }
     }
 
     /**
@@ -221,5 +253,13 @@ class VaadinYarnRunner extends YarnExecRunner {
                     .substitutions(['parameters' : params])
                     .build().write()
         }
+    }
+
+    private void generateWebpackConfig(File bundleFile) {
+        TemplateWriter.builder()
+                .targetDir(workingDir as File)
+                .templateFileName('webpack.config.js')
+                .substitutions(['targetPath' :  bundleFile.parentFile.canonicalPath ])
+                .build().write()
     }
 }
