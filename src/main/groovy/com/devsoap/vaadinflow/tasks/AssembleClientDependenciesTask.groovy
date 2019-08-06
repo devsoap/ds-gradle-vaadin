@@ -22,9 +22,10 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.TaskAction
+
+import java.nio.file.Paths
 
 /**
  * Assembles the files into the frontend directory
@@ -39,6 +40,8 @@ class AssembleClientDependenciesTask extends DefaultTask {
     static final String NAME = 'vaadinAssembleClient'
 
     private static final String FRONTEND = 'frontend'
+    private static final String WEBCOMPONENTSJS = 'webcomponentsjs'
+    private static final String NODE_MODULES = 'node_modules'
 
     final File frontendBuildDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final File sourceDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es5')
@@ -122,9 +125,19 @@ class AssembleClientDependenciesTask extends DefaultTask {
             warnOfDependencyInFrontend(bowerComponents)
         }
 
-        File nodeModules = new File(frontendDir, 'node_modules')
+        File nodeModules = new File(frontendDir, NODE_MODULES)
         if (nodeModules.exists()) {
             warnOfDependencyInFrontend(nodeModules)
+        }
+
+        File webcomponentsJs = Paths.get(project.buildDir.canonicalPath,
+                FRONTEND, NODE_MODULES, '@webcomponents', WEBCOMPONENTSJS).toFile()
+        File targetWebcomponentsJs = Paths.get(webAppGenDir.canonicalPath,
+                         'VAADIN', 'build', WEBCOMPONENTSJS).toFile()
+        project.copy { CopySpec spec ->
+            spec.from(webcomponentsJs)
+                .include('webcomponents-loader.js')
+                .into(targetWebcomponentsJs)
         }
 
         VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
