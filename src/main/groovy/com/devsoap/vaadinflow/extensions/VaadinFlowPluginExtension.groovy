@@ -48,6 +48,7 @@ class VaadinFlowPluginExtension {
     private final Property<String> version
     private final Property<Boolean> unsupportedVersion
     private final Property<Boolean> productionMode
+    private final Property<Boolean> compatibilityMode
     private final Property<Boolean> submitStatistics
     private final Property<String> baseTheme
 
@@ -66,6 +67,7 @@ class VaadinFlowPluginExtension {
         version = project.objects.property(String)
         unsupportedVersion = project.objects.property(Boolean)
         productionMode = project.objects.property(Boolean)
+        compatibilityMode = project.objects.property(Boolean)
         submitStatistics = project.objects.property(Boolean)
         baseTheme = project.objects.property(String)
 
@@ -149,6 +151,21 @@ class VaadinFlowPluginExtension {
     void setProductionMode(boolean enabled) {
         productionMode.set(enabled)
         project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources = enabled
+    }
+
+    /**
+     * Should the plugin support the old legacy mode compilation
+     */
+    boolean isCompatibilityMode() {
+        compatibilityMode.getOrElse(Boolean.parseBoolean(System.getProperty('vaadin.compatibilityMode',
+                Boolean.TRUE.toString())))
+    }
+
+    /**
+     * Should the plugin support legacy browsers by transpiling the sources to ES5
+     */
+    void setCompatibilityMode(boolean enabled) {
+        compatibilityMode.set(enabled)
     }
 
     /**

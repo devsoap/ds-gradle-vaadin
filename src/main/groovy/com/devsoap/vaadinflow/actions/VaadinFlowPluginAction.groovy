@@ -97,6 +97,12 @@ class VaadinFlowPluginAction extends PluginAction {
             LOGGER.warning('Allow Vaadin to gather usage statistics by setting ' +
                     'vaadin.submitStatistics=true (hide this message by setting it to false)')
         }
+
+        if (vaadin.compatibilityMode) {
+            LOGGER.warning(
+                    'The project will be compiled for Vaadin 13 (Flow 1) compatibility mode. ' +
+                    'To disable compatibility mode set vaadin.compatibilityMode=false.')
+        }
     }
 
     @Singleton(lazy = false, strict = true)

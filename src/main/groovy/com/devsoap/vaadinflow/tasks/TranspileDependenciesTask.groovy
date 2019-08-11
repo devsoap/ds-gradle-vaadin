@@ -109,15 +109,26 @@ class TranspileDependenciesTask extends DefaultTask {
     @InputDirectory
     final File nodeModules = new File(workingDir, NODE_MODULES)
 
-    @InputDirectory
-    final File bowerComponents = new File(workingDir, BOWER_COMPONENTS)
+    @OutputDirectory
+    final File appNodeModules = Paths.get(workingDir.canonicalPath, 'dist', NODE_MODULES).toFile()
 
+    @Optional
     @InputDirectory
-    final File unpackedStaticResources = new File(workingDir, 'static')
+    final Closure<File> bowerComponents = {
+        new File(workingDir, BOWER_COMPONENTS).with { it.exists() ? it : null }
+    }
 
-    // Temporary directory to store Javascript sources. Removed after build.
-    final File javascriptSources = new File(workingDir, 'src')
-    final File importsJs = new File(javascriptSources, IMPORTS_JS_FILE)
+    @Optional
+    @InputDirectory
+    final Closure<File> unpackedStaticResources = {
+        new File(workingDir, 'static').with { it.exists() ? it : null }
+    }
+
+    @Optional
+    @InputDirectory
+    final Closure<File> srcDir = {
+        new File(workingDir, 'src').with { it.exists() ? it : null }
+    }
 
     @InputFile
     final File packageJson = new File(workingDir, PACKAGE_JSON_FILE)
@@ -185,9 +196,12 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @TaskAction
     void run() {
-        LOGGER.info('Copying unpacked static resources...')
-        project.copy { spec -> spec.from(unpackedStaticResources).into(workingDir) }
-        project.copy { spec -> spec.from(unpackedStaticResources).include('**/*.js').into(javascriptSources) }
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+
+        if (vaadin.compatibilityMode) {
+            LOGGER.info('Copying unpacked static resources...')
+            project.copy { spec -> spec.from(unpackedStaticResources).into(workingDir) }
+        }
 
         LOGGER.info( 'Copying generated styles...')
         project.copy { spec -> spec.from(webappGenFrontendDir).include(STYLES_GLOB).into(workingDir) }
@@ -224,20 +238,37 @@ class TranspileDependenciesTask extends DefaultTask {
             ClassIntrospectionUtils.getAnnotationScan(project)
         }
 
-        LOGGER.info('Searching for HTML imports...')
-        List<String> imports = initHTMLImportsFromComponents(scan)
+        if (vaadin.compatibilityMode) {
+            bundleInCompatibilityMode(scan)
+        } else {
+            bundle(scan)
+        }
+    }
 
+    private void bundle(ScanResult scan) {
         LOGGER.info('Searching for JS modules...')
         Map<String, String> modules = ClassIntrospectionUtils.findJsModules(scan)
 
-        LOGGER.info( 'Validating JS module imports...')
+        LOGGER.info('Validating JS module imports...')
         removeInvalidModules(modules)
 
+        File importsJs = new File(srcDir.call(), IMPORTS_JS_FILE)
         LOGGER.info("Creating ${importsJs.name}...")
+        importsJs.parentFile.mkdirs()
         importsJs.text = ''
         modules.each { m, c -> importsJs << "import '$m';\n" }
 
-        LOGGER.info( 'Removing excluded HTML imports..')
+        LOGGER.info('Bundling...')
+        LogUtils.measureTime('Bundling completed') {
+            yarnRunner.webpackBundle(statsJson, mainJs)
+        }
+    }
+
+    private void bundleInCompatibilityMode(ScanResult scan) {
+        LOGGER.info('Searching for HTML imports...')
+        List<String> imports = initHTMLImportsFromComponents(scan)
+
+        LOGGER.info('Removing excluded HTML imports..')
         getImportExcludes().each { filter -> imports.removeIf { it.matches(filter) } }
 
         File htmlFile = html.call()
@@ -262,12 +293,7 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Validating transpilation...')
         validateTranspilation()
 
-        LOGGER.info('Bundling...')
-        LogUtils.measureTime('Bundling completed') {
-            yarnRunner.webpackBundle(statsJson, mainJs)
-        }
-
-        LOGGER.info( 'Cleaning up unpacked static resources...')
+        LOGGER.info('Cleaning up unpacked static resources...')
         project.fileTree(unpackedStaticResources).each {
             String relativePath = it.path - workingDir.path - "static${File.separator}"
             String absolutePath = workingDir.canonicalPath + relativePath
@@ -278,7 +304,6 @@ class TranspileDependenciesTask extends DefaultTask {
                 GFileUtils.deleteDirectory(file)
             }
         }
-        GFileUtils.deleteDirectory(javascriptSources)
     }
 
     /**
@@ -322,8 +347,8 @@ class TranspileDependenciesTask extends DefaultTask {
 
         List<String> extraDependencies = [manifestJson.name]
 
-        if (bowerComponents.exists()) {
-            File webcomponentsjs = new File(bowerComponents, 'webcomponentsjs')
+        if (bowerComponents.call()?.exists()) {
+            File webcomponentsjs = new File(bowerComponents.call(), 'webcomponentsjs')
             webcomponentsjs.eachFile {
                 if (it.name.endsWith(JAVASCRIPT_FILE_TYPE) || it.name.endsWith('.js.map')) {
                     extraDependencies.add("$BOWER_COMPONENTS/webcomponentsjs/$it.name")
@@ -423,15 +448,15 @@ class TranspileDependenciesTask extends DefaultTask {
 
     private void removeInvalidModules(Map<String,String> modules) {
         modules.removeAll { m, c ->
-            File nodeDependency = Paths.get(nodeModules.canonicalPath, m.split(SLASH)).toFile()
-            File staticFile = Paths.get(javascriptSources.canonicalPath, m.split(SLASH)).toFile()
+            File nodeDependency = Paths.get(appNodeModules.canonicalPath, m.split(SLASH)).toFile()
+            File staticFile = Paths.get(srcDir.call().canonicalPath, m.split(SLASH)).toFile()
             boolean exists = nodeDependency.exists() || staticFile.exists()
             if (!exists) {
-                LOGGER.warning("No Javascript module with the name '$m' could be found. Module ignored.")
+                LOGGER.warning("$c: No Javascript module with the name '$m' could be found. Module ignored.")
                 return true
             }
             if (!nodeDependency.exists() && staticFile.exists() && !m.startsWith('./')) {
-                LOGGER.warning("Static file Javascript module '$m' does not start with './'. Module ignored.")
+                LOGGER.warning("$c: Static file Javascript module '$m' does not start with './'. Module ignored.")
                 return true
             }
             false
