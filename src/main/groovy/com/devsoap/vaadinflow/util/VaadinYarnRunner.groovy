@@ -16,6 +16,7 @@
 package com.devsoap.vaadinflow.util
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ClientPackage
 import com.moowork.gradle.node.yarn.YarnExecRunner
 import groovy.json.JsonOutput
@@ -47,6 +48,13 @@ class VaadinYarnRunner extends YarnExecRunner {
     private static final String RUN_COMMAND = 'run'
     private static final String FRONTEND = 'frontend'
     private static final String WORK_DIR_OPTION = '--cwd'
+    private static final String BUILD_DISTRIBUTION_COMMAND = 'build-dist'
+    private static final String NO_BIN_LINKS = '--no-bin-links'
+    private static final String DIST_DIR = 'dist'
+    private static final String INIT_COMMAND = 'init'
+    private static final String YES_PARAM = '-y'
+    private static final String PACKAGE_JSON = 'package.json'
+    private static final String SPACE = ' '
 
     private final boolean isOffline
 
@@ -66,6 +74,7 @@ class VaadinYarnRunner extends YarnExecRunner {
         this.workingDir = workingDir
         this.isOffline = project.gradle.startParameter.offline
         execOverrides = { ExecSpec spec ->
+            spec.standardInput = new ByteArrayInputStream()
             spec.standardOutput = standardOutput
             spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
         }
@@ -87,7 +96,9 @@ class VaadinYarnRunner extends YarnExecRunner {
         }
 
         generateYarnRc()
-        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, '--no-bin-links', WORK_DIR_OPTION, workingDir,
+
+        // Install dev dependencies
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, NO_BIN_LINKS, WORK_DIR_OPTION, workingDir,
                      INSTALL_COMMAND]
         execute().assertNormalExitValue()
     }
@@ -107,31 +118,82 @@ class VaadinYarnRunner extends YarnExecRunner {
         generateYarnRc()
 
         // Generate package.json
-        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, 'init', '-y']
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, INIT_COMMAND, YES_PARAM]
         execute().assertNormalExitValue()
 
         // Set proper defaults for package.json
-        File packageJson = new File(frontendDir, 'package.json')
+        File packageJson = new File(frontendDir, PACKAGE_JSON)
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
         pkg.main = ''
         pkg.version = project.version
         pkg.name = FRONTEND
 
-        pkg.devDependencies['polymer-cli'] = Versions.rawVersion('polymer.cli.version')
-        pkg.scripts[POLYMER_COMMAND] = './node_modules/polymer-cli/bin/polymer.js'
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
 
-        pkg.devDependencies[POLYMER_BUNDLER_COMMAND] = Versions.rawVersion('polymer.bundler.version')
-        pkg.scripts[POLYMER_BUNDLER_COMMAND] = './node_modules/polymer-bundler/lib/bin/polymer-bundler.js'
+        if (vaadin.compatibilityMode) {
+            pkg.devDependencies['polymer-cli'] = Versions.rawVersion('polymer.cli.version')
+            pkg.scripts[POLYMER_COMMAND] = './node_modules/polymer-cli/bin/polymer.js'
+
+            pkg.devDependencies[POLYMER_BUNDLER_COMMAND] = Versions.rawVersion('polymer.bundler.version')
+            pkg.scripts[POLYMER_BUNDLER_COMMAND] = './node_modules/polymer-bundler/lib/bin/polymer-bundler.js'
+
+        } else {
+
+            pkg.devDependencies['node-pty'] = Versions.rawVersion('node.pty.version')
+            pkg.devDependencies[WEBPACK_COMMAND] = Versions.rawVersion('webpack.version')
+            pkg.devDependencies[WEBPACK_CLI_COMMAND] = Versions.rawVersion('webpack.cli.version')
+            pkg.devDependencies['webpack-babel-multi-target-plugin'] = Versions.rawVersion(
+                    'bable.multitarget.plugin.version')
+            pkg.scripts[WEBPACK_COMMAND] = './node_modules/webpack/bin/webpack.js'
+        }
 
         pkg.devDependencies[BOWER_COMMAND] = Versions.rawVersion('bower.version')
         pkg.scripts[BOWER_COMMAND] = './node_modules/bower/bin/bower'
 
-        pkg.devDependencies[WEBPACK_COMMAND] = Versions.rawVersion('webpack.version')
-        pkg.devDependencies[WEBPACK_CLI_COMMAND] = Versions.rawVersion('webpack.cli.version')
-        pkg.scripts[WEBPACK_COMMAND] = './node_modules/webpack/bin/webpack.js'
+        if (this.variant.windows) {
+            pkg.scripts.replaceAll { key, value -> this.variant.nodeExec + SPACE + value }
+        }
+
+        packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
+    }
+
+    void distInstall() {
+        generateYarnRc()
+        File distDir = Paths.get(((File)workingDir).canonicalPath, DIST_DIR).toFile()
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, NO_BIN_LINKS, WORK_DIR_OPTION, distDir,
+                     BUILD_DISTRIBUTION_COMMAND]
+        execute().assertNormalExitValue()
+    }
+
+    void initDist() {
+        File distDir = new File((File)workingDir, DIST_DIR)
+
+        // Generate package.json
+        arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, distDir, INIT_COMMAND, YES_PARAM]
+        execute().assertNormalExitValue()
+
+        // Set proper defaults for package.json
+        File packageJson = new File(distDir, PACKAGE_JSON)
+        ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
+        pkg.main = ''
+        pkg.version = project.version
+        pkg.name = FRONTEND
+
+        pkg.dependencies['@babel/runtime'] = Versions.rawVersion('babel.runtime.version')
+        pkg.dependencies['@webcomponents/webcomponentsjs'] = Versions.rawVersion('webcomponentsjs.version')
+
+        // Install Yarn flatten script
+        File yarnInstallScript = Paths.get(project.buildDir.canonicalPath, FRONTEND, 'scripts',
+                'build-dist.js').toFile()
+        yarnInstallScript.parentFile.mkdirs()
+
+        URL yarnInstallScriptUrl = VaadinYarnRunner.classLoader.getResource('scripts/yarn-flat-auto.js')
+        yarnInstallScript.text = yarnInstallScriptUrl.text
+        yarnInstallScript.executable = true
+        pkg.scripts[BUILD_DISTRIBUTION_COMMAND] = "../scripts/$yarnInstallScript.name".toString()
 
         if (this.variant.windows) {
-            pkg.scripts.replaceAll { key, value -> this.variant.nodeExec + ' ' + value }
+            pkg.scripts.replaceAll { key, value -> this.variant.nodeExec + SPACE + value }
         }
 
         packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))

@@ -101,16 +101,16 @@ class AssembleClientDependenciesTask extends DefaultTask {
     @TaskAction
     void run() {
         List<String> excludes = [
-             '**/LICENSE*',
-             '**/demo/**',
-             '**/docs/**',
-             '**/test*/**',
-             '**/build/**',
-             '**/frontend-*/**',
-             '**/.*',
-             '**/*.md',
-             '**/*.json',
-             '**/yarn.lock'
+                '**/LICENSE*',
+                '**/demo/**',
+                '**/docs/**',
+                '**/test*/**',
+                '**/build/**',
+                '**/frontend-*/**',
+                '**/.*',
+                '**/*.md',
+                '**/*.json',
+                '**/yarn.lock'
         ]
 
         List<String> frontendIncludes = [
@@ -130,39 +130,43 @@ class AssembleClientDependenciesTask extends DefaultTask {
             warnOfDependencyInFrontend(nodeModules)
         }
 
-        File webcomponentsJs = Paths.get(project.buildDir.canonicalPath,
-                FRONTEND, NODE_MODULES, '@webcomponents', WEBCOMPONENTSJS).toFile()
-        File targetWebcomponentsJs = Paths.get(webAppGenDir.canonicalPath,
-                         'VAADIN', 'build', WEBCOMPONENTSJS).toFile()
-        project.copy { CopySpec spec ->
-            spec.from(webcomponentsJs)
-                .include('webcomponents-loader.js')
-                .into(targetWebcomponentsJs)
-        }
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        if (vaadin.compatibilityMode) {
+            VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
+            if (client.compileFromSources) {
+                if (!sourceDirEs5.exists()) {
+                    throw new GradleException("ES5 compilation result does not exist in $sourceDirEs5")
+                }
+                if (!sourceDirEs6.exists()) {
+                    throw new GradleException("ES6 compilation result does not exist in $sourceDirEs6")
+                }
+                frontendIncludes <<  'vaadin-flow-bundle-manifest.json'
 
-        VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-        if (client.compileFromSources) {
-            if (!sourceDirEs5.exists()) {
-                throw new GradleException("ES5 compilation result does not exist in $sourceDirEs5")
-            }
-            if (!sourceDirEs6.exists()) {
-                throw new GradleException("ES6 compilation result does not exist in $sourceDirEs6")
-            }
-            frontendIncludes <<  'vaadin-flow-bundle-manifest.json'
+                project.with {
+                    copy { CopySpec spec -> spec.from(frontendDir).into(targetDirEs5) }
+                    copy { CopySpec spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs5) }
+                    copy { CopySpec spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
 
-            project.with {
-                copy { CopySpec spec -> spec.from(frontendDir).into(targetDirEs5) }
-                copy { CopySpec spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs5) }
-                copy { CopySpec spec -> spec.from(sourceDirEs5).exclude(excludes).into(targetDirEs5) }
-
-                copy { CopySpec spec -> spec.from(frontendDir).into(targetDirEs6) }
-                copy { CopySpec spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs6) }
-                copy { CopySpec spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
+                    copy { CopySpec spec -> spec.from(frontendDir).into(targetDirEs6) }
+                    copy { CopySpec spec -> spec.from(frontendBuildDir).include(frontendIncludes).into(targetDirEs6) }
+                    copy { CopySpec spec -> spec.from(sourceDirEs6).exclude(excludes).into(targetDirEs6) }
+                }
+            } else {
+                project.with {
+                    copy { CopySpec spec -> spec.from(frontendDir).into(webAppGenFrontendDir) }
+                    copy { CopySpec spec -> spec.from(frontendBuildDir).exclude(excludes).into(webAppGenFrontendDir) }
+                }
             }
         } else {
-            project.with {
-                copy { CopySpec spec -> spec.from(frontendDir).into(webAppGenFrontendDir) }
-                copy { CopySpec spec -> spec.from(frontendBuildDir).exclude(excludes).into(webAppGenFrontendDir) }
+            File distDir =  Paths.get(project.buildDir.canonicalPath, FRONTEND, 'dist').toFile()
+            File webcomponentsJs = Paths.get(distDir.canonicalPath,  NODE_MODULES,
+                    '@webcomponents', WEBCOMPONENTSJS).toFile()
+            File targetWebcomponentsJs = Paths.get(webAppGenDir.canonicalPath,
+                    'VAADIN', 'build', WEBCOMPONENTSJS).toFile()
+            project.copy { CopySpec spec ->
+                spec.from(webcomponentsJs)
+                        .include('webcomponents-loader.js', 'webcomponents-hi.js')
+                        .into(targetWebcomponentsJs)
             }
         }
     }

@@ -64,10 +64,10 @@ class GrettyPluginAction extends PluginAction {
     protected void executeAfterAllEvaluations() {
         super.executeAfterAllEvaluations()
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        project.gretty.jvmArgs = (project.gretty.jvmArgs ?: []) + [
-            "-Dvaadin.productionMode=$vaadin.productionMode".toString(),
-            '-Dvaadin.bowerMode=true'
-        ]
+        project.gretty.systemProperties = project.gretty.systemProperties ?: [:]
+        project.gretty.systemProperties.putIfAbsent 'vaadin.productionMode', vaadin.productionMode
+        project.gretty.systemProperties.putIfAbsent 'vaadin.compatibilityMode', vaadin.compatibilityMode
+        project.gretty.systemProperties.putIfAbsent 'vaadin.enableDevServer', false
     }
 
     @Override

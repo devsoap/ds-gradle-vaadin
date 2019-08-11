@@ -1,9 +1,55 @@
 const path = require('path');
+const { BabelMultiTargetPlugin } = require('webpack-babel-multi-target-plugin');
 
 module.exports = {
+  mode: 'production',
   entry: './src/index.js',
+
+  resolve: {
+       modules: [
+          path.resolve(__dirname,'dist/node_modules')
+        ]
+  },
+
   output: {
-    filename: 'main.js',
+    filename: `vaadin-[name]-[contenthash].cache.js`,
     path: path.resolve('${targetPath}')
-  }
+  },
+
+  module: {
+      rules: [
+        {
+          test: /\\.js\$/,
+          use: [BabelMultiTargetPlugin.loader()]
+        },
+        {
+          test: /\\.css\$/i,
+          use: ['raw-loader']
+        }
+      ]
+  },
+
+  plugins: [
+      new BabelMultiTargetPlugin({
+        babel: {
+          presetOptions: {
+            useBuiltIns: false
+          }
+        },
+        targets: {
+          'es6': {
+            browsers: [
+              'last 1 Chrome major versions'
+            ],
+          },
+          'es5': {
+            browsers: [
+              'ie 11'
+            ],
+            tagAssetsWithKey: true,
+          }
+        }
+      })
+  ]
 };
+

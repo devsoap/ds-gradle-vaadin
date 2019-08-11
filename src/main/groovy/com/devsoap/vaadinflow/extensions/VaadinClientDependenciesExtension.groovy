@@ -116,9 +116,11 @@ class VaadinClientDependenciesExtension {
     /**
      * Add a Bower dependency using the compact notation
      *
+     * @deprecated In favor of Yarn dependencies
      * @param dependencyNotation
      *      the dependency using the "<dependency-name>:<dependency-version>" notation
      */
+    @Deprecated
     void bower(String dependencyNotation) {
         if (dependencyNotation.contains(COLON)) {
             dependencyNotation.split(COLON).with {
@@ -136,12 +138,19 @@ class VaadinClientDependenciesExtension {
     /**
      * Add a Bower dependency
      *
+     * @deprecated In favor of Yarn dependencies
      * @param dependency
      *      the dependency name
      * @param version
      *      the dependency version
      */
+    @Deprecated
     void bower(String dependency, String version) {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        if (!vaadin.compatibilityMode) {
+            LOGGER.warning("Bower dependency '$dependency' ignored. Please use NPM dependencies instead.")
+            return
+        }
         bowerDependencies[dependency] = version
     }
 

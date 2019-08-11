@@ -102,7 +102,7 @@ class SpringBootAction extends PluginAction {
         VaadinFlowPluginExtension vaadin = task.project.extensions.getByType(VaadinFlowPluginExtension)
         bootRun.jvmArgs([
             "-Dvaadin.productionMode=$vaadin.productionMode".toString(),
-            '-Dvaadin.bowerMode=true'
+            "-Dvaadin.compatibilityMode=$vaadin.compatibilityMode".toString()
         ])
         if (vaadin.productionMode) {
             // TODO Resolve if supporting production mode is even possible with bootRun

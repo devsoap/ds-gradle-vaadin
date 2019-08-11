@@ -48,6 +48,7 @@ contributor(vaadinCtx, {
         property name: "version", type:  String.name
         property name: "unsupportedVersion", type:  Boolean.name
         property name: 'productionMode', type: Boolean.name
+        property name: 'compatibilityMode', type: Boolean.name
         property name: 'submitStatistics', type: Boolean.name
         property name: 'baseTheme', type: String.name
     }
@@ -61,6 +62,7 @@ contributor(closureCtx, {
         property name: "version", type: String.name
         property name: "unsupportedVersion", type:  Boolean.name
         property name: 'productionMode', type: Boolean.name
+        property name: 'compatibilityMode', type: Boolean.name
         property name: 'submitStatistics', type: Boolean.name
         property name: 'baseTheme', type: String.name
     }
