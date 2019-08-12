@@ -67,7 +67,7 @@ class InstallBowerDependenciesTask extends DefaultTask {
         }
 
         description = 'Installs Vaadin bower client dependencies'
-        group = 'Vaadin-compatibility'
+        group = 'vaadin-compatibility'
 
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies

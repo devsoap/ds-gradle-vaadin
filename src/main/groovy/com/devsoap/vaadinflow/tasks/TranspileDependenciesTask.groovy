@@ -27,6 +27,7 @@ import groovy.util.logging.Log
 import io.github.classgraph.ScanResult
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
+import org.gradle.api.file.CopySpec
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
@@ -224,7 +225,7 @@ class TranspileDependenciesTask extends DefaultTask {
         File stylesDir = webStylesDir.call()
         if (stylesDir) {
             LOGGER.info( 'Copying html styles...')
-            project.copy { spec ->
+            project.copy { CopySpec spec ->
                 spec.from(stylesDir.parentFile).include(STYLES_GLOB).into(workingDir)
             }
 
@@ -252,11 +253,19 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Validating JS module imports...')
         removeInvalidModules(modules)
 
+        LOGGER.info('Searching for CSS imports...')
+        Map<String,String> cssImports = ClassIntrospectionUtils.findCssImports(scan)
+
+        LOGGER.info('Validating CSS imports..')
+        removeInvalidCSSImports(cssImports)
+
         File importsJs = new File(srcDir.call(), IMPORTS_JS_FILE)
         LOGGER.info("Creating ${importsJs.name}...")
         importsJs.parentFile.mkdirs()
-        importsJs.text = ''
+        importsJs.text = '// Polymer modules\n'
         modules.each { m, c -> importsJs << "import '$m';\n" }
+        importsJs << '// CSS imports\n'
+        cssImports.each { p, c -> importsJs << "import '${p - '.css'}.js'\n" }
 
         LOGGER.info('Bundling...')
         LogUtils.measureTime('Bundling completed') {
@@ -457,6 +466,17 @@ class TranspileDependenciesTask extends DefaultTask {
             }
             if (!nodeDependency.exists() && staticFile.exists() && !m.startsWith('./')) {
                 LOGGER.warning("$c: Static file Javascript module '$m' does not start with './'. Module ignored.")
+                return true
+            }
+            false
+        }
+    }
+
+    private void removeInvalidCSSImports(Map<String,String> imports) {
+        imports.removeAll { p, c ->
+            File importFile = Paths.get(srcDir.call().canonicalPath, p.split(SLASH)).toFile()
+            if (!importFile.exists()) {
+                LOGGER.warning("$c: No Css import with the name '$p' could be found. Import ignored.")
                 return true
             }
             false
