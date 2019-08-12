@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.tasks
 
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ProjectType
 import groovy.text.Template
 import groovy.text.markup.MarkupTemplateEngine
@@ -52,9 +53,12 @@ class ConvertGroovyTemplatesToHTML extends DefaultTask {
     final File targetPath = new File(project.buildDir, TEMPLATES_TARGET_PATH)
 
     ConvertGroovyTemplatesToHTML() {
-        group = 'vaadin'
+        group = 'vaadin-compatibility'
         description = 'Converts Groovy layout templates (tpl) into html'
-        onlyIf { ProjectType.get(project) == ProjectType.GROOVY }
+        onlyIf {
+            VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+            vaadin.compatibilityMode && ProjectType.get(project) == ProjectType.GROOVY
+        }
     }
 
     @TaskAction

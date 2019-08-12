@@ -45,7 +45,7 @@ class CreateWebTemplateTask extends DefaultTask {
     private final ComponentCreator componentCreator = new ComponentCreator()
 
     CreateWebTemplateTask() {
-        group = 'Vaadin'
+        group = 'vaadin-compatibility'
         description = 'Creates a new Web Template'
     }
 

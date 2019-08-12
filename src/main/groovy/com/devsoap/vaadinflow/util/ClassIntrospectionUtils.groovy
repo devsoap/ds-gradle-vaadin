@@ -41,6 +41,7 @@ class ClassIntrospectionUtils {
     private static final String NPM_PACKAGE_IMPORT_FQN = 'com.vaadin.flow.component.dependency.NpmPackage'
     private static final String ABSTRACT_THEME_FQN = 'com.vaadin.flow.theme.AbstractTheme'
     private static final String JS_MODULE_FQN = 'com.vaadin.flow.component.dependency.JsModule'
+    private static final String CSS_IMPORT_FQN = 'com.vaadin.flow.component.dependency.CssImport'
     private static final String FRONTEND_PROTOCOL = 'frontend://'
     private static final String FRONTEND_DIR = 'frontend'
 
@@ -140,6 +141,16 @@ class ClassIntrospectionUtils {
             }
         }
         modules
+    }
+
+    static final Map<String,String> findCssImports(ScanResult scan) {
+        Map<String, String> imports = [:]
+        scan.getClassesWithAnnotation(CSS_IMPORT_FQN).each { ClassInfo ci ->
+            ci.getAnnotationInfoRepeatable(CSS_IMPORT_FQN).each {
+                imports[it.parameterValues.value.value.toString()] = ci.name
+            }
+        }
+        imports
     }
 
     /**
