@@ -48,16 +48,18 @@ class VaadinProjectCreator {
                 vaadinProject.applicationPackage.split('\\.')).toFile()
         String appClassName = TemplateWriter.makeStringJavaCompatible(vaadinProject.applicationName)
 
-        TemplateWriter.builder()
-                .templateFileName("Servlet.$sourceFileExtension")
-                .targetDir(pkgDir)
-                .targetFileName("${appClassName}Servlet.$sourceFileExtension")
-                .substitutions([
+        if (vaadinProject.compatibilityMode) {
+            TemplateWriter.builder()
+                    .templateFileName("Servlet.$sourceFileExtension")
+                    .targetDir(pkgDir)
+                    .targetFileName("${appClassName}Servlet.$sourceFileExtension")
+                    .substitutions([
                     'applicationPackage' : vaadinProject.applicationPackage,
                     'applicationName' : vaadinProject.applicationName,
                     'productionMode' : vaadinProject.productionMode
-                ])
-                .build().write()
+            ])
+                    .build().write()
+        }
 
         TemplateWriter.builder()
                 .templateFileName("AppView.$sourceFileExtension")
@@ -70,13 +72,15 @@ class VaadinProjectCreator {
                 .build().write()
 
         TemplateWriter.builder()
-                .templateFileName("UI.$sourceFileExtension")
+                .templateFileName(vaadinProject.compatibilityMode ?
+                    "UI.$sourceFileExtension" : "UI.14.$sourceFileExtension")
                 .targetDir(pkgDir)
                 .targetFileName("${appClassName}UI.$sourceFileExtension")
                 .substitutions([
                         'applicationPackage': vaadinProject.applicationPackage,
                         'applicationName' : appClassName,
-                        'applicationTheme' : vaadinProject.applicationName.toLowerCase() + '-theme.html',
+                        'applicationTheme' : vaadinProject.applicationName.toLowerCase() +
+                                "-theme.${vaadinProject.compatibilityMode ? 'html' : 'css'}",
                         'applicationBaseTheme' : vaadinProject.applicationBaseTheme
                 ])
                 .build().write()

@@ -18,7 +18,7 @@ package com.devsoap.vaadinflow.actions
 import com.devsoap.vaadinflow.VaadinFlowPlugin
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
-import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
+import com.devsoap.vaadinflow.tasks.WrapCssTask
 import com.devsoap.vaadinflow.tasks.ConvertGroovyTemplatesToHTML
 import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
 import com.devsoap.vaadinflow.tasks.InstallYarnDependenciesTask
@@ -55,7 +55,7 @@ class VaadinFlowPluginAction extends PluginAction {
         project.with {
             tasks[PROCESS_RESOURCES].with {
                 dependsOn(VersionCheckTask.NAME)
-                dependsOn(ConvertCssToHtmlStyleTask.NAME)
+                dependsOn(WrapCssTask.NAME)
                 dependsOn(ConvertGroovyTemplatesToHTML.NAME)
             }
 
@@ -101,7 +101,7 @@ class VaadinFlowPluginAction extends PluginAction {
         if (vaadin.compatibilityMode) {
             LOGGER.warning(
                     'The project will be compiled for Vaadin 13 (Flow 1) compatibility mode. ' +
-                    'To disable compatibility mode set vaadin.compatibilityMode=false.')
+                    'To disable compatibility mode set vaadin.compatibilityMode=false. (experimental)')
         }
     }
 

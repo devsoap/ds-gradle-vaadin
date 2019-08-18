@@ -19,9 +19,9 @@ import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.PolymerBuild
 import com.devsoap.vaadinflow.util.ClassIntrospectionUtils
+import com.devsoap.vaadinflow.util.ClientPackageUtils
 import com.devsoap.vaadinflow.util.LogUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
-import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import io.github.classgraph.ScanResult
@@ -110,8 +110,12 @@ class TranspileDependenciesTask extends DefaultTask {
     @InputDirectory
     final File nodeModules = new File(workingDir, NODE_MODULES)
 
+    @Optional
     @OutputDirectory
-    final File appNodeModules = Paths.get(workingDir.canonicalPath, 'dist', NODE_MODULES).toFile()
+    final Closure<File> appNodeModules = {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ?  null : Paths.get(workingDir.canonicalPath, 'dist', NODE_MODULES).toFile()
+    }
 
     @Optional
     @InputDirectory
@@ -134,45 +138,86 @@ class TranspileDependenciesTask extends DefaultTask {
     @InputFile
     final File packageJson = new File(workingDir, PACKAGE_JSON_FILE)
 
+    @Optional
     @OutputFile
-    final File polymerJson = new File(workingDir, 'polymer.json')
+    final Closure<File> polymerJson = {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ? new File(workingDir, 'polymer.json') : null
+    }
 
+    @Optional
     @OutputFile
-    final File statsJson = Paths.get(project.buildDir.canonicalPath, 'resources',
-            'main', 'META-INF', VAADIN, 'config', 'stats.json').toFile()
+    final Closure<File> statsJson = {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ? null : Paths.get(project.buildDir.canonicalPath, 'resources',
+                'main', 'META-INF', VAADIN, 'config', 'stats.json').toFile()
+    }
 
+    @Optional
     @OutputFile
-    final File mainJs = Paths.get(webappGenDir.canonicalPath, VAADIN, 'main.js').toFile()
+    final Closure<File> mainJs = {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ? null : Paths.get(webappGenDir.canonicalPath, VAADIN, 'main.js').toFile()
+    }
 
+    @Optional
     @OutputFile
+    @Deprecated
     final Closure<File> html = {
-        String fileHash = inputs.files.collect { it.exists() ? HashUtil.sha256(it) : '' }.join('')
-        String propertyHash = inputs.properties.collect { key, value -> HashUtil.createCompactMD5(key + value) }
-        String manifestHash = HashUtil.createCompactMD5(fileHash + propertyHash)
-        new File(workingDir, "vaadin-flow-bundle-${manifestHash}.cache.html")
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        if (vaadin.compatibilityMode) {
+            String fileHash = inputs.files.collect { it.exists() ? HashUtil.sha256(it) : '' }.join('')
+            String propertyHash = inputs.properties.collect { key, value -> HashUtil.createCompactMD5(key + value) }
+            String manifestHash = HashUtil.createCompactMD5(fileHash + propertyHash)
+            return new File(workingDir, "vaadin-flow-bundle-${manifestHash}.cache.html")
+        }
+        null
+    }
+
+    @Optional
+    @OutputDirectory
+    @Deprecated
+    final Closure<File> es5dir = {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ? Paths.get(workingDir.canonicalPath, BUILD, 'frontend-es5').toFile() : null
+    }
+
+    @Optional
+    @OutputDirectory
+    @Deprecated
+    final Closure<File> es6dir = {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ? Paths.get(workingDir.canonicalPath, BUILD, 'frontend-es6').toFile() : null
+    }
+
+    @Optional
+    @OutputFile
+    @Deprecated
+    final Closure<File> manifestJson = {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ? new File(workingDir, 'vaadin-flow-bundle-manifest.json') : null
     }
 
     @OutputDirectory
-    final File es5dir = Paths.get(workingDir.canonicalPath, BUILD, 'frontend-es5').toFile()
+    final Closure<File> stylesDir = {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ? new File(workingDir, STYLES) : new File(srcDir.call(), STYLES)
+    }
 
+    @Optional
     @OutputDirectory
-    final File es6dir = Paths.get(workingDir.canonicalPath, BUILD, 'frontend-es6').toFile()
-
-    @OutputFile
-    final File manifestJson = new File(workingDir, 'vaadin-flow-bundle-manifest.json')
-
-    @OutputDirectory
-    final File stylesDir = new File(workingDir, STYLES)
-
-    @OutputDirectory
-    final File templatesDir = new File(workingDir, TEMPLATES)
+    @Deprecated
+    final Closure<File> templatesDir = {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ? new File(workingDir, TEMPLATES) : null
+    }
 
     TranspileDependenciesTask() {
         dependsOn(
                 'classes',
                 InstallBowerDependenciesTask.NAME,
                 InstallYarnDependenciesTask.NAME,
-                ConvertCssToHtmlStyleTask.NAME,
+                WrapCssTask.NAME,
                 ConvertGroovyTemplatesToHTML.NAME
         )
         onlyIf {
@@ -205,33 +250,42 @@ class TranspileDependenciesTask extends DefaultTask {
         }
 
         LOGGER.info( 'Copying generated styles...')
-        project.copy { spec -> spec.from(webappGenFrontendDir).include(STYLES_GLOB).into(workingDir) }
+        if (vaadin.compatibilityMode) {
+            project.copy { spec -> spec.from(webappGenFrontendDir).include(STYLES_GLOB).into(workingDir) }
+        } else {
+            project.copy { spec -> spec.from(webappGenFrontendDir).include(STYLES_GLOB).into(srcDir.call()) }
+        }
 
-        LOGGER.info( 'Copying generated templates...')
-        project.copy { spec -> spec.from(webappGenFrontendDir).include(TEMPLATES_GLOB).into(workingDir) }
+        if (vaadin.compatibilityMode) {
+            LOGGER.info( 'Copying generated templates...')
+            project.copy { spec -> spec.from(webappGenFrontendDir).include(TEMPLATES_GLOB).into(workingDir) }
 
-        File templatesDir = webTemplatesDir.call()
-        if (templatesDir) {
-            LOGGER.info( 'Copying html templates...')
-            project.copy { spec ->
-                spec.from(templatesDir.parentFile).include(TEMPLATES_GLOB).into(workingDir)
+            File templatesDir = webTemplatesDir.call()
+            if (templatesDir) {
+                LOGGER.info( 'Copying html templates...')
+                project.copy { spec ->
+                    spec.from(templatesDir.parentFile).include(TEMPLATES_GLOB).into(workingDir)
+                }
+
+                LOGGER.info('Validating html templates...')
+                File templatesTargetDir = new File(workingDir, TEMPLATES)
+                validateImports(templatesTargetDir)
             }
-
-            LOGGER.info('Validating html templates...')
-            File templatesTargetDir = new File(workingDir, TEMPLATES)
-            validateImports(templatesTargetDir)
         }
 
         File stylesDir = webStylesDir.call()
         if (stylesDir) {
             LOGGER.info( 'Copying html styles...')
             project.copy { CopySpec spec ->
-                spec.from(stylesDir.parentFile).include(STYLES_GLOB).into(workingDir)
+                spec.from(stylesDir.parentFile).include(STYLES_GLOB)
+                        .into(vaadin.compatibilityMode ? workingDir : srcDir)
             }
 
-            LOGGER.info('Validating html styles...')
-            File templatesTargetDir = new File(workingDir, STYLES)
-            validateImports(templatesTargetDir)
+            if (vaadin.compatibilityMode) {
+                LOGGER.info('Validating html styles...')
+                File templatesTargetDir = new File(workingDir, STYLES)
+                validateImports(templatesTargetDir)
+            }
         }
 
         LOGGER.info('Performing annotation scan...')
@@ -269,7 +323,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
         LOGGER.info('Bundling...')
         LogUtils.measureTime('Bundling completed') {
-            yarnRunner.webpackBundle(statsJson, mainJs)
+            yarnRunner.webpackBundle(statsJson.call(), mainJs.call())
         }
     }
 
@@ -284,12 +338,12 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info("Creating ${htmlFile.name}...")
         initHtml(htmlFile, imports)
 
-        LOGGER.info("Creating ${polymerJson.name}...")
+        LOGGER.info("Creating ${polymerJson.call().name}...")
         initPolymerJson(htmlFile, imports)
 
         LOGGER.info("Creating ${manifestJson.name}...")
         VaadinYarnRunner yarnBundleRunner = new VaadinYarnRunner(project, workingDir, new ByteArrayOutputStream())
-        yarnBundleRunner.polymerBundle(manifestJson, htmlFile, getBundleExcludes())
+        yarnBundleRunner.polymerBundle(manifestJson.call(), htmlFile, getBundleExcludes())
 
         LOGGER.info('Checking for missing dependencies...')
         checkForMissingDependencies()
@@ -354,7 +408,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
     private void initPolymerJson(File html, List<String> sources) {
 
-        List<String> extraDependencies = [manifestJson.name]
+        List<String> extraDependencies = [manifestJson.call().name]
 
         if (bowerComponents.call()?.exists()) {
             File webcomponentsjs = new File(bowerComponents.call(), 'webcomponentsjs')
@@ -372,11 +426,12 @@ class TranspileDependenciesTask extends DefaultTask {
                 sources: sources,
                 extraDependencies : extraDependencies,
                 builds: [
-                    new PolymerBuild.CustomBuild(name: es5dir.name).with { js.compile = true; it },
-                    new PolymerBuild.CustomBuild(name: es6dir.name)
+                    new PolymerBuild.CustomBuild(name: es5dir.call().name).with { js.compile = true; it },
+                    new PolymerBuild.CustomBuild(name: es6dir.call().name)
                 ]
         )
-        polymerJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(buildModel))
+
+        polymerJson.call().text = ClientPackageUtils.toJson(buildModel)
     }
 
     private void initHtml(File html, List<String> imports) {
@@ -428,7 +483,8 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private void checkForMissingDependencies() {
-        Map<String, Object> manifest = new JsonSlurper().parse(manifestJson) as Map
+        File manifestFile = manifestJson.call()
+        Map<String, Object> manifest = new JsonSlurper().parse(manifestFile) as Map
         if (manifest[MISSING_PROPERTY]) {
             List<String> missing = manifest[MISSING_PROPERTY] as List
             missing.removeAll(getBundleExcludes())
@@ -451,7 +507,7 @@ class TranspileDependenciesTask extends DefaultTask {
                         'Run with --info to get more information.')
             }
             manifest.remove(MISSING_PROPERTY)
-            manifestJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(manifest))
+            manifestFile.text = ClientPackageUtils.toJson(manifest)
         }
     }
 
@@ -484,11 +540,11 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private void validateTranspilation() {
-        if (!es5dir.exists()) {
+        if (!es5dir.call().exists()) {
             throw new GradleException(
                     "Transpile did not generate ES5 result in $es5dir. Run with --info to get more information.")
         }
-        if (!es6dir.exists()) {
+        if (!es6dir.call().exists()) {
             throw new GradleException(
                     "Transpile did not generate ES6 result in $es6dir. Run with --info to get more information.")
         }

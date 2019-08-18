@@ -170,6 +170,7 @@ class VaadinClientDependenciesExtension {
      * @return
      *      a map with the dependency name as key and version as value
      */
+    @Deprecated
     Map<String,String> getBowerDependencies() {
         Collections.unmodifiableMap(bowerDependencies)
     }
@@ -181,8 +182,10 @@ class VaadinClientDependenciesExtension {
      * using NPM for legacy browsers. When custom component sources exist in the project
      * then this is always <code>true</code>.
      */
+    @Deprecated
     boolean isCompileFromSources() {
-        compileFromSources.getOrElse(false)
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ? compileFromSources.getOrElse(false) : true
     }
 
     /**
@@ -192,10 +195,15 @@ class VaadinClientDependenciesExtension {
      * using NPM for legacy browsers. When custom component sources exist in the project
      * then this is always <code>true</code>.
      */
+    @Deprecated
     void setCompileFromSources(boolean compile) {
         compileFromSources.set(compile)
-        if (compile && !project.extensions.getByType(VaadinFlowPluginExtension).productionMode) {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        if (compile && !vaadin.productionMode) {
             LOGGER.warning('compileFromSources has no effect without setting vaadin.productionMode to true')
+        }
+        if (compile && !vaadin.compatibilityMode) {
+            LOGGER.warning('compileFromSources is only available in compatibility mode')
         }
     }
 

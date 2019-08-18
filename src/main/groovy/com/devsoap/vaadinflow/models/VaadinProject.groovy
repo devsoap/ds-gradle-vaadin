@@ -35,6 +35,8 @@ class VaadinProject {
 
     boolean productionMode
 
+    boolean compatibilityMode
+
     ProjectType projectType
 
     ApplicationType applicationType

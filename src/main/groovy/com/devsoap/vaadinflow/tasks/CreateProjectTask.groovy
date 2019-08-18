@@ -74,6 +74,7 @@ class CreateProjectTask extends DefaultTask {
                 rootDirectory : project.projectDir,
                 webappDirectory: assembleTask.webappDir,
                 productionMode : vaadin.productionMode,
+                compatibilityMode: vaadin.compatibilityMode,
                 projectType: ProjectType.get(project),
                 applicationType: ApplicationType.get(project)
         )

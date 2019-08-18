@@ -21,7 +21,6 @@ import com.devsoap.vaadinflow.models.ClientPackage
 import com.devsoap.vaadinflow.util.ClientPackageUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import com.devsoap.vaadinflow.util.WebJarHelper
-import groovy.json.JsonOutput
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.CacheableTask
@@ -88,12 +87,13 @@ class InstallBowerDependenciesTask extends DefaultTask {
         VaadinClientDependenciesExtension deps = project.extensions.getByType(VaadinClientDependenciesExtension)
         ClientPackage bowerModel = new ClientPackage(name: project.name.toLowerCase(), version: project.version)
                 .with { model ->
+            model.dependencies = model.dependencies ?: [:]
             deps.bowerDependencies.each { String name, String version ->
                 model.dependencies[name] = version
             }
             model
         }
-        bowerJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(bowerModel))
+        bowerJson.text = ClientPackageUtils.toJson(bowerModel)
 
         LOGGER.info('Installing bower dependencies ... ')
         yarnRunner.bowerInstall()

@@ -15,10 +15,9 @@
  */
 package com.devsoap.vaadinflow.actions
 
-import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
-import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
+import com.devsoap.vaadinflow.tasks.WrapCssTask
 import com.devsoap.vaadinflow.util.PackagingUtil
 import com.devsoap.vaadinflow.util.Versions
 import com.devsoap.vaadinflow.util.WebJarHelper
@@ -67,14 +66,14 @@ class GrettyPluginAction extends PluginAction {
         project.gretty.systemProperties = project.gretty.systemProperties ?: [:]
         project.gretty.systemProperties.putIfAbsent 'vaadin.productionMode', vaadin.productionMode
         project.gretty.systemProperties.putIfAbsent 'vaadin.compatibilityMode', vaadin.compatibilityMode
-        project.gretty.systemProperties.putIfAbsent 'vaadin.enableDevServer', false
+        project.gretty.systemProperties.put 'vaadin.enableDevServer', false
     }
 
     @Override
     protected void executeAfterEvaluate(Project project) {
         super.executeAfterEvaluate(project)
         project.tasks[PREPARE_INPLACE_WEB_APP_FOLDER_TASK].dependsOn(AssembleClientDependenciesTask.NAME)
-        project.tasks[PREPARE_INPLACE_WEB_APP_FOLDER_TASK].dependsOn(ConvertCssToHtmlStyleTask.NAME)
+        project.tasks[PREPARE_INPLACE_WEB_APP_FOLDER_TASK].dependsOn(WrapCssTask.NAME)
 
         if (buildingProduct) {
             project.tasks[JAR_TASK].dependsOn(AssembleClientDependenciesTask.NAME)
@@ -85,7 +84,7 @@ class GrettyPluginAction extends PluginAction {
     protected void afterTaskExecuted(Task task) {
         super.afterTaskExecuted(task)
         if (task.name in [PREPARE_INPLACE_WEB_APP_FOLDER_TASK,
-                          ConvertCssToHtmlStyleTask.NAME,
+                          WrapCssTask.NAME,
                           AssembleClientDependenciesTask.NAME]) {
             LOGGER.info('Copying generated web-app resources into extracted webapp')
             task.project.copy { copy ->
