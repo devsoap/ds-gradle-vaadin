@@ -124,9 +124,10 @@ class VaadinYarnRunner extends YarnExecRunner {
         // Set proper defaults for package.json
         File packageJson = new File(frontendDir, PACKAGE_JSON)
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
-        pkg.main = ''
         pkg.version = project.version
         pkg.name = FRONTEND
+        pkg.devDependencies = [:]
+        pkg.scripts = [:]
 
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
 
@@ -136,6 +137,9 @@ class VaadinYarnRunner extends YarnExecRunner {
 
             pkg.devDependencies[POLYMER_BUNDLER_COMMAND] = Versions.rawVersion('polymer.bundler.version')
             pkg.scripts[POLYMER_BUNDLER_COMMAND] = './node_modules/polymer-bundler/lib/bin/polymer-bundler.js'
+
+            pkg.devDependencies[BOWER_COMMAND] = Versions.rawVersion('bower.version')
+            pkg.scripts[BOWER_COMMAND] = './node_modules/bower/bin/bower'
 
         } else {
 
@@ -147,14 +151,11 @@ class VaadinYarnRunner extends YarnExecRunner {
             pkg.scripts[WEBPACK_COMMAND] = './node_modules/webpack/bin/webpack.js'
         }
 
-        pkg.devDependencies[BOWER_COMMAND] = Versions.rawVersion('bower.version')
-        pkg.scripts[BOWER_COMMAND] = './node_modules/bower/bin/bower'
-
         if (this.variant.windows) {
             pkg.scripts.replaceAll { key, value -> this.variant.nodeExec + SPACE + value }
         }
 
-        packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
+        packageJson.text = ClientPackageUtils.toJson(pkg)
     }
 
     void distInstall() {
@@ -175,28 +176,21 @@ class VaadinYarnRunner extends YarnExecRunner {
         // Set proper defaults for package.json
         File packageJson = new File(distDir, PACKAGE_JSON)
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
-        pkg.main = ''
         pkg.version = project.version
         pkg.name = FRONTEND
+        pkg.dependencies = [:]
+        pkg.scripts = [:]
 
         pkg.dependencies['@babel/runtime'] = Versions.rawVersion('babel.runtime.version')
         pkg.dependencies['@webcomponents/webcomponentsjs'] = Versions.rawVersion('webcomponentsjs.version')
 
-        // Install Yarn flatten script
-        File yarnInstallScript = Paths.get(project.buildDir.canonicalPath, FRONTEND, 'scripts',
-                'build-dist.js').toFile()
-        yarnInstallScript.parentFile.mkdirs()
-
-        URL yarnInstallScriptUrl = VaadinYarnRunner.classLoader.getResource('scripts/yarn-flat-auto.js')
-        yarnInstallScript.text = yarnInstallScriptUrl.text
-        yarnInstallScript.executable = true
-        pkg.scripts[BUILD_DISTRIBUTION_COMMAND] = "../scripts/$yarnInstallScript.name".toString()
+        addFlattenScript(pkg, '..')
 
         if (this.variant.windows) {
             pkg.scripts.replaceAll { key, value -> this.variant.nodeExec + SPACE + value }
         }
 
-        packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
+        packageJson.text = ClientPackageUtils.toJson(pkg)
     }
 
     /**
@@ -321,7 +315,29 @@ class VaadinYarnRunner extends YarnExecRunner {
         TemplateWriter.builder()
                 .targetDir(workingDir as File)
                 .templateFileName('webpack.config.js')
-                .substitutions(['targetPath' :  bundleFile.parentFile.canonicalPath ])
+                .substitutions([
+                    'targetPath' : bundleFile.parentFile.canonicalPath,
+                    'moduleDirs': [
+                            'src',
+                            'dist/node_modules'
+                    ]
+                ])
                 .build().write()
+    }
+
+    private void addFlattenScript(ClientPackage pkg, String rootPath='.') {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        File yarnInstallScript = Paths.get(project.buildDir.canonicalPath, FRONTEND, 'scripts',
+                'build-dist.js').toFile()
+        yarnInstallScript.parentFile.mkdirs()
+        yarnInstallScript.text = TemplateWriter.builder()
+                .templateFileName('yarn-flat.js')
+                .substitutions([
+                    'productionMode': vaadin.productionMode ? '--production' : ''
+                ])
+                .build().toString()
+
+        yarnInstallScript.executable = true
+        pkg.scripts[BUILD_DISTRIBUTION_COMMAND] = "$rootPath/scripts/$yarnInstallScript.name".toString()
     }
 }

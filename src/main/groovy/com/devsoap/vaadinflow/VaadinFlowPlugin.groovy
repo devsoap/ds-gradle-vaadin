@@ -27,7 +27,7 @@ import com.devsoap.vaadinflow.actions.WarPluginAction
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
-import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
+import com.devsoap.vaadinflow.tasks.WrapCssTask
 import com.devsoap.vaadinflow.tasks.ConvertGroovyTemplatesToHTML
 import com.devsoap.vaadinflow.tasks.CreateComponentTask
 import com.devsoap.vaadinflow.tasks.CreateCompositeTask
@@ -100,7 +100,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 register(InstallBowerDependenciesTask.NAME, InstallBowerDependenciesTask)
                 register(TranspileDependenciesTask.NAME, TranspileDependenciesTask)
                 register(AssembleClientDependenciesTask.NAME, AssembleClientDependenciesTask)
-                register(ConvertCssToHtmlStyleTask.NAME, ConvertCssToHtmlStyleTask)
+                register(WrapCssTask.NAME, WrapCssTask)
                 register(CreateCompositeTask.NAME, CreateCompositeTask)
                 register(CreateComponentTask.NAME, CreateComponentTask)
                 register(CreateWebTemplateTask.NAME, CreateWebTemplateTask)

@@ -16,6 +16,8 @@
 package com.devsoap.vaadinflow.util
 
 import groovy.json.JsonException
+import groovy.json.JsonGenerator
+import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 
@@ -105,6 +107,19 @@ class ClientPackageUtils {
             }
         }
         imports
+    }
+
+    /**
+     * Converts an object into a pretty-printed JSON string
+     *
+     * @since 1.3
+     * @param obj
+     *      the object to convert
+     * @return
+     *      json string
+     */
+    static String toJson(Object obj) {
+        JsonOutput.prettyPrint( new JsonGenerator.Options().excludeNulls().build().toJson(obj))
     }
 
 }

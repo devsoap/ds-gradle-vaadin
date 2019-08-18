@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow
 
+import com.devsoap.vaadinflow.tasks.WrapCssTask
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
 import java.nio.file.Paths
@@ -84,9 +85,9 @@ class VaadinAsSubmoduleTest extends MultimoduleFunctionalTest {
             File wrappedCss = new File(genStyles, "${vaadinProject.name.toLowerCase()}-theme.html")
             run('vaadinCreateProject')
         when:
-            BuildResult result = run('vaadinConvertStyleCssToHtml')
+            BuildResult result = run(WrapCssTask.NAME)
         then:
-            result.task(':vaadinProject:vaadinConvertStyleCssToHtml').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinProject:' + WrapCssTask.NAME).outcome == TaskOutcome.SUCCESS
             wrappedCss.exists()
     }
 

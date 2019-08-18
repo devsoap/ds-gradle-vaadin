@@ -25,7 +25,6 @@ import com.devsoap.vaadinflow.util.ClientPackageUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import com.devsoap.vaadinflow.util.WebJarHelper
 import com.moowork.gradle.node.yarn.YarnSetupTask
-import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
@@ -127,6 +126,8 @@ class InstallYarnDependenciesTask extends DefaultTask {
         ClientPackage pkg = vaadin.compatibilityMode ?
                 json.parse(packageJson) as ClientPackage : json.parse(appPackageJson) as ClientPackage
 
+        pkg.dependencies = pkg.dependencies ?: [:]
+
         // Add classpath dependencies to package.json
         findNpmPackages(getAnnotationScan(project)).each { String name, String version ->
             pkg.dependencies[name] = version
@@ -139,25 +140,21 @@ class InstallYarnDependenciesTask extends DefaultTask {
         }
 
         if (vaadin.compatibilityMode) {
-            packageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
+            packageJson.text = ClientPackageUtils.toJson(pkg)
         } else {
-            appPackageJson.text = JsonOutput.prettyPrint(JsonOutput.toJson(pkg))
+
+            // FIXME Vaadin RTA does not include buffer as transitive dependency. This is most likely a bug in RTA.
+            pkg.dependencies.putIfAbsent 'buffer', '4.9.1'
+
+            appPackageJson.text = ClientPackageUtils.toJson(pkg)
         }
 
         LOGGER.info('Installing development dependencies...')
         yarnRunner.install()
 
-        if (!vaadin.compatibilityMode) {
-            LOGGER.info('Installing application dependencies...')
-            yarnRunner.distInstall()
-        }
-
         LOGGER.info('Extracting node webjars...')
-        if (vaadin.compatibilityMode) {
-            WebJarHelper.unpackWebjars(workingDir, null, project, appNodeModules.name, false)
-        } else {
-            WebJarHelper.unpackWebjars(workingDir, srcDir, project, appNodeModules.name, false)
-        }
+        WebJarHelper.unpackWebjars(workingDir, srcDir, project, appNodeModules.name,
+                false, vaadin.compatibilityMode)
 
         if (vaadin.compatibilityMode) {
             LOGGER.info('Validating node modules...')
@@ -168,6 +165,9 @@ class InstallYarnDependenciesTask extends DefaultTask {
                     logger.error('HTML entrypoint file for {} not found, is it a Polymer 2 component?', dep)
                 }
             }
+        } else {
+            LOGGER.info('Installing application dependencies...')
+            yarnRunner.distInstall()
         }
     }
 }

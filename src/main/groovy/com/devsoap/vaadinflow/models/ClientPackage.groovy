@@ -23,23 +23,23 @@ package com.devsoap.vaadinflow.models
  */
 class ClientPackage {
 
-    String name = ''
+    String name
 
-    String version = ''
+    String version
 
-    String main = ''
+    String main
 
-    String author = ''
+    String author
 
-    String license = ''
+    String license
 
-    String description = ''
+    String description
 
-    List<String> keywords = []
+    List<String> keywords
 
-    Map<String, String> scripts = [:]
+    Map<String, String> scripts
 
-    Map<String, String> devDependencies = [:]
+    Map<String, String> devDependencies
 
-    Map<String, String> dependencies = [:]
+    Map<String, String> dependencies
 }

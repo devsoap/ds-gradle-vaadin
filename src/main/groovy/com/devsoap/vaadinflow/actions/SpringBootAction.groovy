@@ -100,11 +100,12 @@ class SpringBootAction extends PluginAction {
     private static void configureBootRun(Task task) {
         JavaExec bootRun = (JavaExec) task
         VaadinFlowPluginExtension vaadin = task.project.extensions.getByType(VaadinFlowPluginExtension)
-        bootRun.jvmArgs([
-            "-Dvaadin.productionMode=$vaadin.productionMode".toString(),
-            "-Dvaadin.compatibilityMode=$vaadin.compatibilityMode".toString()
-        ])
-        if (vaadin.productionMode) {
+        bootRun.systemProperties = bootRun.systemProperties ?: [:]
+        bootRun.systemProperties.putIfAbsent 'vaadin.productionMode', vaadin.productionMode
+        bootRun.systemProperties.putIfAbsent 'vaadin.compatibilityMode', vaadin.compatibilityMode
+        bootRun.systemProperties.put 'vaadin.enableDevServer', false
+
+        if (vaadin.compatibilityMode && vaadin.productionMode) {
             // TODO Resolve if supporting production mode is even possible with bootRun
             throw new GradleException('Production mode is not supported with bootRun. ' +
                     'Instead package with bootJar or bootWar and execute them directly.')

@@ -62,7 +62,7 @@ class AssembleClientDependenciesTask extends DefaultTask {
         dependsOn(TranspileDependenciesTask.NAME,
                 InstallBowerDependenciesTask.NAME,
                 InstallYarnDependenciesTask.NAME,
-                ConvertCssToHtmlStyleTask.NAME
+                WrapCssTask.NAME
         )
         onlyIf {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)

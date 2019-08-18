@@ -7,7 +7,7 @@ module.exports = {
 
   resolve: {
        modules: [
-          path.resolve(__dirname,'dist/node_modules')
+          ${ moduleDirs.collect { "path.resolve(__dirname, '$it')" }.join(',\n') }
         ]
   },
 

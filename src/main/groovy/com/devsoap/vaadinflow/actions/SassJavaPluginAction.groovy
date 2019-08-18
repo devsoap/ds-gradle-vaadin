@@ -15,7 +15,7 @@
  */
 package com.devsoap.vaadinflow.actions
 
-import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
+import com.devsoap.vaadinflow.tasks.WrapCssTask
 import org.gradle.api.Project
 import org.gradle.api.Task
 
@@ -32,7 +32,7 @@ class SassJavaPluginAction extends PluginAction {
     @Override
     protected void executeAfterEvaluate(Project project) {
         super.executeAfterEvaluate(project)
-        ConvertCssToHtmlStyleTask convertCss = project.tasks.getByName(ConvertCssToHtmlStyleTask.NAME)
+        WrapCssTask convertCss = project.tasks.getByName(WrapCssTask.NAME)
 
         Task compileSass = project.tasks.getByName('compileSass')
         convertCss.dependsOn(compileSass)

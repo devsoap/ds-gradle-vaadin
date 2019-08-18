@@ -67,8 +67,9 @@ class WebJarHelper {
      * @return
      *      A list of directories representing the unpacked target directories
      */
+    @SuppressWarnings('ParameterCount')
     static void unpackWebjars(File targetDir, File resourceTargetDir, Project project, String moduleDirName,
-                              boolean bower) {
+                              boolean bower, boolean copyJarContents=true, boolean copyResources=true) {
         File componentsDir = new File(targetDir, moduleDirName)
         if (!componentsDir.exists()) {
             componentsDir.mkdirs()
@@ -123,7 +124,7 @@ class WebJarHelper {
                         }
                     }
 
-                    if (result) {
+                    if (result && copyJarContents) {
                         String packageJsonFolder = result.first
                         String componentRootPackage = result.second
 
@@ -136,7 +137,7 @@ class WebJarHelper {
                         copyJarToFolder(file, packageJsonFolder, componentRoot, [])
                     }
 
-                    if (resourceTargetDir && findFolder(FRONTEND_RESOURCES_META_DIR, file)) {
+                    if (copyResources && resourceTargetDir && findFolder(FRONTEND_RESOURCES_META_DIR, file)) {
                         LOGGER.info("Unpacking frontend resources in $file.name into $resourceTargetDir")
                         copyJarToFolder(file, FRONTEND_RESOURCES_META_DIR, resourceTargetDir,
                                 [PACKAGE_JSON, BOWER_JSON])

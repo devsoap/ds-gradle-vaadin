@@ -17,7 +17,7 @@ package com.devsoap.vaadinflow
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
-import com.devsoap.vaadinflow.tasks.ConvertCssToHtmlStyleTask
+import com.devsoap.vaadinflow.tasks.WrapCssTask
 import com.devsoap.vaadinflow.tasks.CreateProjectTask
 import org.gradle.testkit.runner.BuildResult
 
@@ -38,9 +38,9 @@ class ThemeTest extends FunctionalTest {
                     'build', 'webapp-gen', 'frontend', 'styles').toFile()
         when:
             run CreateProjectTask.NAME
-            BuildResult result = run ConvertCssToHtmlStyleTask.NAME
+            BuildResult result = run WrapCssTask.NAME
         then:
-            result.task(':' + ConvertCssToHtmlStyleTask.NAME).outcome == SUCCESS
+            result.task(':' + WrapCssTask.NAME).outcome == SUCCESS
             stylesDir.listFiles().size() == 1
             stylesDir.listFiles()[0].name == "${rootDir.name}-theme.html"
     }
