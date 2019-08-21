@@ -21,6 +21,7 @@ import com.devsoap.vaadinflow.models.PolymerBuild
 import com.devsoap.vaadinflow.util.ClassIntrospectionUtils
 import com.devsoap.vaadinflow.util.ClientPackageUtils
 import com.devsoap.vaadinflow.util.LogUtils
+import com.devsoap.vaadinflow.util.TemplateWriter
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
@@ -301,11 +302,24 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private void bundle(ScanResult scan) {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+
+        LOGGER.info('Generating base theme module...')
+        TemplateWriter.builder()
+                .targetDir(srcDir.call())
+                .templateFileName('theme.js')
+                .targetFileName("${vaadin.baseTheme}-theme.js")
+                .substitutions(['theme': vaadin.baseTheme])
+                .build().write()
+
         LOGGER.info('Searching for JS modules...')
         Map<String, String> modules = ClassIntrospectionUtils.findJsModules(scan)
 
         LOGGER.info('Validating JS module imports...')
         removeInvalidModules(modules)
+
+        LOGGER.info('Checking for theme variants of JS modules...')
+        replaceBaseThemeModules(modules)
 
         LOGGER.info('Searching for CSS imports...')
         Map<String,String> cssImports = ClassIntrospectionUtils.findCssImports(scan)
@@ -316,10 +330,15 @@ class TranspileDependenciesTask extends DefaultTask {
         File importsJs = new File(srcDir.call(), IMPORTS_JS_FILE)
         LOGGER.info("Creating ${importsJs.name}...")
         importsJs.parentFile.mkdirs()
-        importsJs.text = '// Polymer modules\n'
-        modules.each { m, c -> importsJs << "import '$m';\n" }
+
+        importsJs.text = '// Theme\n'
+        importsJs << "import './${vaadin.baseTheme}-theme.js';\n"
+
         importsJs << '// CSS imports\n'
-        cssImports.each { p, c -> importsJs << "import '${p - '.css'}.js'\n" }
+        cssImports.each { p, c -> importsJs << "import '${p - '.css'}.js';\n" }
+
+        importsJs << '// Polymer modules\n'
+        modules.each { m, c -> importsJs << "import '$m';\n" }
 
         LOGGER.info('Bundling...')
         LogUtils.measureTime('Bundling completed') {
@@ -513,7 +532,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
     private void removeInvalidModules(Map<String,String> modules) {
         modules.removeAll { m, c ->
-            File nodeDependency = Paths.get(appNodeModules.canonicalPath, m.split(SLASH)).toFile()
+            File nodeDependency = Paths.get(appNodeModules.call().canonicalPath, m.split(SLASH)).toFile()
             File staticFile = Paths.get(srcDir.call().canonicalPath, m.split(SLASH)).toFile()
             boolean exists = nodeDependency.exists() || staticFile.exists()
             if (!exists) {
@@ -525,6 +544,25 @@ class TranspileDependenciesTask extends DefaultTask {
                 return true
             }
             false
+        }
+    }
+
+    private void replaceBaseThemeModules(Map<String,String> modules) {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        new HashSet<String>(modules.keySet()).each { m ->
+            File nodeDependency = Paths.get(appNodeModules.call().canonicalPath, m.split(SLASH)).toFile()
+            if (nodeDependency.exists()) {
+                File baseTheme = Paths.get(nodeDependency.parentFile.parentFile.canonicalPath,
+                        'theme', vaadin.baseTheme).toFile()
+                if (baseTheme.exists()) {
+                    File nodeThemeDependency = new File(baseTheme, nodeDependency.name)
+                    if (nodeThemeDependency.exists()) {
+                        String mt = (nodeThemeDependency.canonicalPath - appNodeModules.call().canonicalPath)
+                                .substring(1)
+                        modules[mt] = modules.remove(m)
+                    }
+                }
+            }
         }
     }
 
