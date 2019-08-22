@@ -16,6 +16,7 @@
 package com.devsoap.vaadinflow.util
 
 import groovy.util.logging.Log
+import io.github.classgraph.AnnotationInfo
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ClassInfo
 import io.github.classgraph.ClassInfoList
@@ -42,6 +43,7 @@ class ClassIntrospectionUtils {
     private static final String ABSTRACT_THEME_FQN = 'com.vaadin.flow.theme.AbstractTheme'
     private static final String JS_MODULE_FQN = 'com.vaadin.flow.component.dependency.JsModule'
     private static final String CSS_IMPORT_FQN = 'com.vaadin.flow.component.dependency.CssImport'
+    private static final String ROUTE_FQN = 'com.vaadin.flow.router.Route'
     private static final String FRONTEND_PROTOCOL = 'frontend://'
     private static final String FRONTEND_DIR = 'frontend'
 
@@ -135,22 +137,58 @@ class ClassIntrospectionUtils {
      */
     static final Map<String, String> findJsModules(ScanResult scan) {
         Map<String, String> modules = [:]
-        scan.getClassesWithAnnotation(JS_MODULE_FQN).each { ClassInfo ci ->
-            ci.getAnnotationInfoRepeatable(JS_MODULE_FQN).each {
-                modules[it.parameterValues.value.value.toString()] = ci.name
-            }
+        List<String> processedClasses = []
+        scan.getClassesWithAnnotation(ROUTE_FQN).each { ClassInfo ci ->
+            findImportModulesByDependencies(ci, modules, JS_MODULE_FQN, processedClasses)
         }
+        LOGGER.info("Scanned ${processedClasses.size()} classes.")
         modules
     }
 
+    /**
+     * Find all CSSImports in project
+     * @since 1.3
+     * @param scan
+     *      the classpath scan with the annoations
+     * @return
+     *      the values of the css imports
+     */
     static final Map<String,String> findCssImports(ScanResult scan) {
         Map<String, String> imports = [:]
-        scan.getClassesWithAnnotation(CSS_IMPORT_FQN).each { ClassInfo ci ->
-            ci.getAnnotationInfoRepeatable(CSS_IMPORT_FQN).each {
-                imports[it.parameterValues.value.value.toString()] = ci.name
+        List<String> processedClasses = []
+        scan.getClassesWithAnnotation(ROUTE_FQN).each { ClassInfo ci ->
+            findImportModulesByDependencies(ci, imports, CSS_IMPORT_FQN, processedClasses)
+        }
+        LOGGER.info("Scanned ${processedClasses.size()} classes.")
+        imports
+    }
+
+    /**
+     * Finds import modules by traversing the dependency tree of the root info
+     *
+     * @since 1.3
+     * @param info
+     *      the root class to start the search from
+     * @param imports
+     *      the accumulated imports
+     * @param annotation
+     *      the annotation to search for
+     * @param processedClasses
+     *      the accumulated processedClasses
+     */
+    static final void findImportModulesByDependencies(ClassInfo info, Map<String, String> imports, String annotation,
+                                                      List<String> processedClasses) {
+        processedClasses << info.name
+        if (info.hasAnnotation(annotation)) {
+            info.getAnnotationInfoRepeatable(annotation).each { AnnotationInfo a ->
+                imports[a.parameterValues.value.value.toString()] = info.name
             }
         }
-        imports
+        info.classDependencies.each { ClassInfo childInfo ->
+            if (!processedClasses.contains(childInfo.name)) {
+                findImportModulesByDependencies(childInfo, imports, annotation, processedClasses)
+            }
+        }
     }
 
     /**
@@ -165,6 +203,7 @@ class ClassIntrospectionUtils {
         new ClassGraph()
                 .overrideClassLoaders(getClassLoader(project))
                 .enableAnnotationInfo()
+                .enableInterClassDependencies()
                 .scan()
     }
 
