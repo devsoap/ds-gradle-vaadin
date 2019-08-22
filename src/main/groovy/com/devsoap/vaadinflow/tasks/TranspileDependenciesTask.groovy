@@ -71,6 +71,8 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String IMPORTS_JS_FILE = 'index.js'
     private static final String SLASH = '/'
     private static final String VAADIN = 'VAADIN'
+    private static final String WARN_BUNDLE_EXCLUDES_ONLY_AVAILABLE_IN_COMP_MODE =
+            'bundleExcludes only supported in compatibility mode.'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
@@ -241,6 +243,63 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
+    private void bundle(ScanResult scan) {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+
+        LOGGER.info('Generating base theme module...')
+        TemplateWriter.builder()
+                .targetDir(srcDir.call())
+                .templateFileName('theme.js')
+                .targetFileName("${vaadin.baseTheme}-theme.js")
+                .substitutions(['theme': vaadin.baseTheme])
+                .build().write()
+
+        LOGGER.info('Searching for JS modules...')
+        Map<String, String> modules = [:]
+        LogUtils.measureTime('Scanning Js modules completed') {
+            modules = ClassIntrospectionUtils.findJsModules(scan)
+        }
+
+        LOGGER.info('Validating JS module imports...')
+        removeInvalidModules(modules)
+
+        LOGGER.info('Checking for theme variants of JS modules...')
+        replaceBaseThemeModules(modules)
+
+        LOGGER.info('Searching for CSS imports...')
+        Map<String,String> cssImports = [:]
+        LogUtils.measureTime('Scanning CSS imports completed') {
+            cssImports = ClassIntrospectionUtils.findCssImports(scan)
+        }
+
+        LOGGER.info('Validating CSS imports..')
+        removeInvalidCSSImports(cssImports)
+
+        LOGGER.info('Excluding excluded imports...')
+        getImportExcludes().each { filter ->
+            cssImports.removeAll { m, c -> m.matches(filter) }
+            modules.removeAll { m, c -> m.matches(filter) }
+        }
+
+        File importsJs = new File(srcDir.call(), IMPORTS_JS_FILE)
+        LOGGER.info("Creating ${importsJs.name}...")
+        importsJs.parentFile.mkdirs()
+
+        importsJs.text = '// Theme\n'
+        importsJs << "import './${vaadin.baseTheme}-theme.js';\n"
+
+        importsJs << '// CSS imports\n'
+        cssImports.each { p, c -> importsJs << "import '${p - '.css'}.js';\n" }
+
+        importsJs << '// Polymer modules\n'
+        modules.each { m, c -> importsJs << "import '$m';\n" }
+
+        LOGGER.info('Bundling...')
+        LogUtils.measureTime('Bundling completed') {
+            yarnRunner.webpackBundle(statsJson.call(), mainJs.call())
+        }
+    }
+
     @TaskAction
     void run() {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
@@ -301,51 +360,6 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
-    private void bundle(ScanResult scan) {
-        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-
-        LOGGER.info('Generating base theme module...')
-        TemplateWriter.builder()
-                .targetDir(srcDir.call())
-                .templateFileName('theme.js')
-                .targetFileName("${vaadin.baseTheme}-theme.js")
-                .substitutions(['theme': vaadin.baseTheme])
-                .build().write()
-
-        LOGGER.info('Searching for JS modules...')
-        Map<String, String> modules = ClassIntrospectionUtils.findJsModules(scan)
-
-        LOGGER.info('Validating JS module imports...')
-        removeInvalidModules(modules)
-
-        LOGGER.info('Checking for theme variants of JS modules...')
-        replaceBaseThemeModules(modules)
-
-        LOGGER.info('Searching for CSS imports...')
-        Map<String,String> cssImports = ClassIntrospectionUtils.findCssImports(scan)
-
-        LOGGER.info('Validating CSS imports..')
-        removeInvalidCSSImports(cssImports)
-
-        File importsJs = new File(srcDir.call(), IMPORTS_JS_FILE)
-        LOGGER.info("Creating ${importsJs.name}...")
-        importsJs.parentFile.mkdirs()
-
-        importsJs.text = '// Theme\n'
-        importsJs << "import './${vaadin.baseTheme}-theme.js';\n"
-
-        importsJs << '// CSS imports\n'
-        cssImports.each { p, c -> importsJs << "import '${p - '.css'}.js';\n" }
-
-        importsJs << '// Polymer modules\n'
-        modules.each { m, c -> importsJs << "import '$m';\n" }
-
-        LOGGER.info('Bundling...')
-        LogUtils.measureTime('Bundling completed') {
-            yarnRunner.webpackBundle(statsJson.call(), mainJs.call())
-        }
-    }
-
     private void bundleInCompatibilityMode(ScanResult scan) {
         LOGGER.info('Searching for HTML imports...')
         List<String> imports = initHTMLImportsFromComponents(scan)
@@ -390,16 +404,31 @@ class TranspileDependenciesTask extends DefaultTask {
 
     /**
      * Sets the bundle exclusions
+     *
+     * @deprecated since 1.3 in favour of importExcludes
      */
+    @Deprecated
     void setBundleExcludes(List<String> excludes) {
-        bundleExcludes.set(excludes)
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        if (vaadin.compatibilityMode) {
+            bundleExcludes.set(excludes)
+        } else {
+            LOGGER.warning(WARN_BUNDLE_EXCLUDES_ONLY_AVAILABLE_IN_COMP_MODE)
+        }
     }
 
     /**
      * Get bundle exclusions
+     *
+     * @deprecated since 1.3 in favour of importExcludes
      */
+    @Deprecated
     List<String> getBundleExcludes() {
-        bundleExcludes.getOrElse([])
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        if (vaadin.compatibilityMode) {
+            return bundleExcludes.getOrElse([])
+        }
+        throw new GradleException(WARN_BUNDLE_EXCLUDES_ONLY_AVAILABLE_IN_COMP_MODE)
     }
 
     /**
