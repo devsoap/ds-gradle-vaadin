@@ -224,7 +224,12 @@ class TranspileDependenciesTask extends DefaultTask {
                 ConvertGroovyTemplatesToHTML.NAME
         )
         onlyIf {
-            project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
+            VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+            if (vaadin.compatibilityMode) {
+                project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources
+            } else {
+                true
+            }
         }
 
         description = 'Compiles client modules to support legacy browsers'

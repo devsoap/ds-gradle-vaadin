@@ -80,11 +80,13 @@ class InstallYarnDependenciesTask extends DefaultTask {
     InstallYarnDependenciesTask() {
         dependsOn( YarnSetupTask.NAME, 'classes' )
         onlyIf {
+            VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            !client.yarnDependencies.empty ||
-            !client.bowerDependencies.empty ||
-            client.compileFromSources //||
-            //!findNpmPackages(getAnnotationScan(project)).empty
+            if (vaadin.compatibilityMode) {
+                (!client.yarnDependencies.empty || !client.bowerDependencies.empty || client.compileFromSources)
+            } else {
+                true
+            }
         }
 
         description = 'Installs Vaadin yarn dependencies'
@@ -101,10 +103,6 @@ class InstallYarnDependenciesTask extends DefaultTask {
         inputs.property('bowerDependencies') {
             project.extensions.getByType(VaadinClientDependenciesExtension).bowerDependencies
         }
-
-        //inputs.property('npmDependencies') {
-         //   findNpmPackages(getAnnotationScan(project))
-        //}
     }
 
     /**
