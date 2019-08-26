@@ -234,9 +234,11 @@ class VaadinYarnRunner extends YarnExecRunner {
      *
      * @since 1.3
      */
-    void webpackBundle(File statsFile, File bundleFile) {
+    void webpackBundle(File statsFile, File bundleFile, File infoFile) {
 
         generateWebpackConfig(bundleFile)
+
+        generateBuildInfo(infoFile)
 
         arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, RUN_COMMAND, WEBPACK_COMMAND,
                      '--profile', '--json']
@@ -323,6 +325,16 @@ class VaadinYarnRunner extends YarnExecRunner {
                     ]
                 ])
                 .build().write()
+    }
+
+    private void generateBuildInfo(File buildInfoFile) {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        Map info = [
+                'compatibilityMode': vaadin.compatibilityMode,
+                'productionMode': vaadin.productionMode,
+                'enableDevServer': false
+        ]
+        buildInfoFile.text = JsonOutput.toJson(info)
     }
 
     private void addFlattenScript(ClientPackage pkg, String rootPath='.') {
