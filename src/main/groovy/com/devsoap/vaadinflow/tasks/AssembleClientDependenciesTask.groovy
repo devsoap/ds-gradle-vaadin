@@ -75,11 +75,11 @@ class AssembleClientDependenciesTask extends DefaultTask {
         project.afterEvaluate {
             VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-            if (vaadin.productionMode && client.compileFromSources) {
+            if (vaadin.compatibilityMode && vaadin.productionMode && client.compileFromSources) {
                 inputs.dir(sourceDirEs5)
                 inputs.dir(sourceDirEs6)
                 outputs.dir(targetDirEs5)
-                outputs.dir( targetDirEs6)
+                outputs.dir(targetDirEs6)
             } else {
                 inputs.dir(frontendBuildDir)
             }

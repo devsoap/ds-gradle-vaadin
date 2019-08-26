@@ -19,6 +19,7 @@ import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
 import com.devsoap.vaadinflow.tasks.WrapCssTask
 import com.devsoap.vaadinflow.util.PackagingUtil
+import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import com.devsoap.vaadinflow.util.Versions
 import com.devsoap.vaadinflow.util.WebJarHelper
 import groovy.util.logging.Log
@@ -28,6 +29,8 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.bundling.Jar
+
+import java.nio.file.Paths
 
 /**
  * Configures the Gretty plugin to be compatible
@@ -86,10 +89,17 @@ class GrettyPluginAction extends PluginAction {
         if (task.name in [PREPARE_INPLACE_WEB_APP_FOLDER_TASK,
                           WrapCssTask.NAME,
                           AssembleClientDependenciesTask.NAME]) {
+            VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
             LOGGER.info('Copying generated web-app resources into extracted webapp')
-            task.project.copy { copy ->
+            task.project.copy { CopySpec copy ->
+                if (vaadin.productionMode || vaadin.compatibilityMode) {
                     copy.from("${task.project.buildDir.canonicalPath}/webapp-gen")
                             .into("${task.project.buildDir.canonicalPath}/inplaceWebapp")
+                } else {
+                    copy.from("${task.project.buildDir.canonicalPath}/webapp-gen")
+                            .include('**/webcomponents-loader.js')
+                            .into("${task.project.buildDir.canonicalPath}/inplaceWebapp")
+                }
             }
         }
     }
