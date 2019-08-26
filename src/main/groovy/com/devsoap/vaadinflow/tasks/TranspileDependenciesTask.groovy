@@ -79,6 +79,8 @@ class TranspileDependenciesTask extends DefaultTask {
 
     final File webappGenDir = new File(project.buildDir, 'webapp-gen')
     final File webappGenFrontendDir = new File(webappGenDir, FRONTEND)
+    final File configDir = Paths.get(project.buildDir.canonicalPath, 'resources',
+            'main', 'META-INF', VAADIN, 'config').toFile()
 
     private final ListProperty<String> bundleExcludes = project.objects.listProperty(String)
 
@@ -152,8 +154,14 @@ class TranspileDependenciesTask extends DefaultTask {
     @OutputFile
     final Closure<File> statsJson = {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        vaadin.compatibilityMode ? null : Paths.get(project.buildDir.canonicalPath, 'resources',
-                'main', 'META-INF', VAADIN, 'config', 'stats.json').toFile()
+        vaadin.compatibilityMode ? null : new File(configDir, 'stats.json')
+    }
+
+    @Optional
+    @OutputFile
+    final Closure<File> infoJson = {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ? null : new File(configDir, 'flow-build-info.json')
     }
 
     @Optional
@@ -296,7 +304,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
         LOGGER.info('Bundling...')
         LogUtils.measureTime('Bundling completed') {
-            yarnRunner.webpackBundle(statsJson.call(), mainJs.call())
+            yarnRunner.webpackBundle(statsJson.call(), mainJs.call(), infoJson.call())
         }
     }
 

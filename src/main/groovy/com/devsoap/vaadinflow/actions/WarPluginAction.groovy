@@ -19,6 +19,8 @@ import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.War
 
+import java.nio.file.Paths
+
 /**
  * Configures the War plugin
  *
@@ -34,7 +36,9 @@ class WarPluginAction extends PluginAction {
         super.executeAfterEvaluate(project)
         project.tasks.withType(War) { War task ->
             task.from(new File(project.buildDir, 'webapp-gen'))
+            task.from(Paths.get(project.buildDir.canonicalPath, 'resources', 'main').toFile())
             AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+            task.dependsOn(assembleTask)
             if (assembleTask.webappDirSet) {
                 task.from(assembleTask.webappDir)
             }
