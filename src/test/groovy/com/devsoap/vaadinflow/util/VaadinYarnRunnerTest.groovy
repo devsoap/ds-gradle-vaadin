@@ -15,6 +15,8 @@
  */
 package com.devsoap.vaadinflow.util
 
+import com.devsoap.vaadinflow.VaadinFlowPlugin
+import com.devsoap.vaadinflow.extensions.DevsoapExtension
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.moowork.gradle.node.NodeExtension
@@ -48,10 +50,10 @@ class VaadinYarnRunnerTest extends Specification {
         packageJson.text = '{}'
 
         project = new ProjectBuilder().withProjectDir(testProjectDir).build()
-        project.extensions.create(VaadinClientDependenciesExtension.NAME, VaadinClientDependenciesExtension, project)
-        project.extensions.create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project)
 
-        project.extensions.create(NodeExtension.NAME, NodeExtension, project).with {
+        project.plugins.apply(VaadinFlowPlugin)
+
+        project.extensions.getByType(NodeExtension).with {
             variant = new Variant()
             variant.windows = false
         }

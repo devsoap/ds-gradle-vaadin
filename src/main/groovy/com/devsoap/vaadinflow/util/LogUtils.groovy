@@ -19,6 +19,7 @@ import groovy.time.TimeCategory
 import groovy.time.TimeDuration
 import groovy.transform.Memoized
 import groovy.util.logging.Log
+import org.gradle.api.Project
 
 import java.nio.charset.StandardCharsets
 import java.util.logging.Level
@@ -43,6 +44,10 @@ class LogUtils {
         TimeDuration duration = TimeCategory.minus(end, start)
         LOGGER.info("$description. It took $duration")
         result
+    }
+
+    static final void printIfNotPrintedBefore(Project project, String message) {
+        SingletonPrinter.instance.printIfNotPrintedBefore(project, message)
     }
 
     @Log('LOGGER')
@@ -73,4 +78,19 @@ class LogUtils {
             mem = ''
         }
     }
+
+    @Singleton(lazy = false, strict = true)
+    private static class SingletonPrinter {
+
+        private final Map<String, Boolean> messageStatus = [:]
+
+        void printIfNotPrintedBefore(Project project, String message) {
+            messageStatus.putIfAbsent(message, true)
+            if ( messageStatus[message] ) {
+                project.logger.quiet(message)
+                messageStatus[message] = false
+            }
+        }
+    }
+
 }
