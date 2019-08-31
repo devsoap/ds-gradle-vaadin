@@ -16,19 +16,20 @@
 package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.VaadinFlowPlugin
+import com.devsoap.vaadinflow.extensions.DevsoapExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
-import com.devsoap.vaadinflow.tasks.WrapCssTask
 import com.devsoap.vaadinflow.tasks.ConvertGroovyTemplatesToHTML
 import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
 import com.devsoap.vaadinflow.tasks.InstallYarnDependenciesTask
 import com.devsoap.vaadinflow.tasks.VersionCheckTask
+import com.devsoap.vaadinflow.tasks.WrapCssTask
+import com.devsoap.vaadinflow.util.LogUtils
 import com.devsoap.vaadinflow.util.Versions
 import com.devsoap.vaadinflow.util.WebJarHelper
 import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
-import org.gradle.api.invocation.Gradle
 
 /**
  * Action taken when the Vaadin plugin is applied to a project
@@ -41,7 +42,10 @@ class VaadinFlowPluginAction extends PluginAction {
 
     final String pluginId = VaadinFlowPlugin.PLUGIN_ID
 
+    private static final String PLUGIN_VERSION_KEY = 'vaadin.plugin.version'
     private static final String PROCESS_RESOURCES = 'processResources'
+    private static final String RUNNING_IN_COMPATIBILITY_MODE_MESSAGE =
+            'The project will be compiled for Vaadin 13 (Flow 1) compatibility mode. '
 
     @Override
     void apply(Project project) {
@@ -67,7 +71,7 @@ class VaadinFlowPluginAction extends PluginAction {
             }
 
             String pluginDependency =
-                    "com.devsoap:gradle-vaadin-flow-plugin:${Versions.rawVersion('vaadin.plugin.version')}"
+                    "com.devsoap:gradle-vaadin-flow-plugin:${Versions.rawVersion(PLUGIN_VERSION_KEY)}"
             Dependency vaadin = dependencies.create(pluginDependency) {
                 description = 'Gradle Vaadin Plugin'
             }
@@ -87,8 +91,21 @@ class VaadinFlowPluginAction extends PluginAction {
     @Override
     protected void executeAfterEvaluate(Project project) {
         super.executeAfterEvaluate(project)
-        VersionPrinter.instance.printIfNotPrintedBefore(project)
-        VaadinFlowPluginExtension vaadin = project.extensions['vaadin']
+
+        VaadinFlowPlugin plugin = project.plugins.getPlugin(VaadinFlowPlugin)
+        String vaadinVersion = Versions.version(PLUGIN_VERSION_KEY)
+        if (plugin.validLicense) {
+            DevsoapExtension devsoap = project.extensions[DevsoapExtension.NAME]
+            LogUtils.printIfNotPrintedBefore( project,
+                    "Using Gradle Vaadin Flow Plugin $vaadinVersion (Licensed to ${devsoap.email})"
+            )
+        } else {
+            LogUtils.printIfNotPrintedBefore( project,
+                    "Using Gradle Vaadin Flow Plugin $vaadinVersion (UNLICENSED)"
+            )
+        }
+
+        VaadinFlowPluginExtension vaadin = project.extensions[VaadinFlowPluginExtension.NAME]
         if (!vaadin.versionSet) {
             LOGGER.warning('vaadin.version is not set, falling back to latest Vaadin version')
         }
@@ -98,23 +115,15 @@ class VaadinFlowPluginAction extends PluginAction {
                     'vaadin.submitStatistics=true (hide this message by setting it to false)')
         }
 
-        if (vaadin.compatibilityMode) {
+        if (vaadin.compatibilityMode && plugin.validLicense) {
             LOGGER.warning(
-                    'The project will be compiled for Vaadin 13 (Flow 1) compatibility mode. ' +
+                    RUNNING_IN_COMPATIBILITY_MODE_MESSAGE +
                     'To disable compatibility mode set vaadin.compatibilityMode=false. (experimental)')
-        }
-    }
-
-    @Singleton(lazy = false, strict = true)
-    private static class VersionPrinter {
-        private Gradle gradle
-        void printIfNotPrintedBefore(Project project) {
-            if (project.gradle == gradle) {
-                return
-            }
-            gradle = project.gradle
-            String version = Versions.version('vaadin.plugin.version')
-            project.logger.quiet "Using Gradle Vaadin Flow Plugin $version"
+        } else if (vaadin.compatibilityMode) {
+            LOGGER.warning(
+                    RUNNING_IN_COMPATIBILITY_MODE_MESSAGE +
+                    'To disable compatibility mode please become a project supporter at ' +
+                    'https://devsoap.com/gradle-vaadin-flow-plugin/#supporttheproject')
         }
     }
 }

@@ -15,8 +15,10 @@
  */
 def vaadinType = 'com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension'
 def vaadinClientType = 'com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension'
+def devsoapType = 'com.devsoap.vaadinflow.extensions.DevsoapExtension'
 def vaadinProperty = 'vaadin'
 def vaadinClientProperty = 'vaadinClientDependencies'
+def devsoapProperty = 'devsoap'
 def vaadinCtx = context(ctype: vaadinType)
 def gradleType = 'gradle'
 def gradleArtifactRepositoryType = 'org.gradle.api.artifacts.repositories.ArtifactRepository'
@@ -66,16 +68,21 @@ contributor(closureCtx, {
         property name: 'submitStatistics', type: Boolean.name
         property name: 'baseTheme', type: String.name
     }
-    if(enclosingCall('vaadinClientDependencies')) {
+    if(enclosingCall(vaadinClientProperty)) {
         property name: 'offlineCachePath', type: String.name
         property name: 'compileFromSources', type: Boolean.name
         method name: 'bower', params: ['version' :  String.name, 'dependency' : String.name]
+    }
+    if(enclosingCall(devsoapProperty)) {
+        property name: 'email', type: String.name
+        property name: 'key', type: Boolean.name
     }
 })
 
 contributor(scriptContext, {
    property name: vaadinProperty, type: vaadinType
    property name: vaadinClientProperty, type: vaadinClientType
+   property name: devsoapProperty, type: devsoapType
    method name: vaadinProperty, params: ['config': Closure.name], type: Void.name
    method name: vaadinClientProperty, params: ['config': Closure.name], type: Void.name
 })

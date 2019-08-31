@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.extensions
 
+import com.devsoap.vaadinflow.VaadinFlowPlugin
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.GradleException
@@ -157,8 +158,13 @@ class VaadinFlowPluginExtension {
      * Should the plugin support the old legacy mode compilation
      */
     boolean isCompatibilityMode() {
-        compatibilityMode.getOrElse(Boolean.parseBoolean(System.getProperty('vaadin.compatibilityMode',
-                Boolean.TRUE.toString())))
+        if (project.plugins.getPlugin(VaadinFlowPlugin).validLicense) {
+            compatibilityMode.getOrElse(Boolean.parseBoolean(System.getProperty('vaadin.compatibilityMode',
+                    Boolean.TRUE.toString())))
+        } else {
+            // Only sponsors are allowed to use the new mode
+            true
+        }
     }
 
     /**

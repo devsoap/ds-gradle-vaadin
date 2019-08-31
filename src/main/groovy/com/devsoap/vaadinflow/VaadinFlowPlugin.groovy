@@ -24,10 +24,10 @@ import com.devsoap.vaadinflow.actions.SassWarPluginAction
 import com.devsoap.vaadinflow.actions.SpringBootAction
 import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
 import com.devsoap.vaadinflow.actions.WarPluginAction
+import com.devsoap.vaadinflow.extensions.DevsoapExtension
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
-import com.devsoap.vaadinflow.tasks.WrapCssTask
 import com.devsoap.vaadinflow.tasks.ConvertGroovyTemplatesToHTML
 import com.devsoap.vaadinflow.tasks.CreateComponentTask
 import com.devsoap.vaadinflow.tasks.CreateCompositeTask
@@ -38,7 +38,11 @@ import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
 import com.devsoap.vaadinflow.tasks.InstallYarnDependenciesTask
 import com.devsoap.vaadinflow.tasks.TranspileDependenciesTask
 import com.devsoap.vaadinflow.tasks.VersionCheckTask
+import com.devsoap.vaadinflow.tasks.WrapCssTask
 import com.devsoap.vaadinflow.util.Versions
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import groovy.transform.PackageScope
 import groovy.util.logging.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -63,8 +67,13 @@ class VaadinFlowPlugin implements Plugin<Project> {
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
     private static final String COMPILE_CONFIGURATION = 'compile'
+    private static final String LICENSE_SERVER_URL = 'https://fns.devsoap.com/t/license-server/check'
+    private static final int CONNECTION_TIMEOUT = 3000
 
     private final List<PluginAction> actions = []
+
+    @PackageScope
+    boolean validated = false
 
     @Inject
     VaadinFlowPlugin(Gradle gradle, Instantiator instantiator) {
@@ -91,6 +100,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
             extensions.with {
                 create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project)
                 create(VaadinClientDependenciesExtension.NAME, VaadinClientDependenciesExtension, project)
+                create(DevsoapExtension.NAME, DevsoapExtension, project)
             }
 
             tasks.with {
@@ -109,11 +119,16 @@ class VaadinFlowPlugin implements Plugin<Project> {
             }
 
             afterEvaluate {
+                validateLicense(project)
                 disableStatistics(project)
                 enableProductionMode(project)
                 validateVaadinVersion(project)
             }
         }
+    }
+
+    final boolean isValidLicense() {
+        validated
     }
 
     private static void disableStatistics(Project project) {
@@ -158,6 +173,32 @@ class VaadinFlowPlugin implements Plugin<Project> {
                         "Please pick one of the following supported Vaadin versions $supportedVersions. " +
                         'Alternatively you can add vaadin.unsupportedVersion=true to your build.gradle to override ' +
                         'this check but there is no guarantee it will work or that the build will be stable.')
+        }
+    }
+
+    private static void validateLicense(Project project) {
+        DevsoapExtension devsoap = project.extensions.getByType(DevsoapExtension)
+        if (!devsoap.email || !devsoap.key) {
+            LOGGER.info('No license email or key defined, skipping license check.')
+            return
+        }
+
+        try {
+            Map payload = ['product': 'gradle-vaadin-flow', 'email' : devsoap.email, 'key' : devsoap.key ]
+            Object response = new JsonSlurper().parse(LICENSE_SERVER_URL.toURL().openConnection().with {
+                it.doOutput = true
+                it.requestMethod = 'POST'
+                it.outputStream.withWriter { writer ->
+                    writer.write(JsonOutput.toJson(payload))
+                }
+                it.connectTimeout = CONNECTION_TIMEOUT
+                it.readTimeout = CONNECTION_TIMEOUT
+                it
+            }.inputStream)
+            VaadinFlowPlugin plugin = project.plugins.getPlugin(VaadinFlowPlugin)
+            plugin.validated = response?.result == 'OK'
+        } catch (SocketTimeoutException e) {
+            LOGGER.info('Validating license failed, failed to contact license server.')
         }
     }
 }
