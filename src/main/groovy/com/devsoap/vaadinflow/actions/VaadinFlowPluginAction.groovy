@@ -122,8 +122,7 @@ class VaadinFlowPluginAction extends PluginAction {
         } else if (vaadin.compatibilityMode) {
             LOGGER.warning(
                     RUNNING_IN_COMPATIBILITY_MODE_MESSAGE +
-                    'To disable compatibility mode please become a project supporter at ' +
-                    'https://devsoap.com/gradle-vaadin-flow-plugin/#supporttheproject')
+                    ' Running in NPM mode is only available for PRO subscribers.');
         }
     }
 }
