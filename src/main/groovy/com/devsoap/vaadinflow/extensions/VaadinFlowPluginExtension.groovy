@@ -171,6 +171,9 @@ class VaadinFlowPluginExtension {
      * Should the plugin support legacy browsers by transpiling the sources to ES5
      */
     void setCompatibilityMode(boolean enabled) {
+        if (!project.plugins.getPlugin(VaadinFlowPlugin).validLicense) {
+            throw new IllegalArgumentException('Setting compatibility mode is only available for PRO subscribers.')
+        }
         compatibilityMode.set(enabled)
     }
 

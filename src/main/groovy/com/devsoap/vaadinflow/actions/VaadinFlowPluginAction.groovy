@@ -122,7 +122,7 @@ class VaadinFlowPluginAction extends PluginAction {
         } else if (vaadin.compatibilityMode) {
             LOGGER.warning(
                     RUNNING_IN_COMPATIBILITY_MODE_MESSAGE +
-                    ' Running in NPM mode is only available for PRO subscribers.');
+                    ' Running in NPM mode is only available for PRO subscribers.')
         }
     }
 }
