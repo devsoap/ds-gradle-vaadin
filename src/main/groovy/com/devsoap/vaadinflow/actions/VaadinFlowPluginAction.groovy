@@ -97,11 +97,11 @@ class VaadinFlowPluginAction extends PluginAction {
         if (plugin.validLicense) {
             DevsoapExtension devsoap = project.extensions[DevsoapExtension.NAME]
             LogUtils.printIfNotPrintedBefore( project,
-                    "Using Gradle Vaadin Flow Plugin $vaadinVersion (Licensed to ${devsoap.email})"
+                    "Using DS Gradle Vaadin Flow Plugin $vaadinVersion (Licensed to ${devsoap.email})"
             )
         } else {
             LogUtils.printIfNotPrintedBefore( project,
-                    "Using Gradle Vaadin Flow Plugin $vaadinVersion (UNLICENSED)"
+                    "Using DS Gradle Vaadin Flow Plugin $vaadinVersion (UNLICENSED)"
             )
         }
 

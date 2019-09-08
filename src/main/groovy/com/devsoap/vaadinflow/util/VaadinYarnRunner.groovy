@@ -15,12 +15,14 @@
  */
 package com.devsoap.vaadinflow.util
 
+import com.devsoap.vaadinflow.actions.SpringBootAction
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ClientPackage
 import com.moowork.gradle.node.yarn.YarnExecRunner
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
+import groovy.util.logging.Log
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.process.ExecResult
@@ -35,6 +37,7 @@ import java.util.logging.Level
  * @author John Ahlroos
  * @since 1.0
  */
+@Log('LOGGER')
 class VaadinYarnRunner extends YarnExecRunner {
 
     private static final String YARN_RC_FILENAME = '.yarnrc'
@@ -238,9 +241,9 @@ class VaadinYarnRunner extends YarnExecRunner {
      *
      * @since 1.3
      */
-    void webpackBundle(File statsFile, File bundleFile, File infoFile) {
+    void webpackBundle(Project project, File statsFile, File bundleFile, File infoFile) {
 
-        generateWebpackConfig(bundleFile)
+        generateWebpackConfig(project, bundleFile, statsFile)
 
         generateBuildInfo(infoFile)
 
@@ -314,12 +317,22 @@ class VaadinYarnRunner extends YarnExecRunner {
         }
     }
 
-    private void generateWebpackConfig(File bundleFile) {
+    private void generateWebpackConfig(Project project, File bundleFile, File statsFile) {
+        File targetPath
+        if (SpringBootAction.isActive(project)) {
+            File metaInf = statsFile.parentFile.parentFile.parentFile
+            targetPath = Paths.get(metaInf.canonicalPath, 'resources', 'VAADIN').toFile()
+        } else {
+            targetPath = bundleFile.parentFile
+        }
+
+        LOGGER.info("Bundling Javascript resources to $targetPath")
+
         TemplateWriter.builder()
                 .targetDir(workingDir as File)
                 .templateFileName('webpack.config.js')
                 .substitutions([
-                    'targetPath' : bundleFile.parentFile.canonicalPath,
+                    'targetPath' : targetPath.canonicalPath,
                     'moduleDirs': [
                             'src',
                             'dist/node_modules'

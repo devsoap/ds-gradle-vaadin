@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.tasks
 
+import com.devsoap.vaadinflow.actions.SpringBootAction
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.PolymerBuild
@@ -79,9 +80,14 @@ class TranspileDependenciesTask extends DefaultTask {
 
     final File webappGenDir = new File(project.buildDir, 'webapp-gen')
     final File webappGenFrontendDir = new File(webappGenDir, FRONTEND)
-    final File configDir = Paths.get(project.buildDir.canonicalPath, 'resources',
-            'main', 'META-INF', VAADIN, 'config').toFile()
-
+    final Closure<File> configDir = {
+        if (SpringBootAction.isActive(project)) {
+            Paths.get(webappGenDir.canonicalPath, 'META-INF', VAADIN, 'config').toFile()
+        } else {
+            Paths.get(project.buildDir.canonicalPath, 'resources',
+                    'main', 'META-INF', VAADIN, 'config').toFile()
+        }
+    }
     private final ListProperty<String> bundleExcludes = project.objects.listProperty(String)
 
     private final ListProperty<String> importExcludes = project.objects.listProperty(String)
@@ -154,14 +160,14 @@ class TranspileDependenciesTask extends DefaultTask {
     @OutputFile
     final Closure<File> statsJson = {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        vaadin.compatibilityMode ? null : new File(configDir, 'stats.json')
+        vaadin.compatibilityMode ? null : new File(configDir.call(), 'stats.json')
     }
 
     @Optional
     @OutputFile
     final Closure<File> infoJson = {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        vaadin.compatibilityMode ? null : new File(configDir, 'flow-build-info.json')
+        vaadin.compatibilityMode ? null : new File(configDir.call(), 'flow-build-info.json')
     }
 
     @Optional
@@ -309,7 +315,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
         LOGGER.info('Bundling...')
         LogUtils.measureTime('Bundling completed') {
-            yarnRunner.webpackBundle(statsJson.call(), mainJs.call(), infoJson.call())
+            yarnRunner.webpackBundle(project, statsJson.call(), mainJs.call(), infoJson.call())
         }
     }
 
