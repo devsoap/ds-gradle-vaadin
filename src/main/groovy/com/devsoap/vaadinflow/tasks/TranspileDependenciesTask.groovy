@@ -388,7 +388,7 @@ class TranspileDependenciesTask extends DefaultTask {
         initPolymerJson(htmlFile, imports)
 
         LOGGER.info("Creating ${manifestJson.name}...")
-        VaadinYarnRunner yarnBundleRunner = new VaadinYarnRunner(project, workingDir, new ByteArrayOutputStream())
+        VaadinYarnRunner yarnBundleRunner = new VaadinYarnRunner(project, workingDir, true)
         yarnBundleRunner.polymerBundle(manifestJson.call(), htmlFile, getBundleExcludes())
 
         LOGGER.info('Checking for missing dependencies...')

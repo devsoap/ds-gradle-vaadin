@@ -23,6 +23,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import org.gradle.api.GradleException
 import org.gradle.api.Project
+import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
 
 import java.nio.file.Paths
@@ -57,6 +58,8 @@ class VaadinYarnRunner extends YarnExecRunner {
     private static final String SPACE = ' '
 
     private final boolean isOffline
+    private boolean captureOutput
+    private OutputStream capturedOutputStream
 
     /**
      * Creates a new Yarn runner
@@ -68,16 +71,17 @@ class VaadinYarnRunner extends YarnExecRunner {
      * @param standardOutput
      *      output stream for messages (stdout)
      */
-    VaadinYarnRunner(Project project, File workingDir,
-                     OutputStream standardOutput = LogUtils.getLogOutputStream(Level.FINE)) {
+    VaadinYarnRunner(Project project, File workingDir, boolean captureOutput=false) {
         super(project)
         this.workingDir = workingDir
         this.isOffline = project.gradle.startParameter.offline
-        execOverrides = { ExecSpec spec ->
-            spec.standardInput = new ByteArrayInputStream()
-            spec.standardOutput = standardOutput
-            spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
-        }
+        this.captureOutput = captureOutput
+    }
+
+    @Override
+    protected ExecResult doExecute() {
+        resetStreams()
+        super.doExecute()
     }
 
     /**
@@ -243,19 +247,16 @@ class VaadinYarnRunner extends YarnExecRunner {
         arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, RUN_COMMAND, WEBPACK_COMMAND,
                      '--profile', '--json']
 
-        ByteArrayOutputStream statsStream = new ByteArrayOutputStream()
-
-        Closure oldExecOverrides = execOverrides
-        execOverrides = { ExecSpec spec ->
-            spec.standardOutput = statsStream
-            spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
+        boolean oldCapture = captureOutput
+        captureOutput = true
+        try {
+            execute().assertNormalExitValue()
+        } finally {
+            captureOutput = oldCapture
         }
 
-        execute().assertNormalExitValue()
-
-        execOverrides = oldExecOverrides
-
-        new ByteArrayInputStream(statsStream.toByteArray()).with { stream ->
+        byte[] output = ((ByteArrayOutputStream) capturedOutputStream).toByteArray()
+        new ByteArrayInputStream(output).with { stream ->
             boolean jsonStartFound = false
             boolean jsonEndFound = false
             statsFile.withWriter { writer ->
@@ -351,5 +352,14 @@ class VaadinYarnRunner extends YarnExecRunner {
 
         yarnInstallScript.executable = true
         pkg.scripts[BUILD_DISTRIBUTION_COMMAND] = "$rootPath/scripts/$yarnInstallScript.name".toString()
+    }
+
+    private void resetStreams() {
+        capturedOutputStream = captureOutput ? new ByteArrayOutputStream() : LogUtils.getLogOutputStream(Level.INFO)
+        execOverrides = { ExecSpec spec ->
+            spec.standardInput = new ByteArrayInputStream()
+            spec.standardOutput = capturedOutputStream
+            spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
+        }
     }
 }

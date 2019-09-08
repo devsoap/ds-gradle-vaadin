@@ -17,10 +17,14 @@ package com.devsoap.vaadinflow.util
 
 import groovy.time.TimeCategory
 import groovy.time.TimeDuration
+import groovy.transform.MapConstructor
 import groovy.transform.Memoized
 import groovy.util.logging.Log
 import org.gradle.api.Project
+import org.gradle.internal.io.LineBufferingOutputStream
+import org.gradle.internal.io.TextStream
 
+import javax.annotation.Nullable
 import java.nio.charset.StandardCharsets
 import java.util.logging.Level
 
@@ -34,7 +38,7 @@ import java.util.logging.Level
 class LogUtils {
 
     static final OutputStream getLogOutputStream(Level level) {
-        new LogOutputStream(level)
+        new LineBufferingOutputStream(new LogStream(level))
     }
 
     static final <T> T measureTime(String description, Closure<T> closure) {
@@ -51,31 +55,27 @@ class LogUtils {
     }
 
     @Log('LOGGER')
-    private static class LogOutputStream extends OutputStream {
-
-        private String mem = ''
+    private static class LogStream implements TextStream {
 
         private final Level level
 
-        LogOutputStream(Level level) {
+        LogStream(Level level) {
             this.level = level
         }
 
         @Override
-        void write(int i) throws IOException {
-            byte[] bytes = new byte[1]
-            bytes[0] = (byte) (i & 0xff)
-            mem = mem + new String(bytes, StandardCharsets.UTF_8)
-            if (mem.endsWith ('\n')) {
-                mem = mem[0..(mem.length() - 1)]
-                flush()
+        void text(String text) {
+            String trimmedText = text.replaceAll(/\s*$/, '')
+            if (!trimmedText.blank) {
+                LOGGER.log(level, trimmedText)
             }
         }
 
         @Override
-        void flush() throws IOException {
-            LOGGER.log(level, mem)
-            mem = ''
+        void endOfStream(@Nullable Throwable failure) {
+            if (failure) {
+                LOGGER.log(Level.SEVERE, '', failure)
+            }
         }
     }
 
