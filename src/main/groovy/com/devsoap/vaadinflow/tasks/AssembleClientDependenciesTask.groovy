@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.tasks
 
+import com.devsoap.vaadinflow.actions.SpringBootAction
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import groovy.util.logging.Log
@@ -132,6 +133,7 @@ class AssembleClientDependenciesTask extends DefaultTask {
 
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
         if (vaadin.compatibilityMode) {
+            LOGGER.info("Assembling compatibility mode Web Application")
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
             if (client.compileFromSources) {
                 if (!sourceDirEs5.exists()) {
@@ -157,7 +159,24 @@ class AssembleClientDependenciesTask extends DefaultTask {
                     copy { CopySpec spec -> spec.from(frontendBuildDir).exclude(excludes).into(webAppGenFrontendDir) }
                 }
             }
+
+        } else if(SpringBootAction.isActive(project)) {
+            LOGGER.info("Assembling Spring Boot Jar...")
+            //webcomponents-loader.js
+            File metaInf = new File(webAppGenDir, 'META-INF')
+            File distDir =  Paths.get(project.buildDir.canonicalPath, FRONTEND, 'dist').toFile()
+            File webcomponentsJs = Paths.get(distDir.canonicalPath,  NODE_MODULES,
+                    '@webcomponents', WEBCOMPONENTSJS).toFile()
+            File targetWebcomponentsJs = Paths.get(metaInf.canonicalPath, 'VAADIN', 'build',
+                    WEBCOMPONENTSJS).toFile()
+            project.copy { CopySpec spec ->
+                spec.from(webcomponentsJs)
+                        .include('webcomponents-loader.js')
+                        .into(targetWebcomponentsJs)
+            }
         } else {
+            LOGGER.info("Assembling Web Application...")
+            //webcomponents-loader.js
             File distDir =  Paths.get(project.buildDir.canonicalPath, FRONTEND, 'dist').toFile()
             File webcomponentsJs = Paths.get(distDir.canonicalPath,  NODE_MODULES,
                     '@webcomponents', WEBCOMPONENTSJS).toFile()
@@ -165,7 +184,7 @@ class AssembleClientDependenciesTask extends DefaultTask {
                     'VAADIN', 'build', WEBCOMPONENTSJS).toFile()
             project.copy { CopySpec spec ->
                 spec.from(webcomponentsJs)
-                        .include('webcomponents-loader.js', 'webcomponents-hi.js')
+                        .include('webcomponents-loader.js')
                         .into(targetWebcomponentsJs)
             }
         }

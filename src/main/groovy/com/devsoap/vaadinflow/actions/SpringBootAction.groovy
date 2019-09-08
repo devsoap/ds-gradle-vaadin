@@ -47,6 +47,18 @@ class SpringBootAction extends PluginAction {
     private static final String WEBAPP_GEN = 'webapp-gen'
     private static final String SPRING_BOOT_RESOURCES_PATH = 'META-INF/resources'
 
+    /**
+     * Is Spring Boot plugin active for the project
+     *
+     * @param project
+     *      the project to check
+     * @return
+     *      <code>true</code> if active
+     */
+    static boolean isActive(Project project) {
+        project.plugins.hasPlugin(new SpringBootAction().pluginId)
+    }
+
     @Override
     protected void execute(Project project) {
         super.execute(project)
@@ -68,17 +80,13 @@ class SpringBootAction extends PluginAction {
     protected void executeAfterEvaluate(Project project) {
         super.executeAfterEvaluate(project)
 
-        // Configure source set to include web resources
-        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        if (!vaadin.productionMode) {
-            AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
-            JavaPluginConvention javaPlugin =  project.convention.getPlugin(JavaPluginConvention)
-            SourceSet mainSourceSet = javaPlugin.sourceSets.main
-            mainSourceSet.resources.srcDir(assembleTask.webappDir)
+        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+        JavaPluginConvention javaPlugin =  project.convention.getPlugin(JavaPluginConvention)
+        SourceSet mainSourceSet = javaPlugin.sourceSets.main
+        mainSourceSet.resources.srcDir(assembleTask.webappDir)
 
-            File webappGen = Paths.get(project.buildDir.canonicalPath, WEBAPP_GEN).toFile()
-            mainSourceSet.resources.srcDir(webappGen)
-        }
+        File webappGen = Paths.get(project.buildDir.canonicalPath, WEBAPP_GEN).toFile()
+        mainSourceSet.resources.srcDir(webappGen)
     }
 
     @Override
@@ -104,6 +112,7 @@ class SpringBootAction extends PluginAction {
         bootRun.systemProperties.putIfAbsent 'vaadin.productionMode', vaadin.productionMode
         bootRun.systemProperties.putIfAbsent 'vaadin.compatibilityMode', vaadin.compatibilityMode
         bootRun.systemProperties.put 'vaadin.enableDevServer', false
+        bootRun.classpath = task.project.files('build/webapp-gen') + bootRun.classpath
 
         if (vaadin.compatibilityMode && vaadin.productionMode) {
             // TODO Resolve if supporting production mode is even possible with bootRun
