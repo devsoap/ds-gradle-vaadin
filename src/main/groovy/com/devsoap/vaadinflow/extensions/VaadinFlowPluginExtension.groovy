@@ -140,15 +140,27 @@ class VaadinFlowPluginExtension {
 
     /**
      * Should the plugin support legacy browsers by transpiling the sources to ES5
+     *
+     * @deprecated since 1.3
      */
+    @Deprecated
     boolean isProductionMode() {
-        productionMode.getOrElse(Boolean.parseBoolean(System.getProperty('vaadin.productionMode',
-                Boolean.FALSE.toString())))
+        if (isCompatibilityMode()) {
+            productionMode.getOrElse(Boolean.parseBoolean(System.getProperty('vaadin.productionMode',
+                    Boolean.FALSE.toString())))
+
+        } else {
+            // NPM mode does not have a different production mode
+            true
+        }
     }
 
     /**
      * Should the plugin support legacy browsers by transpiling the sources to ES5
+     *
+     * @deprecated since 1.3
      */
+    @Deprecated
     void setProductionMode(boolean enabled) {
         productionMode.set(enabled)
         project.extensions.getByType(VaadinClientDependenciesExtension).compileFromSources = enabled
@@ -160,9 +172,15 @@ class VaadinFlowPluginExtension {
     boolean isCompatibilityMode() {
         if (project.plugins.getPlugin(VaadinFlowPlugin).validLicense) {
             compatibilityMode.getOrElse(Boolean.parseBoolean(System.getProperty('vaadin.compatibilityMode',
-                    Boolean.TRUE.toString())))
+                    Boolean.FALSE.toString())))
         } else {
             // Only sponsors are allowed to use the new mode
+            //
+            // You can work around the PRO restriction by setting this to false. I do understand money is short for some
+            // but by hacking this you are also actively saying you don't want to support my work on this plugin. This
+            // makes me sad and most likely will result in the termination of support for this plugin. Please don't make
+            // me sad.
+            //
             true
         }
     }
@@ -171,9 +189,6 @@ class VaadinFlowPluginExtension {
      * Should the plugin support legacy browsers by transpiling the sources to ES5
      */
     void setCompatibilityMode(boolean enabled) {
-        if (!project.plugins.getPlugin(VaadinFlowPlugin).validLicense) {
-            throw new IllegalArgumentException('Setting compatibility mode is only available for PRO subscribers.')
-        }
         compatibilityMode.set(enabled)
     }
 
