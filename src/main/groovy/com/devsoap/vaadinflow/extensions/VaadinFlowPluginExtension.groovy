@@ -248,6 +248,7 @@ class VaadinFlowPluginExtension {
 
         project.plugins.withId('org.springframework.boot') {
             dh.add(COMPILE, springBoot())
+            dh.add(COMPILE, servletApi())
         }
 
         project.plugins.withId('org.jetbrains.kotlin.jvm') {
