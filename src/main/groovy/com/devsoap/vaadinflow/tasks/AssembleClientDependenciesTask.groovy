@@ -43,6 +43,9 @@ class AssembleClientDependenciesTask extends DefaultTask {
     private static final String FRONTEND = 'frontend'
     private static final String WEBCOMPONENTSJS = 'webcomponentsjs'
     private static final String NODE_MODULES = 'node_modules'
+    private static final String VAADIN = 'VAADIN'
+    private static final String BUILD = 'build'
+    private static final String WEBCOMPONENTS_LOADER = 'webcomponents-loader.js'
 
     final File frontendBuildDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final File sourceDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es5')
@@ -132,8 +135,11 @@ class AssembleClientDependenciesTask extends DefaultTask {
         }
 
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        File distDir =  Paths.get(project.buildDir.canonicalPath, FRONTEND, 'dist').toFile()
+        File webcomponentsJs = Paths.get(distDir.canonicalPath,  NODE_MODULES,
+                '@webcomponents', WEBCOMPONENTSJS).toFile()
         if (vaadin.compatibilityMode) {
-            LOGGER.info("Assembling compatibility mode Web Application")
+            LOGGER.info('Assembling compatibility mode Web Application')
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
             if (client.compileFromSources) {
                 if (!sourceDirEs5.exists()) {
@@ -160,31 +166,25 @@ class AssembleClientDependenciesTask extends DefaultTask {
                 }
             }
 
-        } else if(SpringBootAction.isActive(project)) {
-            LOGGER.info("Assembling Spring Boot Jar...")
+        } else if (SpringBootAction.isActive(project)) {
+            LOGGER.info('Assembling Spring Boot Jar...')
             //webcomponents-loader.js
             File metaInf = new File(webAppGenDir, 'META-INF')
-            File distDir =  Paths.get(project.buildDir.canonicalPath, FRONTEND, 'dist').toFile()
-            File webcomponentsJs = Paths.get(distDir.canonicalPath,  NODE_MODULES,
-                    '@webcomponents', WEBCOMPONENTSJS).toFile()
-            File targetWebcomponentsJs = Paths.get(metaInf.canonicalPath, 'VAADIN', 'build',
+            File targetWebcomponentsJs = Paths.get(metaInf.canonicalPath, VAADIN, BUILD,
                     WEBCOMPONENTSJS).toFile()
             project.copy { CopySpec spec ->
                 spec.from(webcomponentsJs)
-                        .include('webcomponents-loader.js')
+                        .include(WEBCOMPONENTS_LOADER)
                         .into(targetWebcomponentsJs)
             }
         } else {
-            LOGGER.info("Assembling Web Application...")
+            LOGGER.info('Assembling Web Application...')
             //webcomponents-loader.js
-            File distDir =  Paths.get(project.buildDir.canonicalPath, FRONTEND, 'dist').toFile()
-            File webcomponentsJs = Paths.get(distDir.canonicalPath,  NODE_MODULES,
-                    '@webcomponents', WEBCOMPONENTSJS).toFile()
             File targetWebcomponentsJs = Paths.get(webAppGenDir.canonicalPath,
-                    'VAADIN', 'build', WEBCOMPONENTSJS).toFile()
+                    VAADIN, BUILD, WEBCOMPONENTSJS).toFile()
             project.copy { CopySpec spec ->
                 spec.from(webcomponentsJs)
-                        .include('webcomponents-loader.js')
+                        .include(WEBCOMPONENTS_LOADER)
                         .into(targetWebcomponentsJs)
             }
         }
