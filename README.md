@@ -12,11 +12,16 @@ not yet support ES6 and helps with integrating with other useful Gradle plugins.
 
 To get started using the plugin have a look a the plugin documentation at https://docs.devsoap.com/vaadin_flow_gradle_plugin
 
-# Sponsors
+# Become PRO
 
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. To find out more about becoming a sponsor see the [Become a sponsor](https://devsoap.com/gradle-vaadin-flow-plugin/#supporttheproject) page.
+With a PRO subscription you will further get the following perks:
 
-[<img src="https://github.com/devsoap/gradle-vaadin-flow/raw/master/docs/sponsors/vaadin.com.png?03062019" />](https://vaadin.com) [<img src="https://github.com/devsoap/gradle-vaadin-flow/raw/master/docs/sponsors/safri.net.png?03062019" />](https://www.safri.net/)
+* Early access to new features in the Gradle plugin
+* Priority treatment of bug issues on github
+* Access to PRO only documentation in DS Docs
+* A good and fuzzy feeling knowing you are supporting a Open Source project
+
+You can order your PRO subscription [here](https://devsoap.com/store/?product=gradle-vaadin-flow).
 
 # License
 
