@@ -81,12 +81,9 @@ class TranspileDependenciesTask extends DefaultTask {
     final File webappGenDir = new File(project.buildDir, 'webapp-gen')
     final File webappGenFrontendDir = new File(webappGenDir, FRONTEND)
     final Closure<File> configDir = {
-        if (SpringBootAction.isActive(project)) {
-            Paths.get(webappGenDir.canonicalPath, 'META-INF', VAADIN, 'config').toFile()
-        } else {
-            Paths.get(project.buildDir.canonicalPath, 'resources',
-                    'main', 'META-INF', VAADIN, 'config').toFile()
-        }
+        File rootDir = SpringBootAction.isActive(project) ? webappGenDir :
+                Paths.get(project.buildDir.canonicalPath, 'resources', 'main').toFile()
+        Paths.get(rootDir.canonicalPath, 'META-INF', VAADIN, 'config').toFile()
     }
     private final ListProperty<String> bundleExcludes = project.objects.listProperty(String)
 
