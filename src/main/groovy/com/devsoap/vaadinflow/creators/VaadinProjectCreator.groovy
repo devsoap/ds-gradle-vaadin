@@ -48,6 +48,19 @@ class VaadinProjectCreator {
                 vaadinProject.applicationPackage.split('\\.')).toFile()
         String appClassName = TemplateWriter.makeStringJavaCompatible(vaadinProject.applicationName)
 
+        TemplateWriter.builder()
+                .templateFileName(vaadinProject.compatibilityMode ?
+                "AppView.$sourceFileExtension" : "AppView.14.$sourceFileExtension")
+                .targetDir(pkgDir)
+                .targetFileName("${appClassName}View.$sourceFileExtension")
+                .substitutions([
+                'applicationPackage': vaadinProject.applicationPackage,
+                'applicationName' : appClassName,
+                'applicationBaseTheme' : vaadinProject.applicationBaseTheme,
+                'applicationTheme' : vaadinProject.applicationName.toLowerCase() +
+                        "-theme.${vaadinProject.compatibilityMode ? 'html' : 'css'}",
+        ]).build().write()
+
         if (vaadinProject.compatibilityMode) {
             TemplateWriter.builder()
                     .templateFileName("Servlet.$sourceFileExtension")
@@ -57,33 +70,20 @@ class VaadinProjectCreator {
                     'applicationPackage' : vaadinProject.applicationPackage,
                     'applicationName' : vaadinProject.applicationName,
                     'productionMode' : vaadinProject.productionMode
-            ])
-                    .build().write()
+            ]).build().write()
+
+            TemplateWriter.builder()
+                    .templateFileName("UI.$sourceFileExtension")
+                    .targetDir(pkgDir)
+                    .targetFileName("${appClassName}UI.$sourceFileExtension")
+                    .substitutions([
+                    'applicationPackage': vaadinProject.applicationPackage,
+                    'applicationName' : appClassName,
+                    'applicationTheme' : vaadinProject.applicationName.toLowerCase() +
+                            "-theme.${vaadinProject.compatibilityMode ? 'html' : 'css'}",
+                    'applicationBaseTheme' : vaadinProject.applicationBaseTheme
+            ]).build().write()
         }
-
-        TemplateWriter.builder()
-                .templateFileName("AppView.$sourceFileExtension")
-                .targetDir(pkgDir)
-                .targetFileName("${appClassName}View.$sourceFileExtension")
-                .substitutions([
-                        'applicationPackage': vaadinProject.applicationPackage,
-                        'applicationName' : appClassName,
-                ])
-                .build().write()
-
-        TemplateWriter.builder()
-                .templateFileName(vaadinProject.compatibilityMode ?
-                    "UI.$sourceFileExtension" : "UI.14.$sourceFileExtension")
-                .targetDir(pkgDir)
-                .targetFileName("${appClassName}UI.$sourceFileExtension")
-                .substitutions([
-                        'applicationPackage': vaadinProject.applicationPackage,
-                        'applicationName' : appClassName,
-                        'applicationTheme' : vaadinProject.applicationName.toLowerCase() +
-                                "-theme.${vaadinProject.compatibilityMode ? 'html' : 'css'}",
-                        'applicationBaseTheme' : vaadinProject.applicationBaseTheme
-                ])
-                .build().write()
 
         if (vaadinProject.applicationType == ApplicationType.SPRING_BOOT) {
             TemplateWriter.builder()

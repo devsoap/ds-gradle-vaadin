@@ -1,5 +1,9 @@
 /*
  * This file contains the Application theme
  */
-label { color: green; }
-label.clicked { color: red; }
+label {
+    color: var(--lumo-primary-text-color);
+}
+label.clicked {
+    color: var(--lumo-success-color);
+}
