@@ -114,6 +114,28 @@ class VaadinClientDependenciesExtension {
     }
 
     /**
+     * Alias for yarn(dependency, version)
+     *
+     * @param dependency
+     *      the dependency name
+     * @param version
+     *      the dependency version
+     */
+    void npm(String dependency, String version) {
+        yarn(dependency, version)
+    }
+
+    /**
+     * Alias for yarn(dependencyNotation)
+     *
+     * @param dependencyNotation
+     *      the dependency using the "<dependency-name>:<dependency-version>" notation
+     */
+    void npm(String dependencyNotation) {
+        yarn(dependencyNotation)
+    }
+
+    /**
      * Add a Bower dependency using the compact notation
      *
      * @deprecated In favor of Yarn dependencies

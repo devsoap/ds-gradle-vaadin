@@ -71,11 +71,14 @@ contributor(closureCtx, {
     if(enclosingCall(vaadinClientProperty)) {
         property name: 'offlineCachePath', type: String.name
         property name: 'compileFromSources', type: Boolean.name
-        method name: 'bower', params: ['version' :  String.name, 'dependency' : String.name]
+        method name: 'yarn', params: ['version' :  String.name, 'dependency' : String.name]
+        method name: 'yarn', params: ['dependencyNotation' : String.name]
+        method name: 'npm', params: ['version' :  String.name, 'dependency' : String.name]
+        method name: 'npm', params: ['dependencyNotation' : String.name]
     }
     if(enclosingCall(devsoapProperty)) {
         property name: 'email', type: String.name
-        property name: 'key', type: Boolean.name
+        property name: 'key', type: String.name
     }
 })
 
