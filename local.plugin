@@ -23,6 +23,7 @@ buildscript {
         classpath "com.devsoap:gradle-vaadin-flow-plugin:$pluginVersion"
         classpath "com.moowork.gradle:gradle-node-plugin:1.2.0"
         classpath 'io.github.classgraph:classgraph:4.8.26'
+        classpath 'com.auth0:java-jwt:3.8.2'
 	}
 }
 

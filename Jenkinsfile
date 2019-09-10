@@ -12,6 +12,7 @@ pipeline {
   environment {
      GRADLE_PUBLISH_KEY = credentials('GRADLE_PUBLISH_KEY')
      GRADLE_PUBLISH_SECRET = credentials('GRADLE_PUBLISH_SECRET')
+     PRODUCT_SIGNATURE = credentials('license-server-product-signature')
   }
 
   stages {

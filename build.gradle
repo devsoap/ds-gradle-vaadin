@@ -65,7 +65,8 @@ processResources {
     from(sourceSets.main.resources.srcDirs){
         filesMatching('versions.properties'){
             filter(ReplaceTokens, tokens: [
-                    version: project.version
+                version: project.version,
+                signature: System.getenv('PRODUCT_SIGNATURE') ?: 'e1058e32-c659-4606-876d-6ace3703292f'
             ])
         }
     }
@@ -88,6 +89,7 @@ dependencies {
 
     compile group: 'com.moowork.node', name: 'com.moowork.node.gradle.plugin', version: '1.3.1'
     compile 'io.github.classgraph:classgraph:4.8.26'
+    compile 'com.auth0:java-jwt:3.8.2'
 
     testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
         exclude group: 'org.codehaus.groovy'

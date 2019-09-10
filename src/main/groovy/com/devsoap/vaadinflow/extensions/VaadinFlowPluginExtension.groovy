@@ -170,7 +170,7 @@ class VaadinFlowPluginExtension {
      * Should the plugin support the old legacy mode compilation
      */
     boolean isCompatibilityMode() {
-        if (project.plugins.getPlugin(VaadinFlowPlugin).validLicense) {
+        if (project.plugins.getPlugin(VaadinFlowPlugin).isValidLicense(project)) {
             compatibilityMode.getOrElse(Boolean.parseBoolean(System.getProperty('vaadin.compatibilityMode',
                     Boolean.FALSE.toString())))
         } else {

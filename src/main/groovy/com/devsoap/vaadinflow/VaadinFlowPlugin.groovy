@@ -15,6 +15,10 @@
  */
 package com.devsoap.vaadinflow
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.JWTVerifier
+import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.exceptions.JWTVerificationException
 import com.devsoap.vaadinflow.actions.GrettyDeprecatedPluginAction
 import com.devsoap.vaadinflow.actions.GrettyPluginAction
 import com.devsoap.vaadinflow.actions.NodePluginAction
@@ -69,11 +73,12 @@ class VaadinFlowPlugin implements Plugin<Project> {
     private static final String COMPILE_CONFIGURATION = 'compile'
     private static final String LICENSE_SERVER_URL = 'https://fns.devsoap.com/t/license-server/check'
     private static final int CONNECTION_TIMEOUT = 3000
+    private static final String PLUGIN_NAME = 'gradle-vaadin-flow'
 
     private final List<PluginAction> actions = []
 
     @PackageScope
-    boolean validated = false
+    final File licenseFile
 
     @Inject
     VaadinFlowPlugin(Gradle gradle, Instantiator instantiator) {
@@ -87,6 +92,8 @@ class VaadinFlowPlugin implements Plugin<Project> {
         actions << instantiator.newInstance(SpringBootAction)
         actions << instantiator.newInstance(SassJavaPluginAction)
         actions << instantiator.newInstance(SassWarPluginAction)
+
+        licenseFile = new File(gradle.gradleUserHomeDir, '.gradle-vaadin-flow.license')
     }
 
     @Override
@@ -127,8 +134,12 @@ class VaadinFlowPlugin implements Plugin<Project> {
         }
     }
 
-    final boolean isValidLicense() {
-        validated
+    final boolean isValidLicense(Project project) {
+        DevsoapExtension devsoap = project.extensions.getByType(DevsoapExtension)
+        if (!devsoap.email || !devsoap.key) {
+            return false
+        }
+        licenseFile.exists() && verifySignature(licenseFile.text, devsoap.key)
     }
 
     private static void disableStatistics(Project project) {
@@ -183,8 +194,14 @@ class VaadinFlowPlugin implements Plugin<Project> {
             return
         }
 
+        VaadinFlowPlugin plugin = project.plugins.getPlugin(VaadinFlowPlugin)
+        if (plugin.isValidLicense(project)) {
+            LOGGER.info('Offline license key verified.')
+            return
+        }
+
         try {
-            Map payload = ['product': 'gradle-vaadin-flow', 'email' : devsoap.email, 'key' : devsoap.key ]
+            Map payload = ['product': PLUGIN_NAME, 'email': devsoap.email, 'key': devsoap.key ]
             Object response = new JsonSlurper().parse(LICENSE_SERVER_URL.toURL().openConnection().with {
                 it.doOutput = true
                 it.requestMethod = 'POST'
@@ -195,10 +212,31 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 it.readTimeout = CONNECTION_TIMEOUT
                 it
             }.inputStream)
-            VaadinFlowPlugin plugin = project.plugins.getPlugin(VaadinFlowPlugin)
-            plugin.validated = response?.result == 'OK'
+            if (response?.result == 'OK') {
+                String token = response.data.signature
+                if (verifySignature(token, devsoap.key)) {
+                    plugin.licenseFile.text = token
+                }
+            }
         } catch (SocketTimeoutException e) {
             LOGGER.info('Validating license failed, failed to contact license server.')
         }
+    }
+
+    private static boolean verifySignature(String jwtToken, String productKey) {
+        String signature = Versions.rawVersion('vaadin.plugin.signature')
+        Algorithm algorithm = Algorithm.HMAC256("${PLUGIN_NAME}.${productKey}.${signature}")
+        JWTVerifier verifier = JWT.require(algorithm)
+                .withIssuer('Devsoap Inc.')
+                .withClaim('key', productKey)
+                .withClaim('product', PLUGIN_NAME)
+                .build()
+        try {
+            verifier.verify(jwtToken)
+            return true
+        } catch (JWTVerificationException e) {
+            LOGGER.warning(e.message)
+        }
+        false
     }
 }

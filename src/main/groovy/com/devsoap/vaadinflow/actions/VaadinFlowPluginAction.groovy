@@ -94,7 +94,7 @@ class VaadinFlowPluginAction extends PluginAction {
 
         VaadinFlowPlugin plugin = project.plugins.getPlugin(VaadinFlowPlugin)
         String vaadinVersion = Versions.version(PLUGIN_VERSION_KEY)
-        if (plugin.validLicense) {
+        if (plugin.isValidLicense(project)) {
             DevsoapExtension devsoap = project.extensions[DevsoapExtension.NAME]
             LogUtils.printIfNotPrintedBefore( project,
                     "Using DS Gradle Vaadin Flow Plugin $vaadinVersion (Licensed to ${devsoap.email})"
@@ -115,7 +115,7 @@ class VaadinFlowPluginAction extends PluginAction {
                     'vaadin.submitStatistics=true (hide this message by setting it to false)')
         }
 
-        if (vaadin.compatibilityMode && plugin.validLicense) {
+        if (vaadin.compatibilityMode && plugin.isValidLicense(project)) {
             LOGGER.warning(
                     RUNNING_IN_COMPATIBILITY_MODE_MESSAGE +
                     'To disable compatibility mode set vaadin.compatibilityMode=false. (experimental)')
