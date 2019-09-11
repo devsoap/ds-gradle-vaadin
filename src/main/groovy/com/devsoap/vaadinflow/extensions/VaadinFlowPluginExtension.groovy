@@ -234,7 +234,6 @@ class VaadinFlowPluginExtension {
     void autoconfigure() {
         repositoryHandler.jcenter()
         repositoryHandler.add(addons())
-        repositoryHandler.add(snapshots())
         dependencyHandler.add(COMPILE, bom())
         dependencyHandler.add(COMPILE, platform())
         dependencyHandler.add(COMPILE, lumoTheme())
