@@ -47,7 +47,7 @@ class DevsoapExtension {
      *
      */
     String getEmail() {
-        email.getOrElse(System.getProperty('devsoap.gradle-flow-plugin.license.key'))
+        email.getOrElse(System.getProperty('devsoap.gradle-flow-plugin.license.email'))
     }
 
     /**
@@ -64,7 +64,7 @@ class DevsoapExtension {
      * The license key
      */
     String getKey() {
-        key.getOrElse(System.getProperty('devsoap.gradle-flow-plugin.license.email'))
+        key.getOrElse(System.getProperty('devsoap.gradle-flow-plugin.license.key'))
     }
 
     /**

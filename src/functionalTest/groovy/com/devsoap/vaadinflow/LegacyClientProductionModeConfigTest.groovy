@@ -26,7 +26,7 @@ import java.nio.file.Paths
  * @author John Ahlroos
  * @since 1.0
  */
-class ClientProductionModeConfigTest extends FunctionalTest {
+class LegacyClientProductionModeConfigTest extends FunctionalTest {
 
     void 'missing imports fail the build'() {
         setup:

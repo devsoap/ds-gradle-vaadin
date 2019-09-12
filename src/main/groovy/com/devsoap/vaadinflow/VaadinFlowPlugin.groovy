@@ -200,23 +200,25 @@ class VaadinFlowPlugin implements Plugin<Project> {
             return
         }
 
+        LOGGER.info('Fetching license information...')
+
         try {
-            Map payload = ['product': PLUGIN_NAME, 'email': devsoap.email, 'key': devsoap.key ]
-            Object response = new JsonSlurper().parse(LICENSE_SERVER_URL.toURL().openConnection().with {
-                it.doOutput = true
-                it.requestMethod = 'POST'
-                it.outputStream.withWriter { writer ->
-                    writer.write(JsonOutput.toJson(payload))
-                }
-                it.connectTimeout = CONNECTION_TIMEOUT
-                it.readTimeout = CONNECTION_TIMEOUT
-                it
-            }.inputStream)
+            Map<String,String> payload = [
+                    'product': PLUGIN_NAME,
+                    'email': devsoap.email.toString(),
+                    'key': devsoap.key.toString()
+            ]
+            InputStream stream = callLicenseServer(payload)
+            Object response = new JsonSlurper().parse(stream)
             if (response?.result == 'OK') {
                 String token = response.data.signature
                 if (verifySignature(token, devsoap.key)) {
                     plugin.licenseFile.text = token
+                } else {
+                    LOGGER.info('License signature verification failed. Are you using a valid license?')
                 }
+            } else {
+              LOGGER.info('Failed response from license server, response: ' + response)
             }
         } catch (SocketTimeoutException e) {
             LOGGER.info('Validating license failed, failed to contact license server.')
@@ -238,5 +240,18 @@ class VaadinFlowPlugin implements Plugin<Project> {
             LOGGER.warning(e.message)
         }
         false
+    }
+
+    private static InputStream callLicenseServer(Map payload) {
+        String body = JsonOutput.toJson(payload)
+        println body
+        LICENSE_SERVER_URL.toURL().openConnection().with {
+            it.doOutput = true
+            it.requestMethod = 'POST'
+            it.outputStream.withWriter { writer -> writer.write(body) }
+            it.connectTimeout = CONNECTION_TIMEOUT
+            it.readTimeout = CONNECTION_TIMEOUT
+            it
+        }.inputStream
     }
 }

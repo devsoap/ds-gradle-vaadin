@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import com.devsoap.vaadinflow.ClientProductionModeTest
+import com.devsoap.vaadinflow.LegacyClientProductionModeTest
 
 runner {
-    include ClientProductionModeTest
+    include LegacyClientProductionModeTest
 }

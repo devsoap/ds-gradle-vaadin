@@ -43,8 +43,10 @@ class VaadinFlowPluginExtension {
     private static final String COLON = ':'
     private static final String COMPILE = 'compile'
     private static final String BOM_ARTIFACT_NAME = 'bom'
-    public static final String VAADIN_VERSION_PROPERTY = 'vaadinVersion'
-    public static final String LUMO = 'lumo'
+    private static final String VAADIN_VERSION_PROPERTY = 'vaadinVersion'
+    private static final String LUMO = 'lumo'
+    private static final String TRUE = 'true'
+    private static final String COMPATIBILITY_MODE_PROPERTY = 'vaadin.compatibilityMode'
 
     private final Property<String> version
     private final Property<Boolean> unsupportedVersion
@@ -170,17 +172,17 @@ class VaadinFlowPluginExtension {
      * Should the plugin support the old legacy mode compilation
      */
     boolean isCompatibilityMode() {
+        if (compatibilityMode.isPresent() && compatibilityMode.get()) {
+            return true
+        }
+        if (System.getProperty(COMPATIBILITY_MODE_PROPERTY)?.toLowerCase() == TRUE) {
+            return true
+        }
         if (project.plugins.getPlugin(VaadinFlowPlugin).isValidLicense(project)) {
-            compatibilityMode.getOrElse(Boolean.parseBoolean(System.getProperty('vaadin.compatibilityMode',
+            compatibilityMode.getOrElse(Boolean.parseBoolean(System.getProperty(COMPATIBILITY_MODE_PROPERTY,
                     Boolean.FALSE.toString())))
         } else {
-            // Only sponsors are allowed to use the new mode
-            //
-            // You can work around the PRO restriction by setting this to false. I do understand money is short for some
-            // but by hacking this you are also actively saying you don't want to support my work on this plugin. This
-            // makes me sad and most likely will result in the termination of support for this plugin. Please don't make
-            // me sad.
-            //
+            LOGGER.info('License check failed, running in compatibility mode.')
             true
         }
     }

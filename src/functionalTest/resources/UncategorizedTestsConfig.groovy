@@ -15,12 +15,14 @@
  */
 import com.devsoap.spock.Smoke
 import com.devsoap.vaadinflow.ClientDependenciesTest
-import com.devsoap.vaadinflow.ClientProductionModeConfigTest
-import com.devsoap.vaadinflow.ClientProductionModeTest
+import com.devsoap.vaadinflow.LegacyClientDependenciesTest
+import com.devsoap.vaadinflow.LegacyClientProductionModeConfigTest
+import com.devsoap.vaadinflow.LegacyClientProductionModeTest
 import com.devsoap.vaadinflow.FunctionalTest
 import com.devsoap.vaadinflow.MultimoduleFunctionalTest
 
 runner {
     include FunctionalTest, MultimoduleFunctionalTest
-    exclude ClientDependenciesTest, ClientProductionModeTest, ClientProductionModeConfigTest, Smoke
+    exclude LegacyClientDependenciesTest, LegacyClientProductionModeTest, LegacyClientProductionModeConfigTest,
+            ClientDependenciesTest, Smoke
 }
