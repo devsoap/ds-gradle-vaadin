@@ -26,7 +26,7 @@ import java.nio.file.Paths
  * @author John Ahlroos
  * @since 1.0
  */
-class ClientProductionModeTest extends FunctionalTest {
+class LegacyClientProductionModeTest extends FunctionalTest {
 
     void 'transpile when no client dependencies in production mode'() {
         setup:

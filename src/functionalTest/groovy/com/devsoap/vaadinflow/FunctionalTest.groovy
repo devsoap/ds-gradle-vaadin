@@ -34,7 +34,7 @@ class FunctionalTest extends Specification {
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
-    static final String DEFAULT_TEST_VAADIN_VERSION = '12.0.0'
+    static final String DEFAULT_TEST_VAADIN_VERSION = '14.0.3'
 
     @Rule
     protected TemporaryFolder testProjectDir
@@ -52,6 +52,8 @@ class FunctionalTest extends Specification {
     protected File getPluginJar() {
         Paths.get(System.getProperty('plugin.jar.path')).toFile()
     }
+
+    protected boolean compatibilityMode = true
 
     /**
      * Sets up the test
@@ -107,6 +109,7 @@ class FunctionalTest extends Specification {
      *      the result of the build
      */
     protected BuildResult run(ConfigureRunner config = { }, String... args) {
+        System.setProperty('vaadin.compatibilityMode', compatibilityMode.toString() )
         GradleRunner runner = GradleRunner.create()
                 .withProjectDir(testProjectDir.root)
                 .withArguments(['--stacktrace', '--info'] + (args as List))
@@ -125,16 +128,17 @@ class FunctionalTest extends Specification {
      *       the result of the build
      */
     protected BuildResult runAndFail(ConfigureRunner config = { }, String... args) {
+        System.setProperty('vaadin.compatibilityMode', compatibilityMode.toString() )
         GradleRunner runner = GradleRunner.create()
                 .withProjectDir(testProjectDir.root)
                 .withArguments(['--stacktrace', '--info'] + (args as List))
                 .withPluginClasspath()
         config.run(runner)
-        println "Running gradle ${runner.arguments.join(' ')}"
+        println "Running gradle ${args.join(' ')}"
         runner.buildAndFail()
     }
 
-    private void initBuildFile() {
+    protected void initBuildFile() {
         buildFile = testProjectDir.newFile('build.gradle')
         buildFile << """
             plugins {
