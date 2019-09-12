@@ -17,7 +17,6 @@ package com.devsoap.vaadinflow.actions
 
 import com.devsoap.vaadinflow.NodePlugin
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
-import com.devsoap.vaadinflow.tasks.NodeSetupTask
 import com.devsoap.vaadinflow.util.HttpUtils
 import com.devsoap.vaadinflow.util.LogUtils
 import com.devsoap.vaadinflow.util.TemplateWriter
@@ -26,6 +25,7 @@ import com.moowork.gradle.node.NodeExtension
 import com.moowork.gradle.node.npm.NpmSetupTask
 import com.moowork.gradle.node.yarn.YarnSetupTask
 import groovy.util.logging.Log
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.gradle.process.ExecSpec
@@ -83,8 +83,10 @@ class NodePluginAction extends PluginAction {
         nodeExtension.download = true
         nodeExtension.nodeModulesDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
         nodeExtension.npmVersion = Versions.rawVersion('npm.version')
-        nodeExtension.yarnVersion = Versions.rawVersion('yarn.version')
-        nodeExtension.version = Versions.rawVersion('node.version')
+        nodeExtension.yarnVersion =
+                Versions.rawVersion(Os.isFamily(Os.FAMILY_WINDOWS) ? 'windows.yarn.version' : 'yarn.version')
+        nodeExtension.version =
+                Versions.rawVersion(Os.isFamily(Os.FAMILY_WINDOWS) ? 'windows.node.version' : 'node.version')
     }
 
     @Override

@@ -13,7 +13,7 @@ module.exports = {
 
   output: {
     filename: `vaadin-[name]-[contenthash].cache.js`,
-    path: path.resolve('${targetPath}')
+    path: path.resolve(__dirname, '${targetPath}')
   },
 
   module: {

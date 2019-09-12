@@ -59,6 +59,8 @@ class VaadinYarnRunner extends YarnExecRunner {
     private static final String YES_PARAM = '-y'
     private static final String PACKAGE_JSON = 'package.json'
     private static final String SPACE = ' '
+    private static final String NODE_PTY_PREBUILT = 'node-pty-prebuilt'
+    private static final String NODE_PTY = 'node-pty'
 
     private final boolean isOffline
     private boolean captureOutput
@@ -149,8 +151,12 @@ class VaadinYarnRunner extends YarnExecRunner {
             pkg.scripts[BOWER_COMMAND] = './node_modules/bower/bin/bower'
 
         } else {
+            if (this.variant.windows) {
+                pkg.devDependencies[NODE_PTY_PREBUILT] = Versions.rawVersion('node.pty.prebuilt.version')
+            } else {
+                pkg.devDependencies[NODE_PTY] = Versions.rawVersion('node.pty.version')
+            }
 
-            pkg.devDependencies['node-pty'] = Versions.rawVersion('node.pty.version')
             pkg.devDependencies[WEBPACK_COMMAND] = Versions.rawVersion('webpack.version')
             pkg.devDependencies[WEBPACK_CLI_COMMAND] = Versions.rawVersion('webpack.cli.version')
             pkg.devDependencies['webpack-babel-multi-target-plugin'] = Versions.rawVersion(
@@ -241,14 +247,14 @@ class VaadinYarnRunner extends YarnExecRunner {
      *
      * @since 1.3
      */
-    void webpackBundle(Project project, File statsFile, File bundleFile, File infoFile) {
+    void webpackBundle(Project project, File statsFile, File infoFile) {
 
-        generateWebpackConfig(project, bundleFile, statsFile)
+        generateWebpackConfig(project)
 
         generateBuildInfo(infoFile)
 
         arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir, RUN_COMMAND, WEBPACK_COMMAND,
-                     '--profile', '--json']
+                     '--json']
 
         boolean oldCapture = captureOutput
         captureOutput = true
@@ -317,14 +323,10 @@ class VaadinYarnRunner extends YarnExecRunner {
         }
     }
 
-    private void generateWebpackConfig(Project project, File bundleFile, File statsFile) {
-        File targetPath
-        if (SpringBootAction.isActive(project)) {
-            File metaInf = statsFile.parentFile.parentFile.parentFile
-            targetPath = Paths.get(metaInf.canonicalPath, 'resources', 'VAADIN').toFile()
-        } else {
-            targetPath = bundleFile.parentFile
-        }
+    private void generateWebpackConfig(Project project) {
+        String targetPath = SpringBootAction.isActive(project) ?
+                '../webapp-gen/META-INF/resources/VAADIN' :
+                '../webapp-gen/VAADIN'
 
         LOGGER.info("Bundling Javascript resources to $targetPath")
 
@@ -332,7 +334,7 @@ class VaadinYarnRunner extends YarnExecRunner {
                 .targetDir(workingDir as File)
                 .templateFileName('webpack.config.js')
                 .substitutions([
-                    'targetPath' : targetPath.canonicalPath,
+                    'targetPath' : targetPath,
                     'moduleDirs': [
                             'src',
                             'dist/node_modules'
@@ -355,11 +357,14 @@ class VaadinYarnRunner extends YarnExecRunner {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
         File yarnInstallScript = Paths.get(project.buildDir.canonicalPath, FRONTEND, 'scripts',
                 'build-dist.js').toFile()
+        File distDir = new File(yarnInstallScript.parentFile.parentFile, DIST_DIR)
         yarnInstallScript.parentFile.mkdirs()
         yarnInstallScript.text = TemplateWriter.builder()
                 .templateFileName('yarn-flat.js')
                 .substitutions([
-                    'productionMode': vaadin.productionMode ? '--production' : ''
+                    'productionMode': vaadin.productionMode ? '--production' : '',
+                    'distDir': distDir.canonicalPath.replace( '\\', '\\\\'),
+                    'ptyPackage': this.variant.windows ? NODE_PTY_PREBUILT : NODE_PTY
                 ])
                 .build().toString()
 

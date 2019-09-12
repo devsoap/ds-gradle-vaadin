@@ -48,6 +48,7 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.transform.PackageScope
 import groovy.util.logging.Log
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
@@ -58,6 +59,20 @@ import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.util.VersionNumber
 
 import javax.inject.Inject
+import javax.naming.Context
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLServerSocketFactory
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManagerFactory
+import java.security.KeyManagementException
+import java.security.KeyStore
+import java.security.KeyStoreException
+import java.security.NoSuchAlgorithmException
+import java.security.cert.Certificate
+import java.security.cert.CertificateException
+import java.security.cert.CertificateFactory
+import java.util.concurrent.TimeUnit
 
 /**
  * Main plugin class
@@ -232,6 +247,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 .withIssuer('Devsoap Inc.')
                 .withClaim('key', productKey)
                 .withClaim('product', PLUGIN_NAME)
+                .acceptLeeway(TimeUnit.HOURS.toSeconds(12))
                 .build()
         try {
             verifier.verify(jwtToken)
@@ -244,8 +260,12 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     private static InputStream callLicenseServer(Map payload) {
         String body = JsonOutput.toJson(payload)
-        println body
-        LICENSE_SERVER_URL.toURL().openConnection().with {
+        HttpsURLConnection connection = (HttpsURLConnection) LICENSE_SERVER_URL.toURL().openConnection()
+        SSLSocketFactory socketFactory = initSslSocketFactory()
+        if (socketFactory) {
+            connection.setSSLSocketFactory(socketFactory)
+        }
+        connection.with {
             it.doOutput = true
             it.requestMethod = 'POST'
             it.outputStream.withWriter { writer -> writer.write(body) }
@@ -253,5 +273,28 @@ class VaadinFlowPlugin implements Plugin<Project> {
             it.readTimeout = CONNECTION_TIMEOUT
             it
         }.inputStream
+    }
+
+    private static SSLSocketFactory initSslSocketFactory() {
+        try {
+            CertificateFactory cf = CertificateFactory.getInstance('X.509')
+            InputStream is = VaadinFlowPlugin.getResourceAsStream('/fns_devsoap_com.crt')
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.defaultType)
+            keyStore.load(null, null)
+            new BufferedInputStream(is).withStream {
+                Certificate ca = cf.generateCertificate(it)
+                keyStore.setCertificateEntry('ca', ca)
+            }
+            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.defaultAlgorithm)
+            tmf.init(keyStore)
+            SSLContext context2 = SSLContext.getInstance('TLS')
+            context2.init(null, tmf.trustManagers, null)
+            return context2.socketFactory
+
+        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException |
+                    CertificateException | IOException e) {
+            LOGGER.severe('Failed to build socket factory. Could not add fns.devsoap.com certificate to keystore.')
+        }
+        null
     }
 }
