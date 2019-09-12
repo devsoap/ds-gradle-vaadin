@@ -46,6 +46,7 @@ class AssembleClientDependenciesTask extends DefaultTask {
     private static final String VAADIN = 'VAADIN'
     private static final String BUILD = 'build'
     private static final String WEBCOMPONENTS_LOADER = 'webcomponents-loader.js'
+    public static final String BUNDLES = 'bundles/*.js'
 
     final File frontendBuildDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final File sourceDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es5')
@@ -168,23 +169,23 @@ class AssembleClientDependenciesTask extends DefaultTask {
 
         } else if (SpringBootAction.isActive(project)) {
             LOGGER.info('Assembling Spring Boot Jar...')
-            //webcomponents-loader.js
+            //webcomponents-loader.js + bundles
             File metaInf = new File(webAppGenDir, 'META-INF')
             File targetWebcomponentsJs = Paths.get(metaInf.canonicalPath, VAADIN, BUILD,
                     WEBCOMPONENTSJS).toFile()
             project.copy { CopySpec spec ->
                 spec.from(webcomponentsJs)
-                        .include(WEBCOMPONENTS_LOADER)
+                        .include(WEBCOMPONENTS_LOADER, BUNDLES)
                         .into(targetWebcomponentsJs)
             }
         } else {
             LOGGER.info('Assembling Web Application...')
-            //webcomponents-loader.js
+            //webcomponents-loader.js + bundles
             File targetWebcomponentsJs = Paths.get(webAppGenDir.canonicalPath,
                     VAADIN, BUILD, WEBCOMPONENTSJS).toFile()
             project.copy { CopySpec spec ->
                 spec.from(webcomponentsJs)
-                        .include(WEBCOMPONENTS_LOADER)
+                        .include(WEBCOMPONENTS_LOADER, BUNDLES)
                         .into(targetWebcomponentsJs)
             }
         }

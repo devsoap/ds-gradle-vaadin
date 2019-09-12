@@ -27,6 +27,7 @@ import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import io.github.classgraph.ScanResult
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.CopySpec
@@ -312,7 +313,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
         LOGGER.info('Bundling...')
         LogUtils.measureTime('Bundling completed') {
-            yarnRunner.webpackBundle(project, statsJson.call(), mainJs.call(), infoJson.call())
+            yarnRunner.webpackBundle(project, statsJson.call(), infoJson.call())
         }
     }
 
@@ -604,7 +605,9 @@ class TranspileDependenciesTask extends DefaultTask {
                     if (nodeThemeDependency.exists()) {
                         String mt = (nodeThemeDependency.canonicalPath - appNodeModules.call().canonicalPath)
                                 .substring(1)
+                        mt = mt.replace('\\', SLASH) // Do not use Windows paths
                         modules[mt] = modules.remove(m)
+                        LOGGER.info("\tReplaced: $m -> $mt")
                     }
                 }
             }
