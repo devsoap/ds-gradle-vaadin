@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.tasks
 
+import com.devsoap.vaadinflow.actions.JavaPluginAction
 import com.devsoap.vaadinflow.models.ApplicationType
 import com.devsoap.vaadinflow.creators.VaadinProjectCreator
 import com.devsoap.vaadinflow.creators.VaadinThemeCreator
@@ -26,6 +27,8 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
+
+import java.nio.file.Paths
 
 /**
  * Creates a new project using a template
@@ -83,4 +86,5 @@ class CreateProjectTask extends DefaultTask {
 
         themeCreator.generateCssTheme(vaadinProject)
     }
+
 }

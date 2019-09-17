@@ -26,10 +26,13 @@ public class ${applicationName}View extends VerticalLayout {
         Label hello = new Label("Hello Gradle app!");
         add(hello);
 
-        Button button = new Button("Click me", event -> {
-            hello.setText("Clicked!");
+        Button button = new Button("This is a Vaadin Button, Click me!", event -> {
             hello.setClassName("clicked");
+            hello.setText("Clicked! Next is a custom Polymer template button, Click it!");
+            event.getSource().setVisible(false);
+            add(new HelloButton());
         });
+
         add(button);
     }
 }

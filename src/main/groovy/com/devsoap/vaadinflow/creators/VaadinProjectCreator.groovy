@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.creators
 
+import com.devsoap.vaadinflow.actions.JavaPluginAction
 import com.devsoap.vaadinflow.models.ApplicationType
 import com.devsoap.vaadinflow.models.VaadinProject
 import com.devsoap.vaadinflow.util.TemplateWriter
@@ -50,7 +51,7 @@ class VaadinProjectCreator {
 
         TemplateWriter.builder()
                 .templateFileName(vaadinProject.compatibilityMode ?
-                "AppView.$sourceFileExtension" : "AppView.14.$sourceFileExtension")
+                "AppView.$sourceFileExtension" : "AppView.v14.$sourceFileExtension")
                 .targetDir(pkgDir)
                 .targetFileName("${appClassName}View.$sourceFileExtension")
                 .substitutions([
@@ -83,6 +84,20 @@ class VaadinProjectCreator {
                             "-theme.${vaadinProject.compatibilityMode ? 'html' : 'css'}",
                     'applicationBaseTheme' : vaadinProject.applicationBaseTheme
             ]).build().write()
+        } else {
+            TemplateWriter.builder()
+                    .templateFileName('hello-button.js')
+                    .targetDir(getJavascriptDir(vaadinProject))
+                    .substitutions([
+                    'applicationPackage' : vaadinProject.applicationPackage
+            ]).build().write()
+
+            TemplateWriter.builder()
+                    .templateFileName("HelloButton.$sourceFileExtension")
+                    .targetDir(pkgDir)
+                    .substitutions([
+                    'applicationPackage' : vaadinProject.applicationPackage
+            ]).build().write()
         }
 
         if (vaadinProject.applicationType == ApplicationType.SPRING_BOOT) {
@@ -96,5 +111,10 @@ class VaadinProjectCreator {
                 ])
                 .build().write()
         }
+    }
+
+    private static File getJavascriptDir(VaadinProject vaadinProject) {
+        Paths.get(vaadinProject.rootDirectory.canonicalPath,
+                JavaPluginAction.JAVASCRIPT_SOURCES.split('/')).toFile()
     }
 }

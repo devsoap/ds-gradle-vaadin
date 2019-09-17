@@ -76,10 +76,11 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String VAADIN = 'VAADIN'
     private static final String WARN_BUNDLE_EXCLUDES_ONLY_AVAILABLE_IN_COMP_MODE =
             'bundleExcludes only supported in compatibility mode.'
+    private static final String RUN_WITH_INFO_FOR_MORE_INFORMATION = 'Run with --info to get more information.'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
-
+    final File srcDir = new File(workingDir, 'src')
     final File webappGenDir = new File(project.buildDir, 'webapp-gen')
     final File webappGenFrontendDir = new File(webappGenDir, FRONTEND)
     final Closure<File> configDir = {
@@ -91,18 +92,21 @@ class TranspileDependenciesTask extends DefaultTask {
 
     private final ListProperty<String> importExcludes = project.objects.listProperty(String)
 
+    @Deprecated
     @Optional
     @InputDirectory
     final Closure<File> webappGenFrontendStylesDir = {
         new File(webappGenFrontendDir, STYLES).with { it.exists() ? it : null }
     }
 
+    @Deprecated
     @Optional
     @InputDirectory
     final Closure<File> webappGenFrontendTemplatesDir = {
         new File(webappGenFrontendDir, TEMPLATES).with { it.exists() ? it : null }
     }
 
+    @Deprecated
     @Optional
     @InputDirectory
     final Closure<File> webTemplatesDir = {
@@ -110,6 +114,7 @@ class TranspileDependenciesTask extends DefaultTask {
         Paths.get(assembleTask.webappDir.canonicalPath, FRONTEND, TEMPLATES).toFile().with { it.exists() ? it : null }
     }
 
+    @Deprecated
     @Optional
     @InputDirectory
     final Closure<File> webStylesDir = {
@@ -127,6 +132,7 @@ class TranspileDependenciesTask extends DefaultTask {
         vaadin.compatibilityMode ?  null : Paths.get(workingDir.canonicalPath, 'dist', NODE_MODULES).toFile()
     }
 
+    @Deprecated
     @Optional
     @InputDirectory
     final Closure<File> bowerComponents = {
@@ -141,8 +147,18 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @Optional
     @InputDirectory
-    final Closure<File> srcDir = {
-        new File(workingDir, 'src').with { it.exists() ? it : null }
+    final Closure<File> stylesheetsSources = {
+        Paths.get(project.projectDir.canonicalPath,
+                JavaPluginAction.STYLESHEETS_SOURCES.split(SLASH))
+                .toFile().with { it.exists() ? it : null }
+    }
+
+    @Optional
+    @InputDirectory
+    final Closure<File> javascriptSources = {
+        Paths.get(project.projectDir.canonicalPath,
+                JavaPluginAction.JAVASCRIPT_SOURCES.split(SLASH))
+                .toFile().with { it.exists() ? it : null }
     }
 
     @InputFile
@@ -171,6 +187,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @Optional
     @OutputFile
+    @Deprecated
     final Closure<File> mainJs = {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
         vaadin.compatibilityMode ? null : Paths.get(webappGenDir.canonicalPath, VAADIN, 'main.js').toFile()
@@ -212,12 +229,6 @@ class TranspileDependenciesTask extends DefaultTask {
     final Closure<File> manifestJson = {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
         vaadin.compatibilityMode ? new File(workingDir, 'vaadin-flow-bundle-manifest.json') : null
-    }
-
-    @OutputDirectory
-    final Closure<File> stylesDir = {
-        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        vaadin.compatibilityMode ? new File(workingDir, STYLES) : new File(srcDir.call(), STYLES)
     }
 
     @Optional
@@ -262,11 +273,12 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private void bundle(ScanResult scan) {
+
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
 
         LOGGER.info('Generating base theme module...')
         TemplateWriter.builder()
-                .targetDir(srcDir.call())
+                .targetDir(srcDir)
                 .templateFileName('theme.js')
                 .targetFileName("${vaadin.baseTheme}-theme.js")
                 .substitutions(['theme': vaadin.baseTheme])
@@ -306,7 +318,7 @@ class TranspileDependenciesTask extends DefaultTask {
             jsImports.removeAll { m, c -> m.matches(filter) }
         }
 
-        File importsJs = new File(srcDir.call(), IMPORTS_JS_FILE)
+        File importsJs = new File(srcDir, IMPORTS_JS_FILE)
         LOGGER.info("Creating ${importsJs.name}...")
         importsJs.parentFile.mkdirs()
 
@@ -353,6 +365,18 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
+    private void checkIdUsage(ScanResult scan) {
+        List<String> ids = ClassIntrospectionUtils.findIdUsages(scan)
+        if (!ids.isEmpty()) {
+            LOGGER.severe('Plugin does not currently support @Id annotations in Polymer templates')
+            LOGGER.severe('The following classes contains @Id annotations:')
+            ids.each { LOGGER.severe("\t$it") }
+            LOGGER.severe('Please replace them with model access instead.')
+            throw new GradleException('Unsupported @Id annotations found in polymer templates. ' +
+                    RUN_WITH_INFO_FOR_MORE_INFORMATION)
+        }
+    }
+
     @TaskAction
     void run() {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
@@ -366,8 +390,8 @@ class TranspileDependenciesTask extends DefaultTask {
         if (vaadin.compatibilityMode) {
             project.copy { spec -> spec.from(webappGenFrontendDir).include(STYLES_GLOB).into(workingDir) }
         } else {
-            project.copy { spec -> spec.from(JavaPluginAction.STYLESHEETS_SOURCES).into(srcDir.call()) }
-            project.copy { spec -> spec.from(JavaPluginAction.JAVASCRIPT_SOURCES).into(srcDir.call()) }
+            project.copy { spec -> spec.from(JavaPluginAction.STYLESHEETS_SOURCES).into(srcDir) }
+            project.copy { spec -> spec.from(JavaPluginAction.JAVASCRIPT_SOURCES).into(srcDir) }
         }
 
         if (vaadin.compatibilityMode) {
@@ -419,6 +443,7 @@ class TranspileDependenciesTask extends DefaultTask {
         if (vaadin.compatibilityMode) {
             bundleInCompatibilityMode(scan)
         } else {
+            checkIdUsage(scan)
             bundle(scan)
         }
     }
@@ -615,7 +640,7 @@ class TranspileDependenciesTask extends DefaultTask {
                 }
                 LOGGER.severe(']')
                 throw new GradleException('Manifest contains imports to missing dependencies. ' +
-                        'Run with --info to get more information.')
+                        RUN_WITH_INFO_FOR_MORE_INFORMATION)
             }
             manifest.remove(MISSING_PROPERTY)
             manifestFile.text = ClientPackageUtils.toJson(manifest)
@@ -625,12 +650,12 @@ class TranspileDependenciesTask extends DefaultTask {
     private void removeInvalidModules(Map<String,String> modules) {
         modules.removeAll { m, c ->
             File nodeDependency = Paths.get(appNodeModules.call().canonicalPath, m.split(SLASH)).toFile()
-            File staticFile = Paths.get(srcDir.call().canonicalPath, m.split(SLASH)).toFile()
-            File templateFile = Paths.get(srcDir.call().parentFile.canonicalPath, m.split(SLASH)).toFile()
+            File staticFile = Paths.get(srcDir.canonicalPath, m.split(SLASH)).toFile()
+            File templateFile = Paths.get(srcDir.parentFile.canonicalPath, m.split(SLASH)).toFile()
             boolean exists = nodeDependency.exists() || staticFile.exists() || templateFile.exists()
             if (!exists) {
                 LOGGER.warning("$c: No Javascript module with the name '$m' could be found. Module ignored.")
-                return true
+                throw new GradleException("$c: No Javascript module with the name '$m' could be found. Module ignored.")
             }
             if (!nodeDependency.exists() && staticFile.exists() && !m.startsWith('./')) {
                 LOGGER.warning("$c: Static file Javascript module '$m' does not start with './'. Module ignored.")
@@ -663,7 +688,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
     private void removeInvalidCSSImports(Map<String,String> imports) {
         imports.removeAll { p, c ->
-            File importFile = Paths.get(srcDir.call().canonicalPath, p.split(SLASH)).toFile()
+            File importFile = Paths.get(srcDir.canonicalPath, p.split(SLASH)).toFile()
             if (!importFile.exists()) {
                 LOGGER.warning("$c: No Css import with the name '$p' could be found. Import ignored.")
                 return true
@@ -685,6 +710,6 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @PackageScope
     boolean isInSourceFolder(String path) {
-        new File(srcDir.call(), path).exists()
+        new File(srcDir, path).exists()
     }
 }

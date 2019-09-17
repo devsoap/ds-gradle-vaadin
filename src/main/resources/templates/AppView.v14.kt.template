@@ -25,9 +25,11 @@ class ${applicationName}View : VerticalLayout() {
         val hello = Label("Hello Kotlin app!")
         add(hello)
 
-        val button = Button("Click me") {
+        val button = Button("Click me") { event ->
             hello.text = "Clicked!"
             hello.className = "clicked"
+            event.source.isVisible = false
+            add(HelloButton())
         }
         add(button)
     }

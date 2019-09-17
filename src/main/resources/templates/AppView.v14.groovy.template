@@ -14,7 +14,7 @@ import com.vaadin.flow.theme.Theme
  * The main view of the application
  */
 @Route('')
-@Theme(${applicationBaseTheme.toLowerCase().capitalize()})
+@Theme(${applicationBaseTheme.toLowerCase().capitalize()}.class)
 @BodySize(height = '100vh', width = '100vw')
 @Viewport('width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes')
 @CssImport("./theme.css")
@@ -26,11 +26,12 @@ class ${applicationName}View extends VerticalLayout {
 
         add new Label('Hello Groovy app!')
 
-        add new Button('Click me!', { event ->
-             event.source.with {
-                text = 'Clicked!'
-                className = 'clicked'
-            }
-        })
+        def button = new Button('This is a Vaadin Button, Click me!') { event ->
+           hello.setClassName('clicked');
+           hello.setText('Clicked! Next is a custom Polymer template button, Click it!');
+           event.getSource().setVisible(false);
+           add(new HelloButton());
+        }
+        add button
     }
 }
