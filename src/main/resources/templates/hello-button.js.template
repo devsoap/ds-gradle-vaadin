@@ -1,0 +1,20 @@
+import {PolymerElement} from '@polymer/polymer/polymer-element.js';
+import {html} from '@polymer/polymer/lib/utils/html-tag.js';
+
+class HelloButtonElement extends PolymerElement {
+
+  static get template() {
+    return html`
+        <style>
+            :host { display: inline-block; cursor: pointer; animation: blinker 1s linear infinite;  }
+            @keyframes blinker { 50% { opacity: 0; }}
+        </style>
+        <span id="caption" on-click="sayHello">[[caption]]</span>
+    `;
+  }
+
+  static get is() {
+      return 'hello-button';
+  }
+}
+customElements.define(HelloButtonElement.is, HelloButtonElement);

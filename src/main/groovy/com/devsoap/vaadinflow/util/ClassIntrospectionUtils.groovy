@@ -43,6 +43,7 @@ class ClassIntrospectionUtils {
     private static final String ABSTRACT_THEME_FQN = 'com.vaadin.flow.theme.AbstractTheme'
     private static final String JS_MODULE_FQN = 'com.vaadin.flow.component.dependency.JsModule'
     private static final String CSS_IMPORT_FQN = 'com.vaadin.flow.component.dependency.CssImport'
+    private static final String ID_FQN = 'com.vaadin.flow.component.polymertemplate.Id'
     private static final String ROUTE_FQN = 'com.vaadin.flow.router.Route'
     private static final String FRONTEND_PROTOCOL = 'frontend://'
     private static final String FRONTEND_DIR = 'frontend'
@@ -161,6 +162,16 @@ class ClassIntrospectionUtils {
         }
         LOGGER.info("Scanned ${processedClasses.size()} classes.")
         imports
+    }
+
+    /**
+     * Find all classes which has an @Id filed annotation
+     *
+     * @param scan
+     *  the classpath scan with the annoations
+     */
+    static final List<String> findIdUsages(ScanResult scan) {
+        scan.getClassesWithFieldAnnotation(ID_FQN)*.name
     }
 
     /**
