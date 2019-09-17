@@ -21,6 +21,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.auth0.jwt.exceptions.JWTVerificationException
 import com.devsoap.vaadinflow.actions.GrettyDeprecatedPluginAction
 import com.devsoap.vaadinflow.actions.GrettyPluginAction
+import com.devsoap.vaadinflow.actions.JavaPluginAction
 import com.devsoap.vaadinflow.actions.NodePluginAction
 import com.devsoap.vaadinflow.actions.PluginAction
 import com.devsoap.vaadinflow.actions.SassJavaPluginAction
@@ -48,7 +49,6 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import groovy.transform.PackageScope
 import groovy.util.logging.Log
-import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
@@ -59,10 +59,8 @@ import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.util.VersionNumber
 
 import javax.inject.Inject
-import javax.naming.Context
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLServerSocketFactory
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManagerFactory
 import java.security.KeyManagementException
@@ -99,6 +97,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
     VaadinFlowPlugin(Gradle gradle, Instantiator instantiator) {
         validateGradleVersion(gradle)
 
+        actions << instantiator.newInstance(JavaPluginAction)
         actions << instantiator.newInstance(VaadinFlowPluginAction)
         actions << instantiator.newInstance(NodePluginAction)
         actions << instantiator.newInstance(WarPluginAction)

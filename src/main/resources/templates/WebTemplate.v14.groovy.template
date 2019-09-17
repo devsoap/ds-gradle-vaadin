@@ -1,0 +1,25 @@
+package ${componentPackage}
+
+import com.vaadin.flow.component.Tag
+import com.vaadin.flow.component.dependency.JsModule
+import com.vaadin.flow.component.polymertemplate.EventHandler
+import com.vaadin.flow.component.polymertemplate.PolymerTemplate
+import com.vaadin.flow.templatemodel.TemplateModel
+
+@Tag('${componentTag}')
+@JsModule('./${componentName}Element.js')
+class ${componentName} extends PolymerTemplate<${componentName}Model> {
+
+    ${componentName}() {
+        model.caption = 'Hello template!'
+    }
+
+    @EventHandler
+    private void sayHello() {
+        model.caption = 'You clicked, how can I help you?'
+    }
+
+    static interface ${componentName}Model extends TemplateModel {
+        void setCaption(String greeting);
+    }
+}

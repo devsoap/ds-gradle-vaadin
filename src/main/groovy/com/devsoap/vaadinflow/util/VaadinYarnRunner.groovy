@@ -109,7 +109,10 @@ class VaadinYarnRunner extends YarnExecRunner {
         // Install dev dependencies
         arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, NO_BIN_LINKS, WORK_DIR_OPTION, workingDir,
                      INSTALL_COMMAND]
-        execute().assertNormalExitValue()
+
+        LogUtils.measureTime('Installing development packages done.') {
+            execute().assertNormalExitValue()
+        }
     }
 
     /**
@@ -133,7 +136,6 @@ class VaadinYarnRunner extends YarnExecRunner {
         // Set proper defaults for package.json
         File packageJson = new File(frontendDir, PACKAGE_JSON)
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
-        pkg.version = project.version
         pkg.name = FRONTEND
         pkg.devDependencies = [:]
         pkg.scripts = [:]
@@ -176,7 +178,9 @@ class VaadinYarnRunner extends YarnExecRunner {
         File distDir = Paths.get(((File)workingDir).canonicalPath, DIST_DIR).toFile()
         arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, NO_BIN_LINKS, WORK_DIR_OPTION, distDir,
                      BUILD_DISTRIBUTION_COMMAND]
-        execute().assertNormalExitValue()
+        LogUtils.measureTime('Installing application packages done.') {
+            execute().assertNormalExitValue()
+        }
     }
 
     void initDist() {
@@ -189,7 +193,6 @@ class VaadinYarnRunner extends YarnExecRunner {
         // Set proper defaults for package.json
         File packageJson = new File(distDir, PACKAGE_JSON)
         ClientPackage pkg = new JsonSlurper().parse(packageJson) as ClientPackage
-        pkg.version = project.version
         pkg.name = FRONTEND
         pkg.dependencies = [:]
         pkg.scripts = [:]

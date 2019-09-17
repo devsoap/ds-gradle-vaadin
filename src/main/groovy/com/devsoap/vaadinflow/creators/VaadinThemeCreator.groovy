@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.creators
 
+import com.devsoap.vaadinflow.actions.JavaPluginAction
 import com.devsoap.vaadinflow.models.VaadinProject
 import com.devsoap.vaadinflow.util.TemplateWriter
 import groovy.util.logging.Log
@@ -38,14 +39,19 @@ class VaadinThemeCreator {
      */
     void generateCssTheme(VaadinProject vaadinProject) {
         String appClassName = TemplateWriter.makeStringJavaCompatible(vaadinProject.applicationName)
+        String themeName = vaadinProject.compatibilityMode ? "${appClassName.toLowerCase()}-theme.css" : 'theme.css'
         TemplateWriter.builder()
                 .templateFileName('AppTheme.css')
                 .targetDir(getStylesDir(vaadinProject))
-                .targetFileName("${appClassName.toLowerCase()}-theme.css")
+                .targetFileName(themeName)
                 .build().write()
     }
 
     private static File getStylesDir(VaadinProject vaadinProject) {
-        Paths.get(vaadinProject.webappDirectory.canonicalPath, 'frontend', 'styles').toFile()
+        vaadinProject.compatibilityMode ?
+            Paths.get(vaadinProject.webappDirectory.canonicalPath,
+                    'frontend', 'styles').toFile() :
+            Paths.get(vaadinProject.rootDirectory.canonicalPath,
+                    JavaPluginAction.STYLESHEETS_SOURCES.split('/')).toFile()
     }
 }

@@ -25,7 +25,7 @@ class ClientPackage {
 
     String name
 
-    String version
+    String version = '1.0'
 
     String main
 

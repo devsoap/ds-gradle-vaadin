@@ -45,17 +45,16 @@ proc.on("data", function(data) {
 	const suitableVersion = buff.match(/suitable version for "(\\S+)"/);
 	if(suitableVersion == null) return;
     const packageName = suitableVersion[1];
-	const versions = buff
-		.split(/\\r?\\n/g)
-		.map(line => line.trim().replace(
-    /[\\u001b\\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, ''))
-		.filter(line => line.match(/^[0-9]\\).*/))
-		.filter(line => line.match("which resolved to"))
-		.map(line => line.match(/"(\\S+)"\$/)[1]);
+    const lines = buff.split(/\\r?\\n/g)
+    const cleanLines = lines.map(line => line.replace(
+              /[\\u001b\\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '').trim())
+    const alternatives = cleanLines.filter(line => line.match(/^[0-9]\\).*/))
+    const resolvedLines = alternatives.filter(line => line.match("which resolved to"))
+    const versions = resolvedLines.map(line => line.match(/"(\\S+)"\$/)[1]);
     const sorted = versions.slice(0).sort(semverComparator);
     const highestVersion = sorted[sorted.length - 1];
     const choice = versions.indexOf(highestVersion) + 1;
-    console.log("Choosing " + packageName + "@" + highestVersion);
+    console.log("Choosing " + packageName + "@" + highestVersion + " (" + choice + ")");
     proc.write(choice.toString() + "\\r\\n");
     buff = "";
   }

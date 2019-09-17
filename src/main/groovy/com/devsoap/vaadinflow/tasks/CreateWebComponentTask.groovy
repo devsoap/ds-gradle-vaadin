@@ -18,6 +18,7 @@ package com.devsoap.vaadinflow.tasks
 import static com.devsoap.vaadinflow.models.WebComponent.PackageManager.BOWER
 import static com.devsoap.vaadinflow.models.WebComponent.PackageManager.YARN
 
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.creators.ComponentCreator
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
@@ -42,6 +43,7 @@ class CreateWebComponentTask extends DefaultTask {
 
     private static final String YARN_PREFIX = 'yarn:'
     private static final String BOWER_PREFIX = 'bower:'
+    private static final String NPM_PREFIX = 'npm:'
     private static final String COLON = ':'
     private static final String PATH_SEPARATOR = '/'
     private static final String HASH = '#'
@@ -65,17 +67,18 @@ class CreateWebComponentTask extends DefaultTask {
     CreateWebComponentTask() {
         description = 'Creates a new Vaadin web component'
         group = 'Vaadin'
-        finalizedBy(InstallYarnDependenciesTask.NAME)
-        finalizedBy(InstallBowerDependenciesTask.NAME)
+        finalizedBy(InstallYarnDependenciesTask.NAME, InstallBowerDependenciesTask.NAME)
     }
 
     @TaskAction
     void run() {
 
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+
         componentName = componentName ?: 'ExampleWebComponent'
         componentPackage = componentPackage ?: 'com.example.' + project.name.toLowerCase()
         componentTag = componentTag ?: componentName.replaceAll(/\B[A-Z]/) { '-' + it }.toLowerCase()
-        componentDependency = componentDependency ?: componentTag
+        componentDependency = componentDependency ?: "yarn:$componentTag"
 
         File buildFile = project.file('build.gradle')
 
@@ -85,8 +88,12 @@ class CreateWebComponentTask extends DefaultTask {
             dep = componentDependency - YARN_PREFIX
         } else if (componentDependency.startsWith(BOWER_PREFIX)) {
             dep = componentDependency - BOWER_PREFIX
-        } else {
+        } else if (componentDependency.startsWith(NPM_PREFIX)) {
+            dep = componentDependency - NPM_PREFIX
+        } else if (vaadin.compatibilityMode) {
             throw new GradleException("Dependency needs too start with either $YARN_PREFIX or $BOWER_PREFIX")
+        } else {
+            throw new GradleException("Dependency needs too start with either $YARN_PREFIX or $NPM_PREFIX")
         }
 
         // Resolve dependency without version
@@ -119,9 +126,15 @@ class CreateWebComponentTask extends DefaultTask {
         VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
         if (componentDependency.startsWith(YARN_PREFIX)) {
             buildFile << """
-            ${VaadinClientDependenciesExtension.NAME}.yarn('$dep')
+            ${VaadinClientDependenciesExtension.NAME}.yarn('${dep}')
             """.stripIndent()
             client.yarn(dep)
+
+        } else if (componentDependency.startsWith(NPM_PREFIX)) {
+            buildFile << """
+            ${VaadinClientDependenciesExtension.NAME}.npm('${dep}')
+            """.stripIndent()
+            client.npm(dep)
 
         } else if (componentDependency.startsWith(BOWER_PREFIX)) {
             buildFile << """
@@ -131,7 +144,9 @@ class CreateWebComponentTask extends DefaultTask {
         }
 
         AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+
         webComponentCreator.generate new WebComponent(
+                compatibilityMode: vaadin.compatibilityMode,
                 componentName : componentName,
                 componentPackage : componentPackage,
                 componentTag : componentTag,
@@ -139,7 +154,8 @@ class CreateWebComponentTask extends DefaultTask {
                 dependencyHtml : dependencyHtml,
                 rootDirectory : project.projectDir,
                 webappDirectory: assembleTask.webappDir,
-                packageManager : componentDependency.startsWith('yarn') ? YARN : BOWER,
+                packageManager : componentDependency.startsWith(YARN_PREFIX) ||
+                        componentDependency.startsWith(NPM_PREFIX) ? YARN : BOWER,
                 projectType: ProjectType.get(project)
         )
     }

@@ -15,11 +15,13 @@
  */
 package com.devsoap.vaadinflow.tasks
 
+import com.devsoap.vaadinflow.actions.JavaPluginAction
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileTree
 import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
@@ -47,11 +49,24 @@ class WrapCssTask extends DefaultTask {
     private static final String STYLES = 'styles'
 
     @Optional
+    @InputDirectory
+    final Closure<File> cssSourceDir = {
+        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        File dir = vaadin.compatibilityMode ?
+            Paths.get(assembleTask.webappDir.canonicalPath, FRONTEND, STYLES).toFile() :
+            Paths.get(project.projectDir.canonicalPath, JavaPluginAction.STYLESHEETS_SOURCES.split('/')).toFile()
+        dir.exists() ? dir : null
+    }
+
+    @Optional
     @InputFiles
     final Closure<FileTree> cssFiles = {
-        AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
-        File stylesPath = Paths.get(assembleTask.webappDir.canonicalPath, FRONTEND, STYLES).toFile()
-        stylesPath.exists() ? project.fileTree(stylesPath).matching { it.include(CSS_REGEXP) } : null
+        File stylesPath = cssSourceDir.call()
+        if (stylesPath && stylesPath.exists()) {
+            return project.fileTree(stylesPath).matching { it.include(CSS_REGEXP) }
+        }
+        null
     }
 
     @Optional
@@ -62,7 +77,12 @@ class WrapCssTask extends DefaultTask {
     }
 
     @OutputDirectory
-    final File targetPath = new File(project.buildDir, STYLES_TARGET_PATH)
+    final Closure<File> targetPath = {
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        vaadin.compatibilityMode ?
+            new File(project.buildDir, STYLES_TARGET_PATH) :
+            Paths.get(project.buildDir.canonicalPath, 'frontend', 'src').toFile()
+    }
 
     WrapCssTask() {
         group = 'vaadin'
@@ -102,8 +122,7 @@ class WrapCssTask extends DefaultTask {
 
             content += '\n</style></custom-style>'
 
-            targetPath.mkdirs()
-            new File(targetPath, "${ it.name - CSS}.html" ).text = content
+            new File(targetPath.call(), "${ it.name - CSS}.html" ).text = content
         }
     }
 
@@ -121,8 +140,10 @@ $it.text
 </style>`;
 document.head.appendChild(\$_documentContainer.content);
 """
-            targetPath.mkdirs()
-            new File(targetPath, "${ it.name - CSS}.js" ).text = content
+
+            File js = new File(targetPath.call(), "${ cssSourceDir.call().relativePath(it) - CSS }.js" )
+            js.parentFile.mkdirs()
+            js.text = content
         }
     }
 }
