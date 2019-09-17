@@ -1,0 +1,13 @@
+import {PolymerElement} from '@polymer/polymer/polymer-element.js';
+
+class ${componentName}Element extends PolymerElement {
+
+  static get template() {
+    return '<div id="caption" on-click="sayHello">[[caption]]</div>';
+  }
+
+  static get is() {
+      return '${componentTag}';
+  }
+}
+customElements.define(${componentName}Element.is, ${componentName}Element);

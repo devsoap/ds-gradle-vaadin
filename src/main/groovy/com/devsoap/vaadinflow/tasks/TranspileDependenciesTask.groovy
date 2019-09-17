@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.tasks
 
+import com.devsoap.vaadinflow.actions.JavaPluginAction
 import com.devsoap.vaadinflow.actions.SpringBootAction
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
@@ -25,9 +26,9 @@ import com.devsoap.vaadinflow.util.LogUtils
 import com.devsoap.vaadinflow.util.TemplateWriter
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import groovy.json.JsonSlurper
+import groovy.transform.PackageScope
 import groovy.util.logging.Log
 import io.github.classgraph.ScanResult
-import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.CopySpec
@@ -283,6 +284,12 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Checking for theme variants of JS modules...')
         replaceBaseThemeModules(modules)
 
+        LOGGER.info('Search for JS imports...')
+        Map<String, String> jsImports = [:]
+        LogUtils.measureTime('Scanning Js imports completed') {
+            jsImports = ClassIntrospectionUtils.findJsImports(scan)
+        }
+
         LOGGER.info('Searching for CSS imports...')
         Map<String,String> cssImports = [:]
         LogUtils.measureTime('Scanning CSS imports completed') {
@@ -296,6 +303,7 @@ class TranspileDependenciesTask extends DefaultTask {
         getImportExcludes().each { filter ->
             cssImports.removeAll { m, c -> m.matches(filter) }
             modules.removeAll { m, c -> m.matches(filter) }
+            jsImports.removeAll { m, c -> m.matches(filter) }
         }
 
         File importsJs = new File(srcDir.call(), IMPORTS_JS_FILE)
@@ -305,11 +313,39 @@ class TranspileDependenciesTask extends DefaultTask {
         importsJs.text = '// Theme\n'
         importsJs << "import './${vaadin.baseTheme}-theme.js';\n"
 
+        importsJs << '// Polymer modules\n'
+        modules.keySet().sort { a, b ->
+            (isInSourceFolder(a) <=> isInSourceFolder(b))
+        }.each {
+            importsJs << "import '$it';\n"
+        }
+
+        importsJs << '// Javascript imports\n'
+        jsImports.each { p, c -> importsJs << "import '${p}';\n" }
+
         importsJs << '// CSS imports\n'
         cssImports.each { p, c -> importsJs << "import '${p - '.css'}.js';\n" }
 
-        importsJs << '// Polymer modules\n'
-        modules.each { m, c -> importsJs << "import '$m';\n" }
+        LOGGER.info('Checking for legacy imports...')
+        Map<String, File> legacyImports = ClassIntrospectionUtils.findHtmlImports(project, scan, vaadin.baseTheme)
+        if (!legacyImports.isEmpty()) {
+            LOGGER.warning('Found the following Flow 1 HTML imports:')
+            legacyImports.each { importPath, importFile ->
+                LOGGER.warning("\t$importPath in $importFile")
+            }
+            LOGGER.warning('To use them, please convert them to Polymer 3 Javascript imports')
+        }
+
+        Map<String, String> legacyStylesheetImports = ClassIntrospectionUtils
+                .findStylesheetImports(scan)
+                .findAll { k, c -> c.startsWith('com.vaadin') }
+        if (!legacyStylesheetImports.isEmpty()) {
+            LOGGER.warning('Found the following Flow 1 Stylesheet imports:')
+            legacyStylesheetImports.each { importPath, className ->
+                LOGGER.warning("\t$importPath in $className")
+            }
+            LOGGER.warning('To use them, please convert them to Css imports')
+        }
 
         LOGGER.info('Bundling...')
         LogUtils.measureTime('Bundling completed') {
@@ -330,7 +366,8 @@ class TranspileDependenciesTask extends DefaultTask {
         if (vaadin.compatibilityMode) {
             project.copy { spec -> spec.from(webappGenFrontendDir).include(STYLES_GLOB).into(workingDir) }
         } else {
-            project.copy { spec -> spec.from(webappGenFrontendDir).include(STYLES_GLOB).into(srcDir.call()) }
+            project.copy { spec -> spec.from(JavaPluginAction.STYLESHEETS_SOURCES).into(srcDir.call()) }
+            project.copy { spec -> spec.from(JavaPluginAction.JAVASCRIPT_SOURCES).into(srcDir.call()) }
         }
 
         if (vaadin.compatibilityMode) {
@@ -362,6 +399,15 @@ class TranspileDependenciesTask extends DefaultTask {
                 LOGGER.info('Validating html styles...')
                 File templatesTargetDir = new File(workingDir, STYLES)
                 validateImports(templatesTargetDir)
+            }
+        }
+
+        File templatesDir = webTemplatesDir.call()
+        if (templatesDir && !vaadin.compatibilityMode) {
+            LOGGER.info( 'Copying Javascript templates...')
+            project.copy { CopySpec spec ->
+                spec.from(templatesDir.parentFile).include(TEMPLATES_GLOB)
+                        .into(srcDir)
             }
         }
 
@@ -465,9 +511,9 @@ class TranspileDependenciesTask extends DefaultTask {
     private List<String> initHTMLImportsFromComponents(ScanResult scan) {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
         List<String> imports = []
-        imports += ClassIntrospectionUtils.findHtmlImports(project, scan, vaadin.baseTheme)
-        imports += ClassIntrospectionUtils.findJsImports(scan)
-        imports += ClassIntrospectionUtils.findStylesheetImports(scan)
+        imports += ClassIntrospectionUtils.findHtmlImports(project, scan, vaadin.baseTheme).keySet()
+        imports += ClassIntrospectionUtils.findJsImports(scan).keySet()
+        imports += ClassIntrospectionUtils.findStylesheetImports(scan).keySet()
         imports.sort()
     }
 
@@ -580,7 +626,8 @@ class TranspileDependenciesTask extends DefaultTask {
         modules.removeAll { m, c ->
             File nodeDependency = Paths.get(appNodeModules.call().canonicalPath, m.split(SLASH)).toFile()
             File staticFile = Paths.get(srcDir.call().canonicalPath, m.split(SLASH)).toFile()
-            boolean exists = nodeDependency.exists() || staticFile.exists()
+            File templateFile = Paths.get(srcDir.call().parentFile.canonicalPath, m.split(SLASH)).toFile()
+            boolean exists = nodeDependency.exists() || staticFile.exists() || templateFile.exists()
             if (!exists) {
                 LOGGER.warning("$c: No Javascript module with the name '$m' could be found. Module ignored.")
                 return true
@@ -634,5 +681,10 @@ class TranspileDependenciesTask extends DefaultTask {
             throw new GradleException(
                     "Transpile did not generate ES6 result in $es6dir. Run with --info to get more information.")
         }
+    }
+
+    @PackageScope
+    boolean isInSourceFolder(String path) {
+        new File(srcDir.call(), path).exists()
     }
 }

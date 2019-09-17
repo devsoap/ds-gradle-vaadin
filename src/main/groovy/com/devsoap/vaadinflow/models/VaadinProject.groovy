@@ -21,7 +21,7 @@ package com.devsoap.vaadinflow.models
  * @author John Ahlroos
  * @since 1.0
  */
-class VaadinProject {
+class VaadinProject implements TemplateModel {
 
     String applicationName
 
@@ -29,13 +29,7 @@ class VaadinProject {
 
     String applicationBaseTheme
 
-    File rootDirectory
-
-    File webappDirectory
-
     boolean productionMode
-
-    boolean compatibilityMode
 
     ProjectType projectType
 

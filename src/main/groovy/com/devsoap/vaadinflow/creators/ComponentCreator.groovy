@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.creators
 
+import com.devsoap.vaadinflow.actions.JavaPluginAction
 import com.devsoap.vaadinflow.models.Component
 import com.devsoap.vaadinflow.models.Composite
 import com.devsoap.vaadinflow.models.ProjectType
@@ -52,7 +53,8 @@ class ComponentCreator {
 
         TemplateWriter.builder()
                 .targetDir(pkgDir)
-                .templateFileName("WebComponent.$extension")
+                .templateFileName(webComponent.compatibilityMode ?
+                    "WebComponent.$extension" : "WebComponent.v14.$extension")
                 .targetFileName("${componentClassName}.$extension")
                 .substitutions([
                     'componentPackage' : webComponent.componentPackage,
@@ -76,11 +78,12 @@ class ComponentCreator {
         File pkgDir = Paths.get(javaSourceDir.canonicalPath, webTemplate.componentPackage.split(DOT_REGEX)).toFile()
         String componentClassName = TemplateWriter.makeStringJavaCompatible(webTemplate.componentName)
         String extension = webTemplate.projectType.extension
-        String templateExtension = webTemplate.projectType.templateExtension
+        String templateExtension = webTemplate.projectType.getTemplateExtension(webTemplate.compatibilityMode)
 
         TemplateWriter.builder()
                 .targetDir(pkgDir)
-                .templateFileName("WebTemplate.$extension")
+                .templateFileName(webTemplate.compatibilityMode ?
+                    "WebTemplate.$extension" : "WebTemplate.v14.$extension")
                 .targetFileName("${componentClassName}.$extension")
                 .substitutions([
                     'componentPackage' : webTemplate.componentPackage,
@@ -89,9 +92,11 @@ class ComponentCreator {
         ]).build().write()
 
         TemplateWriter.builder()
-                .targetDir(getTemplatesDir(webTemplate.webappDirectory))
+                .targetDir(getTemplatesDir(
+                    webTemplate.webappDirectory, webTemplate.rootDirectory, webTemplate.compatibilityMode))
                 .templateFileName("WebTemplate.$templateExtension")
-                .targetFileName("${componentClassName}.$templateExtension")
+                .targetFileName(webTemplate.compatibilityMode ?
+                    "${componentClassName}.$templateExtension" : "${componentClassName}Element.$templateExtension")
                 .substitutions([
                     'componentPackage' : webTemplate.componentPackage,
                     'componentTag' : webTemplate.componentTag,
@@ -150,10 +155,14 @@ class ComponentCreator {
     }
 
     private static File getSourceDirectory(File root, ProjectType projectType) {
-        Paths.get(root.canonicalPath,  SRC, MAIN, projectType.sourceDir).toFile()
+        Paths.get(root.canonicalPath, SRC, MAIN, projectType.sourceDir).toFile()
     }
 
-    private static File getTemplatesDir(File webappDir) {
-        Paths.get(webappDir.canonicalPath, 'frontend', 'templates').toFile()
+    private static File getTemplatesDir(File webappDir, File rootDir, boolean compatibilityMode) {
+        if (compatibilityMode) {
+            Paths.get(webappDir.canonicalPath, 'frontend', 'templates').toFile()
+        } else {
+           Paths.get(rootDir.canonicalPath, JavaPluginAction.JAVASCRIPT_SOURCES.split('/')).toFile()
+        }
     }
 }

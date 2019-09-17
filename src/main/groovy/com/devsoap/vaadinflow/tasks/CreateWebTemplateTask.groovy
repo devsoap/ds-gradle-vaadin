@@ -16,6 +16,7 @@
 package com.devsoap.vaadinflow.tasks
 
 import com.devsoap.vaadinflow.creators.ComponentCreator
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.models.WebTemplate
 
@@ -45,7 +46,7 @@ class CreateWebTemplateTask extends DefaultTask {
     private final ComponentCreator componentCreator = new ComponentCreator()
 
     CreateWebTemplateTask() {
-        group = 'vaadin-compatibility'
+        group = 'Vaadin'
         description = 'Creates a new Web Template'
     }
 
@@ -56,13 +57,15 @@ class CreateWebTemplateTask extends DefaultTask {
         templateTag = templateTag ?: templateName.replaceAll(/\B[A-Z]/) { '-' + it }.toLowerCase()
 
         AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
+        VaadinFlowPluginExtension vaadin = project.extensions.findByType(VaadinFlowPluginExtension)
         componentCreator.generate new WebTemplate(
                 componentName : templateName,
                 componentPackage : templatePackage,
                 componentTag : templateTag,
                 rootDirectory : project.projectDir,
                 webappDirectory: assembleTask.webappDir,
-                projectType: ProjectType.get(project)
+                projectType: ProjectType.get(project),
+                compatibilityMode: vaadin.compatibilityMode
         )
     }
 }

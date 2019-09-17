@@ -26,4 +26,6 @@ trait TemplateModel {
     File rootDirectory
 
     File webappDirectory
+
+    boolean compatibilityMode = true
 }

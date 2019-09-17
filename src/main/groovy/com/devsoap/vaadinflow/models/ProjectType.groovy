@@ -15,6 +15,8 @@
  */
 package com.devsoap.vaadinflow.models
 
+import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import groovy.transform.Memoized
 import org.gradle.api.Project
 
@@ -76,10 +78,10 @@ enum ProjectType {
     /**
      * Get the file extension for the web template
      */
-    String getTemplateExtension() {
+    String getTemplateExtension(boolean compatibilityMode) {
         if (this == GROOVY) {
             return 'tpl'
         }
-        'html'
+        compatibilityMode ? 'html' : 'js'
     }
 }

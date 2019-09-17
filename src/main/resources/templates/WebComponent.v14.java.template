@@ -1,0 +1,15 @@
+package ${componentPackage};
+
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Tag;
+import com.vaadin.flow.component.dependency.JsModule;
+
+@Tag("${componentTag}")
+@JsModule("${dependencyPackage}/src/${dependencyHtml}.js")
+public class ${componentName} extends Component {
+
+    public ${componentName}() {
+
+    }
+}
+

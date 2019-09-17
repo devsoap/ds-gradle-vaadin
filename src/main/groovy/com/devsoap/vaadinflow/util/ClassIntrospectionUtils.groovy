@@ -55,9 +55,9 @@ class ClassIntrospectionUtils {
      * @return
      *      a list of HTML imports
      */
-    static final Set<String> findHtmlImports(Project project, ScanResult scan, String selectedTheme) {
+    static final Map<String, File> findHtmlImports(Project project, ScanResult scan, String selectedTheme) {
         Map<String, Map<String,String>> themes = findThemes(project)
-        Set<String> htmlImports = []
+        Map<String,File> htmlImports = [:]
         scan.getClassesWithAnnotation(HTML_IMPORT_FQN).each {
             it.getAnnotationInfoRepeatable(HTML_IMPORT_FQN).each {
                 String path = it.parameterValues.value.value.toString() - FRONTEND_PROTOCOL
@@ -79,11 +79,11 @@ class ClassIntrospectionUtils {
      * @return
      *        a list of HTML imports
      */
-    static final Set<String> findJsImports(ScanResult scan) {
-        Set<String> jsImports = []
-        scan.getClassesWithAnnotation(JS_IMPORT_FQN).each {
-            it.getAnnotationInfoRepeatable(JS_IMPORT_FQN).each {
-                jsImports << it.parameterValues.value.value.toString() - FRONTEND_PROTOCOL
+    static final Map<String, String> findJsImports(ScanResult scan) {
+        Map<String, String> jsImports = [:]
+        scan.getClassesWithAnnotation(JS_IMPORT_FQN).each { clz ->
+            clz.getAnnotationInfoRepeatable(JS_IMPORT_FQN).each {
+                jsImports.put(it.parameterValues.value.value.toString() - FRONTEND_PROTOCOL, clz.name)
             }
         }
         jsImports
@@ -97,11 +97,11 @@ class ClassIntrospectionUtils {
      * @return
      *      a list of HTML imports
      */
-    static final Set<String> findStylesheetImports(ScanResult scan) {
-        Set<String> styleImports = []
-        scan.getClassesWithAnnotation(STYLE_IMPORT_FQN).each {
-            it.getAnnotationInfoRepeatable(STYLE_IMPORT_FQN).each {
-                styleImports << it.parameterValues.value.value.toString() - FRONTEND_PROTOCOL
+    static final Map<String, String> findStylesheetImports(ScanResult scan) {
+        Map<String,String> styleImports = [:]
+        scan.getClassesWithAnnotation(STYLE_IMPORT_FQN).each { clz ->
+            clz.getAnnotationInfoRepeatable(STYLE_IMPORT_FQN).each {
+                styleImports.put(it.parameterValues.value.value.toString() - FRONTEND_PROTOCOL, clz.name)
             }
         }
         styleImports
@@ -230,7 +230,7 @@ class ClassIntrospectionUtils {
         new URLClassLoader(classpath)
     }
 
-    private static void findHTMLImportsRecursively(Project project, File template, Set<String> imports,
+    private static void findHTMLImportsRecursively(Project project, File template, Map<String, File> imports,
                                                    Map<String,String> theme=null) {
         File frontendDir = new File(project.buildDir, FRONTEND_DIR)
         template.text.findAll('.*rel="import".*href="(.*)".*').collect {
@@ -251,20 +251,20 @@ class ClassIntrospectionUtils {
         }
     }
 
-    private static void addImport(Project project, File importFile , Set<String> imports, String htmlImport,
+    private static void addImport(Project project, File importFile , Map<String, File> imports, String htmlImport,
                                   Map<String,String> theme) {
         File frontendDir = new File(project.buildDir, FRONTEND_DIR)
-        if (!imports.contains(htmlImport)) {
+        if (!imports.containsKey(htmlImport)) {
             if (theme && htmlImport.contains(theme.baseUrl) ) {
                 String htmlThemeImport = htmlImport.replace(theme.baseUrl, theme.themeUrl)
                 File themeFile = new File(frontendDir, htmlThemeImport)
                 if (themeFile.exists()) {
-                    imports.add(htmlThemeImport)
+                    imports.put(htmlThemeImport, themeFile)
                 } else {
-                    imports.addAll(htmlImport)
+                    imports.put(htmlImport, importFile)
                 }
             } else {
-                imports.add(htmlImport)
+                imports.put(htmlImport, importFile)
             }
 
             findHTMLImportsRecursively(project, importFile, imports, theme)
