@@ -21,6 +21,7 @@ import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.models.ClientPackage
 import com.moowork.gradle.node.yarn.YarnExecRunner
 import groovy.json.JsonOutput
+import groovy.json.JsonParserType
 import groovy.json.JsonSlurper
 import groovy.util.logging.Log
 import org.gradle.api.GradleException
@@ -61,6 +62,7 @@ class VaadinYarnRunner extends YarnExecRunner {
     private static final String SPACE = ' '
     private static final String NODE_PTY_PREBUILT = 'node-pty-prebuilt'
     private static final String NODE_PTY = 'node-pty'
+    private static final String DONE = 'Done'
 
     private final boolean isOffline
     private boolean captureOutput
@@ -267,22 +269,38 @@ class VaadinYarnRunner extends YarnExecRunner {
             captureOutput = oldCapture
         }
 
-        byte[] output = ((ByteArrayOutputStream) capturedOutputStream).toByteArray()
-        new ByteArrayInputStream(output).with { stream ->
-            boolean jsonStartFound = false
-            boolean jsonEndFound = false
-            statsFile.withWriter { writer ->
-                stream.filterLine(writer) { line ->
-                    if (!jsonStartFound && line.startsWith('{')) {
-                        jsonStartFound = true
-                        return true
-                    } else if (!jsonEndFound && line.startsWith('}')) {
-                        jsonEndFound = true
-                        return true
+        LOGGER.info('Writing stats.json...')
+        LogUtils.measureTime(DONE) {
+            byte[] output = ((ByteArrayOutputStream) capturedOutputStream).toByteArray()
+            new ByteArrayInputStream(output).with { stream ->
+                boolean jsonStartFound = false
+                boolean jsonEndFound = false
+                statsFile.withWriter { writer ->
+                    stream.filterLine(writer) { line ->
+                        if (!jsonStartFound && line.startsWith('{')) {
+                            jsonStartFound = true
+                            return true
+                        } else if (!jsonEndFound && line.startsWith('}')) {
+                            jsonEndFound = true
+                            return true
+                        }
+                        jsonStartFound && !jsonEndFound
                     }
-                    jsonStartFound && !jsonEndFound
                 }
             }
+        }
+
+        LOGGER.info('Sanitizing stats.json...')
+        LogUtils.measureTime(DONE) {
+            Object stats = new JsonSlurper(type: JsonParserType.CHARACTER_SOURCE).parse(statsFile)
+            List sources = stats.chunks.modules.source as List
+            Map out = [assetsByChunkName: stats.assetsByChunkName]
+            out.chunks = [:]
+            out.chunks.modules = []
+            sources.findAll { it != null }.each { source ->
+                out.chunks.modules << [source : source]
+            }
+            statsFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(out))
         }
     }
 
