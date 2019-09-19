@@ -293,14 +293,28 @@ class VaadinYarnRunner extends YarnExecRunner {
         LOGGER.info('Sanitizing stats.json...')
         LogUtils.measureTime(DONE) {
             Object stats = new JsonSlurper(type: JsonParserType.CHARACTER_SOURCE).parse(statsFile)
-            List sources = stats.chunks.modules.source as List
             Map out = [assetsByChunkName: stats.assetsByChunkName]
             out.chunks = [:]
-            out.chunks.modules = []
-            sources.findAll { it != null }.each { source ->
-                out.chunks.modules << [source : source]
+            stats.chunks.each { c ->
+                Map chunk = [modules: []]
+                recursivelyAddModules(c, chunk)
+                out.chunks << chunk
             }
             statsFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(out))
+        }
+    }
+
+    private static void recursivelyAddModules(Map inModule, Map outModule) {
+
+        if (!inModule.modules) {
+            outModule.remove('modules')
+            return
+        }
+
+        inModule.modules.each { m ->
+            Map module = [name : m.name, source: m.source, modules:[]]
+            outModule.modules << module
+            recursivelyAddModules(m, module)
         }
     }
 
