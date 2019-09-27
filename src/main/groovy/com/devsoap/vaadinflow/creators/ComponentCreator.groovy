@@ -61,6 +61,8 @@ class ComponentCreator {
                     'componentTag' : webComponent.componentTag,
                     'dependencyPackage': webComponent.dependencyPackage,
                     'dependencyHtml': webComponent.dependencyHtml,
+                    'dependencyVersion': webComponent.dependencyVersion,
+                    'dependencyArtifact': webComponent.dependencyArtifact,
                     'componentName' : componentClassName,
                     'packageManager' : webComponent.packageManager.packageDir
                 ]).build().write()

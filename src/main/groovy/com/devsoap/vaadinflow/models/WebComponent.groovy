@@ -26,8 +26,9 @@ class WebComponent extends Component {
     PackageManager packageManager
 
     String dependencyPackage
-
     String dependencyHtml
+    String dependencyVersion
+    String dependencyArtifact
 
     enum PackageManager {
         YARN('node_modules'),
