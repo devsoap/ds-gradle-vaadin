@@ -53,7 +53,7 @@ class LegacyClientProductionModeConfigTest extends FunctionalTest {
         when:
             BuildResult result = runAndFail'vaadinTranspileDependencies'
         then:
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallClientDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.FAILED
             result.output.contains("HTML import 'http://localhost/foo.js' could not be resolved.")
@@ -86,7 +86,7 @@ class LegacyClientProductionModeConfigTest extends FunctionalTest {
         when:
             BuildResult result = run'vaadinTranspileDependencies'
         then:
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallClientDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
     }
@@ -117,7 +117,7 @@ class LegacyClientProductionModeConfigTest extends FunctionalTest {
         when:
             BuildResult result = run 'vaadinAssembleClient'
         then:
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallClientDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
@@ -141,7 +141,7 @@ class LegacyClientProductionModeConfigTest extends FunctionalTest {
 
             run 'vaadinCreateProject'
         when:
-            run 'vaadinInstallYarnDependencies'
+            run 'vaadinInstallClientDependencies'
         then:
             File frontend = Paths.get(buildFile.parentFile.canonicalPath, 'build', 'frontend').toFile()
             File yarnrc = new File(frontend, '.yarnrc')

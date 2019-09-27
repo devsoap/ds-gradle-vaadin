@@ -41,7 +41,7 @@ class LegacyClientDependenciesTest extends FunctionalTest {
         when:
         BuildResult result = run 'vaadinAssembleClient'
         then:
-        result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+        result.task(':vaadinInstallClientDependencies').outcome == TaskOutcome.SUCCESS
         result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
         result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
         result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
@@ -64,7 +64,7 @@ class LegacyClientDependenciesTest extends FunctionalTest {
         when:
             BuildResult result = run  'vaadinAssembleClient'
         then:
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallClientDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
@@ -83,7 +83,7 @@ class LegacyClientDependenciesTest extends FunctionalTest {
             run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider:v2.0.5'
             BuildResult result = run 'jar'
         then:
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.UP_TO_DATE
+            result.task(':vaadinInstallClientDependencies').outcome == TaskOutcome.UP_TO_DATE
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.UP_TO_DATE
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SKIPPED
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
@@ -168,7 +168,7 @@ class LegacyClientDependenciesTest extends FunctionalTest {
         when:
             BuildResult result = run('build')
         then:
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallClientDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
     }

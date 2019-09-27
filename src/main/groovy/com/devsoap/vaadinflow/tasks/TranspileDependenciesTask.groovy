@@ -299,7 +299,7 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Search for JS imports...')
         Map<String, String> jsImports = [:]
         LogUtils.measureTime('Scanning Js imports completed') {
-            jsImports = ClassIntrospectionUtils.findJsImports(scan)
+            jsImports = ClassIntrospectionUtils.findJsImports(scan).collectEntries { k,v -> [ "./$k" : v] }
         }
 
         LOGGER.info('Searching for CSS imports...')
@@ -323,20 +323,20 @@ class TranspileDependenciesTask extends DefaultTask {
         importsJs.parentFile.mkdirs()
 
         importsJs.text = '// Theme\n'
-        importsJs << "import './${vaadin.baseTheme}-theme.js';\n"
+        importsJs << "import '${frontendAlias('./' + vaadin.baseTheme)}-theme.js';\n"
 
         importsJs << '// Polymer modules\n'
         modules.keySet().sort { a, b ->
             (isInSourceFolder(a) <=> isInSourceFolder(b))
         }.each {
-            importsJs << "import '$it';\n"
+            importsJs << "import '${frontendAlias(it)}';\n"
         }
 
         importsJs << '// Javascript imports\n'
-        jsImports.each { p, c -> importsJs << "import '${p}';\n" }
+        jsImports.each { p, c -> importsJs << "import '${frontendAlias(p)}';\n" }
 
         importsJs << '// CSS imports\n'
-        cssImports.each { p, c -> importsJs << "import '${p - '.css'}.js';\n" }
+        cssImports.each { p, c -> importsJs << "import '${frontendAlias(p) - '.css'}.js';\n" }
 
         LOGGER.info('Checking for legacy imports...')
         Map<String, File> legacyImports = ClassIntrospectionUtils.findHtmlImports(project, scan, vaadin.baseTheme)
@@ -443,7 +443,7 @@ class TranspileDependenciesTask extends DefaultTask {
         if (vaadin.compatibilityMode) {
             bundleInCompatibilityMode(scan)
         } else {
-            checkIdUsage(scan)
+            //checkIdUsage(scan)
             bundle(scan)
         }
     }
@@ -711,5 +711,9 @@ class TranspileDependenciesTask extends DefaultTask {
     @PackageScope
     boolean isInSourceFolder(String path) {
         new File(srcDir, path).exists()
+    }
+
+    static String frontendAlias(String path) {
+        path.replaceFirst(/^\./, "Frontend")
     }
 }

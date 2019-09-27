@@ -43,7 +43,7 @@ import org.gradle.api.tasks.TaskAction
 @CacheableTask
 class InstallYarnDependenciesTask extends DefaultTask {
 
-    static final String NAME = 'vaadinInstallYarnDependencies'
+    static final String NAME = 'vaadinInstallClientDependencies'
 
     private static final String PACKAGE_JSON = 'package.json'
     private static final String NODE_MODULES = 'node_modules'
