@@ -73,6 +73,7 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String MISSING_PROPERTY = '_missing'
     private static final String IMPORTS_JS_FILE = 'index.js'
     private static final String SLASH = '/'
+    static final String DOTSLASH = './'
     private static final String VAADIN = 'VAADIN'
     private static final String WARN_BUNDLE_EXCLUDES_ONLY_AVAILABLE_IN_COMP_MODE =
             'bundleExcludes only supported in compatibility mode.'
@@ -299,7 +300,7 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Search for JS imports...')
         Map<String, String> jsImports = [:]
         LogUtils.measureTime('Scanning Js imports completed') {
-            jsImports = ClassIntrospectionUtils.findJsImports(scan).collectEntries { k,v -> [ "./$k" : v] }
+            jsImports = ClassIntrospectionUtils.findJsImports(scan).collectEntries { k, v -> [ (DOTSLASH + k) : v] }
         }
 
         LOGGER.info('Searching for CSS imports...')
@@ -323,7 +324,7 @@ class TranspileDependenciesTask extends DefaultTask {
         importsJs.parentFile.mkdirs()
 
         importsJs.text = '// Theme\n'
-        importsJs << "import '${frontendAlias('./' + vaadin.baseTheme)}-theme.js';\n"
+        importsJs << "import '${frontendAlias(DOTSLASH + vaadin.baseTheme)}-theme.js';\n"
 
         importsJs << '// Polymer modules\n'
         modules.keySet().sort { a, b ->
@@ -443,7 +444,7 @@ class TranspileDependenciesTask extends DefaultTask {
         if (vaadin.compatibilityMode) {
             bundleInCompatibilityMode(scan)
         } else {
-            //checkIdUsage(scan)
+            checkIdUsage(scan)
             bundle(scan)
         }
     }
@@ -657,7 +658,7 @@ class TranspileDependenciesTask extends DefaultTask {
                 LOGGER.warning("$c: No Javascript module with the name '$m' could be found. Module ignored.")
                 throw new GradleException("$c: No Javascript module with the name '$m' could be found. Module ignored.")
             }
-            if (!nodeDependency.exists() && staticFile.exists() && !m.startsWith('./')) {
+            if (!nodeDependency.exists() && staticFile.exists() && !m.startsWith(DOTSLASH)) {
                 LOGGER.warning("$c: Static file Javascript module '$m' does not start with './'. Module ignored.")
                 return true
             }
@@ -713,7 +714,8 @@ class TranspileDependenciesTask extends DefaultTask {
         new File(srcDir, path).exists()
     }
 
+    @PackageScope
     static String frontendAlias(String path) {
-        path.replaceFirst(/^\./, "Frontend")
+        path.replaceFirst(/^\./, 'Frontend')
     }
 }

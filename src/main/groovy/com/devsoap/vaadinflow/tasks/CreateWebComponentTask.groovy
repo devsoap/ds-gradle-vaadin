@@ -129,7 +129,7 @@ class CreateWebComponentTask extends DefaultTask {
         componentTag = componentTag ?: dependencyHtml
 
         // Add dependency import to build.gradle
-        if(vaadin.compatibilityMode) {
+        if (vaadin.compatibilityMode) {
             VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
             if (componentDependency.startsWith(YARN_PREFIX)) {
                 buildFile << """

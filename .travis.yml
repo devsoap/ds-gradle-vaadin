@@ -1,6 +1,6 @@
 language: groovy
 jdk:
-  - openjdk8
+  - openjdk11
 script: "./gradlew --stacktrace --info --parallel check -PTEST_CATEGORY=$TEST_CATEGORY"
 env:
   - TEST_CATEGORY=SmokeTests

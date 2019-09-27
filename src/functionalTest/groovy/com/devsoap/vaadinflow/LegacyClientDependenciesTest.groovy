@@ -95,7 +95,7 @@ class LegacyClientDependenciesTest extends FunctionalTest {
                     'com', 'example', testProjectDir.root.name.toLowerCase(),
                             'ExampleWebComponent.java').toFile()
             componentClass.exists()
-            componentClass.text.contains('@Tag("example-web-component")')
+            componentClass.text.contains('@Tag("paper-slider")')
             componentClass.text.contains(
                     '@HtmlImport("frontend://bower_components/paper-slider/paper-slider.html")')
             componentClass.text.contains('public class ExampleWebComponent')

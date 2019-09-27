@@ -23,6 +23,7 @@ import com.moowork.gradle.node.yarn.YarnExecRunner
 import groovy.json.JsonOutput
 import groovy.json.JsonParserType
 import groovy.json.JsonSlurper
+import groovy.transform.PackageScope
 import groovy.util.logging.Log
 import org.gradle.api.GradleException
 import org.gradle.api.Project
@@ -414,7 +415,8 @@ class VaadinYarnRunner extends YarnExecRunner {
         }
     }
 
+    @PackageScope
     static String frontendAlias(String path) {
-        path.replaceFirst(/^\.\/src/, "Frontend")
+        path.replaceFirst(/^\.\/src/, 'Frontend')
     }
 }
