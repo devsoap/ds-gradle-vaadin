@@ -6,9 +6,12 @@ module.exports = {
   entry: './src/index.js',
 
   resolve: {
-       modules: [
+      alias: {
+        'Frontend' : '.'
+      },
+      modules: [
           ${ moduleDirs.collect { "path.resolve(__dirname, '$it')" }.join(',\n') }
-        ]
+      ]
   },
 
   output: {

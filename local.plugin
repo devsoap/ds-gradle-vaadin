@@ -29,7 +29,7 @@ buildscript {
 
 repositories {
     def gradlePluginDirectory =  System.getProperty("user.home")+'/Repositories/gradle-vaadin-flow/build/libs'
-    def pluginVersion = '1.0-SNAPSHOT-'+ new Date().format('yyyyMMdd')
+    def pluginVersion = '2.0-SNAPSHOT-'+ new Date().format('yyyyMMdd')
     flatDir dirs: gradlePluginDirectory
 }
 

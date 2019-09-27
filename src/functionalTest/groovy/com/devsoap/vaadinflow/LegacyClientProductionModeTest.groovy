@@ -38,7 +38,7 @@ class LegacyClientProductionModeTest extends FunctionalTest {
         when:
             BuildResult result = run('jar')
         then:
-            result.task(':vaadinInstallYarnDependencies').outcome == TaskOutcome.SUCCESS
+            result.task(':vaadinInstallClientDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinInstallBowerDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinTranspileDependencies').outcome == TaskOutcome.SUCCESS
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
@@ -84,7 +84,7 @@ class LegacyClientProductionModeTest extends FunctionalTest {
                 vaadin.autoconfigure()
             """.stripIndent()
         when:
-            run '--info', 'vaadinInstallYarnDependencies'
+            run '--info', 'vaadinInstallClientDependencies'
             File mirror = Paths.get(testProjectDir.root.canonicalPath, '.gradle', 'yarn',
                     'yarn-offline-mirror').toFile()
         then:

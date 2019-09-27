@@ -294,8 +294,8 @@ class VaadinYarnRunner extends YarnExecRunner {
         LogUtils.measureTime(DONE) {
             Object stats = new JsonSlurper(type: JsonParserType.CHARACTER_SOURCE).parse(statsFile)
             Map out = [assetsByChunkName: stats.assetsByChunkName]
-            out.chunks = [:]
-            stats.chunks.each { c ->
+            out.chunks = []
+            stats.chunks.each { Map c ->
                 Map chunk = [modules: []]
                 recursivelyAddModules(c, chunk)
                 out.chunks << chunk
@@ -305,14 +305,12 @@ class VaadinYarnRunner extends YarnExecRunner {
     }
 
     private static void recursivelyAddModules(Map inModule, Map outModule) {
-
         if (!inModule.modules) {
-            outModule.remove('modules')
-            return
+           outModule.remove('modules')
+           return
         }
-
         inModule.modules.each { m ->
-            Map module = [name : m.name, source: m.source, modules:[]]
+            Map module = [name : frontendAlias(m.name), source: m.source, modules:[]]
             outModule.modules << module
             recursivelyAddModules(m, module)
         }
@@ -414,5 +412,9 @@ class VaadinYarnRunner extends YarnExecRunner {
             spec.standardOutput = capturedOutputStream
             spec.errorOutput = LogUtils.getLogOutputStream(Level.INFO)
         }
+    }
+
+    static String frontendAlias(String path) {
+        path.replaceFirst(/^\.\/src/, "Frontend")
     }
 }
