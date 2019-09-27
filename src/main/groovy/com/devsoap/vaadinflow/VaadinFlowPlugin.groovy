@@ -61,15 +61,13 @@ import org.gradle.util.VersionNumber
 import javax.inject.Inject
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManagerFactory
-import java.security.KeyManagementException
-import java.security.KeyStore
-import java.security.KeyStoreException
-import java.security.NoSuchAlgorithmException
-import java.security.cert.Certificate
-import java.security.cert.CertificateException
-import java.security.cert.CertificateFactory
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
+import java.security.SecureRandom
+import java.security.cert.CertPathBuilderException
+import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 
 /**
@@ -85,7 +83,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     private static final String COMPILE_CONFIGURATION = 'compile'
     private static final String LICENSE_SERVER_URL = 'https://fns.devsoap.com/t/license-server/check'
-    private static final int CONNECTION_TIMEOUT = 3000
+    private static final int CONNECTION_TIMEOUT = 30000
     private static final String PLUGIN_NAME = 'gradle-vaadin-flow'
 
     private final List<PluginAction> actions = []
@@ -234,8 +232,9 @@ class VaadinFlowPlugin implements Plugin<Project> {
             } else {
               LOGGER.info('Failed response from license server, response: ' + response)
             }
-        } catch (SocketTimeoutException e) {
-            LOGGER.info('Validating license failed, failed to contact license server.')
+        } catch (SocketTimeoutException | SSLHandshakeException | CertPathBuilderException e) {
+            LOGGER.warning('Validating license failed, failed to contact license server.')
+            LOGGER.warning(e.message)
         }
     }
 
@@ -260,40 +259,28 @@ class VaadinFlowPlugin implements Plugin<Project> {
     private static InputStream callLicenseServer(Map payload) {
         String body = JsonOutput.toJson(payload)
         HttpsURLConnection connection = (HttpsURLConnection) LICENSE_SERVER_URL.toURL().openConnection()
-        SSLSocketFactory socketFactory = initSslSocketFactory()
-        if (socketFactory) {
-            connection.setSSLSocketFactory(socketFactory)
-        }
         connection.with {
+            it.SSLSocketFactory = trustAllSslSocketFactory()
             it.doOutput = true
             it.requestMethod = 'POST'
-            it.outputStream.withWriter { writer -> writer.write(body) }
             it.connectTimeout = CONNECTION_TIMEOUT
             it.readTimeout = CONNECTION_TIMEOUT
+            it.outputStream.withWriter { writer -> writer.write(body) }
             it
         }.inputStream
     }
 
-    private static SSLSocketFactory initSslSocketFactory() {
-        try {
-            CertificateFactory cf = CertificateFactory.getInstance('X.509')
-            InputStream is = VaadinFlowPlugin.getResourceAsStream('/fns_devsoap_com.crt')
-            KeyStore keyStore = KeyStore.getInstance(KeyStore.defaultType)
-            keyStore.load(null, null)
-            new BufferedInputStream(is).withStream {
-                Certificate ca = cf.generateCertificate(it)
-                keyStore.setCertificateEntry('ca', ca)
-            }
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.defaultAlgorithm)
-            tmf.init(keyStore)
-            SSLContext context2 = SSLContext.getInstance('TLS')
-            context2.init(null, tmf.trustManagers, null)
-            return context2.socketFactory
-
-        } catch (NoSuchAlgorithmException | KeyStoreException | KeyManagementException |
-                    CertificateException | IOException e) {
-            LOGGER.severe('Failed to build socket factory. Could not add fns.devsoap.com certificate to keystore.')
-        }
-        null
+    // FIXME Replace with real certificate
+    @SuppressWarnings('UnusedMethodParameter')
+    private static SSLSocketFactory trustAllSslSocketFactory() throws Exception {
+        TrustManager[] allTM = [ new X509TrustManager() {
+            @Override X509Certificate[] getAcceptedIssuers() { new X509Certificate[0] }
+            @Override void checkClientTrusted(X509Certificate[] chain, String authType) { }
+            @Override void checkServerTrusted(X509Certificate[] chain, String authType) { }
+        }]
+        SSLContext sslContext = SSLContext.getInstance('TLS')
+        sslContext.init(null, allTM , new SecureRandom())
+        sslContext.socketFactory
     }
+
 }
