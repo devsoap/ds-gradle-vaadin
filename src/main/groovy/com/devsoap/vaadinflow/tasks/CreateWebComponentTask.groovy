@@ -77,7 +77,7 @@ class CreateWebComponentTask extends DefaultTask {
 
         componentName = componentName ?: 'ExampleWebComponent'
         componentPackage = componentPackage ?: 'com.example.' + project.name.toLowerCase()
-        componentTag = componentTag ?: componentName.replaceAll(/\B[A-Z]/) { '-' + it }.toLowerCase()
+
         componentDependency = componentDependency ?: "yarn:$componentTag"
 
         File buildFile = project.file('build.gradle')
@@ -93,17 +93,21 @@ class CreateWebComponentTask extends DefaultTask {
         } else if (vaadin.compatibilityMode) {
             throw new GradleException("Dependency needs too start with either $YARN_PREFIX or $BOWER_PREFIX")
         } else {
-            throw new GradleException("Dependency needs too start with either $YARN_PREFIX or $NPM_PREFIX")
+            dep = componentDependency
         }
 
         // Resolve dependency without version
         String depNoVersion
+        String depVersion
         if (dep.contains(COLON)) {
             depNoVersion = dep.split(COLON).first()
+            depVersion = dep.split(COLON).last()
         } else if (dep.contains(HASH)) {
             depNoVersion = dep.split(HASH).first()
+            depVersion = dep.split(HASH).last()
         } else {
             depNoVersion = dep
+            depVersion = ''
         }
 
         // Resolve dependency package
@@ -122,25 +126,29 @@ class CreateWebComponentTask extends DefaultTask {
             dependencyHtml = dependencyPackage
         }
 
+        componentTag = componentTag ?: dependencyHtml
+
         // Add dependency import to build.gradle
-        VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
-        if (componentDependency.startsWith(YARN_PREFIX)) {
-            buildFile << """
+        if(vaadin.compatibilityMode) {
+            VaadinClientDependenciesExtension client = project.extensions.getByType(VaadinClientDependenciesExtension)
+            if (componentDependency.startsWith(YARN_PREFIX)) {
+                buildFile << """
             ${VaadinClientDependenciesExtension.NAME}.yarn('${dep}')
             """.stripIndent()
-            client.yarn(dep)
+                client.yarn(dep)
 
-        } else if (componentDependency.startsWith(NPM_PREFIX)) {
-            buildFile << """
+            } else if (componentDependency.startsWith(NPM_PREFIX)) {
+                buildFile << """
             ${VaadinClientDependenciesExtension.NAME}.npm('${dep}')
             """.stripIndent()
-            client.npm(dep)
+                client.npm(dep)
 
-        } else if (componentDependency.startsWith(BOWER_PREFIX)) {
-            buildFile << """
+            } else if (componentDependency.startsWith(BOWER_PREFIX)) {
+                buildFile << """
             ${VaadinClientDependenciesExtension.NAME}.bower('$dep')
             """.stripIndent()
-            client.bower(dep)
+                client.bower(dep)
+            }
         }
 
         AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
@@ -152,6 +160,8 @@ class CreateWebComponentTask extends DefaultTask {
                 componentTag : componentTag,
                 dependencyPackage : dependencyPackage,
                 dependencyHtml : dependencyHtml,
+                dependencyVersion: depVersion,
+                dependencyArtifact: depNoVersion,
                 rootDirectory : project.projectDir,
                 webappDirectory: assembleTask.webappDir,
                 packageManager : componentDependency.startsWith(YARN_PREFIX) ||
