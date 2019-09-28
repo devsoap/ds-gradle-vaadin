@@ -80,6 +80,7 @@ class ClassIntrospectionUtils {
      * @return
      *        a list of HTML imports
      */
+    @Deprecated
     static final Map<String, String> findJsImports(ScanResult scan) {
         Map<String, String> jsImports = [:]
         scan.getClassesWithAnnotation(JS_IMPORT_FQN).each { clz ->
@@ -88,6 +89,16 @@ class ClassIntrospectionUtils {
             }
         }
         jsImports
+    }
+
+    static final Map<String, String> findJsImportsByRoute(ScanResult scan) {
+        Map<String, String> modules = [:]
+        List<String> processedClasses = []
+        scan.getClassesWithAnnotation(ROUTE_FQN).each { ClassInfo ci ->
+            findImportModulesByDependencies(ci, modules, JS_IMPORT_FQN, processedClasses)
+        }
+        LOGGER.info("Scanned ${processedClasses.size()} classes.")
+        modules
     }
 
     /**
