@@ -334,7 +334,7 @@ class VaadinYarnRunner extends YarnExecRunner {
 
             Map<String, Object> params = [:]
             params['lastUpdateCheck'] = 0
-            params['cache-folder'] = './build/frontend/yarn-cache'
+            params['cache-folder'] = './cache'
             params['yarn-offline-mirror'] = vaadinClient.offlineCachePath
             params['yarn-offline-mirror-pruning'] = true
             params['disable-self-update-check'] = true

@@ -300,7 +300,10 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Search for JS imports...')
         Map<String, String> jsImports = [:]
         LogUtils.measureTime('Scanning Js imports completed') {
-            jsImports = ClassIntrospectionUtils.findJsImports(scan).collectEntries { k, v -> [ (DOTSLASH + k) : v] }
+            jsImports = ClassIntrospectionUtils.findJsImportsByRoute(scan)
+                .collectEntries { k, v -> [ (k - 'frontend://') : v ] }
+                .collectEntries { k, v -> [ (DOTSLASH + k) : v ] }
+                .findAll { k, v -> !modules.containsKey(k.toString().replace(JAVASCRIPT_FILE_TYPE, '-es6.js')) }
         }
 
         LOGGER.info('Searching for CSS imports...')
@@ -656,7 +659,7 @@ class TranspileDependenciesTask extends DefaultTask {
             boolean exists = nodeDependency.exists() || staticFile.exists() || templateFile.exists()
             if (!exists) {
                 LOGGER.warning("$c: No Javascript module with the name '$m' could be found. Module ignored.")
-                throw new GradleException("$c: No Javascript module with the name '$m' could be found. Module ignored.")
+                return true
             }
             if (!nodeDependency.exists() && staticFile.exists() && !m.startsWith(DOTSLASH)) {
                 LOGGER.warning("$c: Static file Javascript module '$m' does not start with './'. Module ignored.")
