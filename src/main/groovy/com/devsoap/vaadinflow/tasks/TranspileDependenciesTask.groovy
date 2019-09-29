@@ -36,10 +36,12 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.options.Option
 import org.gradle.internal.hash.HashUtil
 import org.gradle.util.GFileUtils
 
@@ -92,6 +94,10 @@ class TranspileDependenciesTask extends DefaultTask {
     private final ListProperty<String> bundleExcludes = project.objects.listProperty(String)
 
     private final ListProperty<String> importExcludes = project.objects.listProperty(String)
+
+    @Internal
+    @Option(option = 'ignore-id-usage', description = 'Should @Id be checked (#285)')
+    boolean ignoreIdUsage = false
 
     @Deprecated
     @Optional
@@ -370,14 +376,16 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     private void checkIdUsage(ScanResult scan) {
-        List<String> ids = ClassIntrospectionUtils.findIdUsages(scan)
-        if (!ids.isEmpty()) {
-            LOGGER.severe('Plugin does not currently support @Id annotations in Polymer templates')
-            LOGGER.severe('The following classes contains @Id annotations:')
-            ids.each { LOGGER.severe("\t$it") }
-            LOGGER.severe('Please replace them with model access instead.')
-            throw new GradleException('Unsupported @Id annotations found in polymer templates. ' +
-                    RUN_WITH_INFO_FOR_MORE_INFORMATION)
+        if (!ignoreIdUsage) {
+            List<String> ids = ClassIntrospectionUtils.findIdUsages(scan)
+            if (!ids.isEmpty()) {
+                LOGGER.severe('Plugin does not currently support @Id annotations in Polymer templates')
+                LOGGER.severe('The following classes contains @Id annotations:')
+                ids.each { LOGGER.severe("\t$it") }
+                LOGGER.severe('Please replace them with model access instead.')
+                throw new GradleException('Unsupported @Id annotations found in polymer templates. ' +
+                        RUN_WITH_INFO_FOR_MORE_INFORMATION)
+            }
         }
     }
 
