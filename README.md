@@ -27,3 +27,7 @@ You can order your PRO subscription [here](https://devsoap.com/store/?product=gr
 
 This plugin is distributed under the Apache License 2.0 license. For more information about the license see the LICENSE file 
 in the root directory of the repository. A signed CLA is required when contributing to the project.
+
+# Contributing to the project
+
+Checkout the [Contribution Guide](CONTRIBUTING.md) to learn how to develop this project locally.
