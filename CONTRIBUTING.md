@@ -20,8 +20,7 @@ The **src/main** source folder contains the sources of the plugin. This is most 
 
 The **src/test** source folders contains unit tests. 
 
-The third source folder is for integration/functional tests. These tests are run using the Gradle Test Runner so they 
-are run using an actual Gradle installation.  The tests are written in Spock and Groovy.
+The third source folder, **src/functionalTest** is for integration/functional tests. These tests are run using the Gradle Test Runner so they are run using an actual Gradle installation.  The tests are written in Spock and Groovy.
 
 #### Plugin package structure
 
