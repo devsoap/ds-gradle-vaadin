@@ -62,6 +62,10 @@ class TranspileDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinTranspileDependencies'
 
+    // Need to be public for closure to have access to them
+    static final String DOTSLASH = './'
+    static final String JAVASCRIPT_FILE_TYPE = '.js'
+
     private static final String PACKAGE_JSON_FILE = 'package.json'
     private static final String BOWER_COMPONENTS = 'bower_components'
     private static final String NODE_MODULES = 'node_modules'
@@ -69,13 +73,13 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String FRONTEND = 'frontend'
     private static final String TEMPLATES_GLOB = '**/templates/**'
     private static final String STYLES_GLOB = '**/styles/**'
-    private static final String JAVASCRIPT_FILE_TYPE = '.js'
+
     private static final String STYLES = 'styles'
     private static final String TEMPLATES = 'templates'
     private static final String MISSING_PROPERTY = '_missing'
     private static final String IMPORTS_JS_FILE = 'index.js'
     private static final String SLASH = '/'
-    static final String DOTSLASH = './'
+
     private static final String VAADIN = 'VAADIN'
     private static final String WARN_BUNDLE_EXCLUDES_ONLY_AVAILABLE_IN_COMP_MODE =
             'bundleExcludes only supported in compatibility mode.'
