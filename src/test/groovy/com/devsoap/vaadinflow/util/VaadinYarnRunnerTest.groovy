@@ -16,9 +16,7 @@
 package com.devsoap.vaadinflow.util
 
 import com.devsoap.vaadinflow.VaadinFlowPlugin
-import com.devsoap.vaadinflow.extensions.DevsoapExtension
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
-import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.moowork.gradle.node.NodeExtension
 import com.moowork.gradle.node.variant.Variant
 import org.gradle.api.Project

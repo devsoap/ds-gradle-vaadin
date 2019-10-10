@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.extensions
 
+import com.devsoap.license.Validator
 import com.devsoap.vaadinflow.VaadinFlowPlugin
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
@@ -178,7 +179,7 @@ class VaadinFlowPluginExtension {
         if (System.getProperty(COMPATIBILITY_MODE_PROPERTY)?.toLowerCase() == TRUE) {
             return true
         }
-        if (project.plugins.getPlugin(VaadinFlowPlugin).isValidLicense(project)) {
+        if (Validator.isValidLicense(project, VaadinFlowPlugin.PRODUCT_NAME)) {
             compatibilityMode.getOrElse(Boolean.parseBoolean(System.getProperty(COMPATIBILITY_MODE_PROPERTY,
                     Boolean.FALSE.toString())))
         } else {

@@ -15,8 +15,12 @@
  */
 package com.devsoap.vaadinflow.actions
 
+import static com.devsoap.license.DevsoapLicenseExtension.Credential
+
+import com.devsoap.license.DevsoapLicenseExtension
+import com.devsoap.license.DevsoapLicensePlugin
+import com.devsoap.license.Validator
 import com.devsoap.vaadinflow.VaadinFlowPlugin
-import com.devsoap.vaadinflow.extensions.DevsoapExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
 import com.devsoap.vaadinflow.tasks.ConvertGroovyTemplatesToHTML
@@ -46,11 +50,24 @@ class VaadinFlowPluginAction extends PluginAction {
     private static final String PROCESS_RESOURCES = 'processResources'
     private static final String RUNNING_IN_COMPATIBILITY_MODE_MESSAGE =
             'The project will be compiled for Vaadin 13 (Flow 1) compatibility mode. '
+    private static final String COMPILE_ONLY = 'compileOnly'
 
     @Override
     void apply(Project project) {
         super.apply(project)
         project.plugins.apply('java')
+
+        project.pluginManager.apply(DevsoapLicensePlugin)
+
+        DevsoapLicenseExtension devsoap = project.extensions.getByType(DevsoapLicenseExtension)
+        devsoap.credential(VaadinFlowPlugin.PRODUCT_NAME, null, null) { Credential c ->
+            c.signature =  Versions.rawVersion('vaadin.plugin.signature')
+        }
+
+        String licenseDependency =
+                "com.devsoap:devsoap-license-plugin:${ Versions.rawVersion('devsoap.license.version') }"
+        Dependency license = project.dependencies.create(licenseDependency)
+        project.configurations[COMPILE_ONLY].dependencies.add(license)
     }
 
     @Override
@@ -75,7 +92,7 @@ class VaadinFlowPluginAction extends PluginAction {
             Dependency vaadin = dependencies.create(pluginDependency) {
                 description = 'Gradle Vaadin Plugin'
             }
-            configurations['compileOnly'].dependencies.add(vaadin)
+            configurations[COMPILE_ONLY].dependencies.add(vaadin)
         }
     }
 
@@ -92,12 +109,12 @@ class VaadinFlowPluginAction extends PluginAction {
     protected void executeAfterEvaluate(Project project) {
         super.executeAfterEvaluate(project)
 
-        VaadinFlowPlugin plugin = project.plugins.getPlugin(VaadinFlowPlugin)
         String vaadinVersion = Versions.version(PLUGIN_VERSION_KEY)
-        if (plugin.isValidLicense(project)) {
-            DevsoapExtension devsoap = project.extensions[DevsoapExtension.NAME]
+        if (Validator.isValidLicense(project, VaadinFlowPlugin.PRODUCT_NAME)) {
+            DevsoapLicenseExtension devsoap = project.extensions[DevsoapLicenseExtension.NAME]
+            Credential credential = devsoap.getCredential(VaadinFlowPlugin.PRODUCT_NAME)
             LogUtils.printIfNotPrintedBefore( project,
-                    "Using DS Gradle Vaadin Flow Plugin $vaadinVersion (Licensed to ${devsoap.email})"
+                    "Using DS Gradle Vaadin Flow Plugin $vaadinVersion (Licensed to ${credential.email})"
             )
         } else {
             LogUtils.printIfNotPrintedBefore( project,
@@ -115,7 +132,7 @@ class VaadinFlowPluginAction extends PluginAction {
                     'vaadin.submitStatistics=true (hide this message by setting it to false)')
         }
 
-        if (vaadin.compatibilityMode && plugin.isValidLicense(project)) {
+        if (vaadin.compatibilityMode && Validator.isValidLicense(project, VaadinFlowPlugin.PRODUCT_NAME)) {
             LOGGER.warning(
                     RUNNING_IN_COMPATIBILITY_MODE_MESSAGE +
                     'To disable compatibility mode set vaadin.compatibilityMode=false. (experimental)')
