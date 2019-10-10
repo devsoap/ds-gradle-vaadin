@@ -15,7 +15,7 @@
  */
 def vaadinType = 'com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension'
 def vaadinClientType = 'com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension'
-def devsoapType = 'com.devsoap.vaadinflow.extensions.DevsoapExtension'
+def devsoapType = 'com.devsoap.license.DevsoapLicenseExtension'
 def vaadinProperty = 'vaadin'
 def vaadinClientProperty = 'vaadinClientDependencies'
 def devsoapProperty = 'devsoap'

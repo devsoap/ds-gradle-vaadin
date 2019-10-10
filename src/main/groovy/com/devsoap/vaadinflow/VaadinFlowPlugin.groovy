@@ -15,10 +15,6 @@
  */
 package com.devsoap.vaadinflow
 
-import com.auth0.jwt.JWT
-import com.auth0.jwt.JWTVerifier
-import com.auth0.jwt.algorithms.Algorithm
-import com.auth0.jwt.exceptions.JWTVerificationException
 import com.devsoap.vaadinflow.actions.GrettyDeprecatedPluginAction
 import com.devsoap.vaadinflow.actions.GrettyPluginAction
 import com.devsoap.vaadinflow.actions.JavaPluginAction
@@ -29,7 +25,6 @@ import com.devsoap.vaadinflow.actions.SassWarPluginAction
 import com.devsoap.vaadinflow.actions.SpringBootAction
 import com.devsoap.vaadinflow.actions.VaadinFlowPluginAction
 import com.devsoap.vaadinflow.actions.WarPluginAction
-import com.devsoap.vaadinflow.extensions.DevsoapExtension
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
@@ -45,9 +40,6 @@ import com.devsoap.vaadinflow.tasks.TranspileDependenciesTask
 import com.devsoap.vaadinflow.tasks.VersionCheckTask
 import com.devsoap.vaadinflow.tasks.WrapCssTask
 import com.devsoap.vaadinflow.util.Versions
-import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
-import groovy.transform.PackageScope
 import groovy.util.logging.Log
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -59,16 +51,6 @@ import org.gradle.tooling.UnsupportedVersionException
 import org.gradle.util.VersionNumber
 
 import javax.inject.Inject
-import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLHandshakeException
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
-import java.security.SecureRandom
-import java.security.cert.CertPathBuilderException
-import java.security.cert.X509Certificate
-import java.util.concurrent.TimeUnit
 
 /**
  * Main plugin class
@@ -80,16 +62,10 @@ import java.util.concurrent.TimeUnit
 class VaadinFlowPlugin implements Plugin<Project> {
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
+    static final String PRODUCT_NAME = 'gradle-vaadin-flow'
 
     private static final String COMPILE_CONFIGURATION = 'compile'
-    private static final String LICENSE_SERVER_URL = 'https://fns.devsoap.com/t/license-server/check'
-    private static final int CONNECTION_TIMEOUT = 30000
-    private static final String PLUGIN_NAME = 'gradle-vaadin-flow'
-
     private final List<PluginAction> actions = []
-
-    @PackageScope
-    final File licenseFile
 
     @Inject
     VaadinFlowPlugin(Gradle gradle, Instantiator instantiator) {
@@ -104,8 +80,6 @@ class VaadinFlowPlugin implements Plugin<Project> {
         actions << instantiator.newInstance(SpringBootAction)
         actions << instantiator.newInstance(SassJavaPluginAction)
         actions << instantiator.newInstance(SassWarPluginAction)
-
-        licenseFile = new File(gradle.gradleUserHomeDir, '.gradle-vaadin-flow.license')
     }
 
     @Override
@@ -119,7 +93,6 @@ class VaadinFlowPlugin implements Plugin<Project> {
             extensions.with {
                 create(VaadinFlowPluginExtension.NAME, VaadinFlowPluginExtension, project)
                 create(VaadinClientDependenciesExtension.NAME, VaadinClientDependenciesExtension, project)
-                create(DevsoapExtension.NAME, DevsoapExtension, project)
             }
 
             tasks.with {
@@ -138,20 +111,11 @@ class VaadinFlowPlugin implements Plugin<Project> {
             }
 
             afterEvaluate {
-                validateLicense(project)
                 disableStatistics(project)
                 enableProductionMode(project)
                 validateVaadinVersion(project)
             }
         }
-    }
-
-    final boolean isValidLicense(Project project) {
-        DevsoapExtension devsoap = project.extensions.getByType(DevsoapExtension)
-        if (!devsoap.email || !devsoap.key) {
-            return false
-        }
-        licenseFile.exists() && verifySignature(licenseFile.text, devsoap.key)
     }
 
     private static void disableStatistics(Project project) {
@@ -198,89 +162,4 @@ class VaadinFlowPlugin implements Plugin<Project> {
                         'this check but there is no guarantee it will work or that the build will be stable.')
         }
     }
-
-    private static void validateLicense(Project project) {
-        DevsoapExtension devsoap = project.extensions.getByType(DevsoapExtension)
-        if (!devsoap.email || !devsoap.key) {
-            LOGGER.info('No license email or key defined, skipping license check.')
-            return
-        }
-
-        VaadinFlowPlugin plugin = project.plugins.getPlugin(VaadinFlowPlugin)
-        if (plugin.isValidLicense(project)) {
-            LOGGER.info('Offline license key verified.')
-            return
-        }
-
-        LOGGER.info('Fetching license information...')
-
-        try {
-            Map<String,String> payload = [
-                    'product': PLUGIN_NAME,
-                    'email': devsoap.email.toString(),
-                    'key': devsoap.key.toString()
-            ]
-            InputStream stream = callLicenseServer(payload)
-            Object response = new JsonSlurper().parse(stream)
-            if (response?.result == 'OK') {
-                String token = response.data.signature
-                if (verifySignature(token, devsoap.key)) {
-                    plugin.licenseFile.text = token
-                } else {
-                    LOGGER.info('License signature verification failed. Are you using a valid license?')
-                }
-            } else {
-              LOGGER.info('Failed response from license server, response: ' + response)
-            }
-        } catch (SocketTimeoutException | SSLHandshakeException | CertPathBuilderException e) {
-            LOGGER.warning('Validating license failed, failed to contact license server.')
-            LOGGER.warning(e.message)
-        }
-    }
-
-    private static boolean verifySignature(String jwtToken, String productKey) {
-        String signature = Versions.rawVersion('vaadin.plugin.signature')
-        Algorithm algorithm = Algorithm.HMAC256("${PLUGIN_NAME}.${productKey}.${signature}")
-        JWTVerifier verifier = JWT.require(algorithm)
-                .withIssuer('Devsoap Inc.')
-                .withClaim('key', productKey)
-                .withClaim('product', PLUGIN_NAME)
-                .acceptLeeway(TimeUnit.HOURS.toSeconds(12))
-                .build()
-        try {
-            verifier.verify(jwtToken)
-            return true
-        } catch (JWTVerificationException e) {
-            LOGGER.warning(e.message)
-        }
-        false
-    }
-
-    private static InputStream callLicenseServer(Map payload) {
-        String body = JsonOutput.toJson(payload)
-        HttpsURLConnection connection = (HttpsURLConnection) LICENSE_SERVER_URL.toURL().openConnection()
-        connection.with {
-            it.SSLSocketFactory = trustAllSslSocketFactory()
-            it.doOutput = true
-            it.requestMethod = 'POST'
-            it.connectTimeout = CONNECTION_TIMEOUT
-            it.readTimeout = CONNECTION_TIMEOUT
-            it.outputStream.withWriter { writer -> writer.write(body) }
-            it
-        }.inputStream
-    }
-
-    // FIXME Replace with real certificate
-    @SuppressWarnings('UnusedMethodParameter')
-    private static SSLSocketFactory trustAllSslSocketFactory() throws Exception {
-        TrustManager[] allTM = [ new X509TrustManager() {
-            @Override X509Certificate[] getAcceptedIssuers() { new X509Certificate[0] }
-            @Override void checkClientTrusted(X509Certificate[] chain, String authType) { }
-            @Override void checkServerTrusted(X509Certificate[] chain, String authType) { }
-        }]
-        SSLContext sslContext = SSLContext.getInstance('TLS')
-        sslContext.init(null, allTM , new SecureRandom())
-        sslContext.socketFactory
-    }
-
 }
