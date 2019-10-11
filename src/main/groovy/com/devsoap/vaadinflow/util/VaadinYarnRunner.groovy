@@ -221,7 +221,7 @@ class VaadinYarnRunner extends YarnExecRunner {
         generateYarnRc()
         arguments = [isOffline ? OFFLINE : PREFER_OFFLINE, WORK_DIR_OPTION, workingDir,
                      RUN_COMMAND, BOWER_COMMAND, INSTALL_COMMAND,
-                     '--config.interactive=false' ]
+                     '--config.interactive=false', '--allow-root' ]
         if (isOffline) {
             arguments << OFFLINE
         }
