@@ -22,7 +22,7 @@ buildscript {
     dependencies {
         classpath "com.devsoap:gradle-vaadin-flow-plugin:$pluginVersion"
         classpath "com.moowork.gradle:gradle-node-plugin:1.2.0"
-        classpath "com.devsoap:devsoap-license-plugin:1.0"
+        classpath "com.devsoap:devsoap-license-plugin:1.0.2"
         classpath 'io.github.classgraph:classgraph:4.8.26'
 	}
 }

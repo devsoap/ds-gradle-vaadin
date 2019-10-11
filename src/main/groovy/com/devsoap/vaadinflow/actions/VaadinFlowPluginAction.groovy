@@ -60,7 +60,10 @@ class VaadinFlowPluginAction extends PluginAction {
         project.pluginManager.apply(DevsoapLicensePlugin)
 
         DevsoapLicenseExtension devsoap = project.extensions.getByType(DevsoapLicenseExtension)
-        devsoap.credential(VaadinFlowPlugin.PRODUCT_NAME, null, null) { Credential c ->
+        devsoap.credential(VaadinFlowPlugin.PRODUCT_NAME,
+                System.getProperty('devsoap.gradle-flow-plugin.license.email'),
+                System.getProperty('devsoap.gradle-flow-plugin.license.key')
+        ) { Credential c ->
             c.signature =  Versions.rawVersion('vaadin.plugin.signature')
         }
 
