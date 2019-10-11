@@ -53,7 +53,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
         then:
             result.task(':jar').outcome == SUCCESS
         where:
-            version = '5.0-milestone-1'
+            version = '5.6'
     }
 
     void 'server dependencies are applied to project'() {
