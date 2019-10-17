@@ -283,7 +283,9 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
-    private void bundle(ScanResult scan) {
+    @Internal
+    @PackageScope
+    void bundle(ScanResult scan) {
 
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
 
@@ -379,7 +381,9 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
-    private void checkIdUsage(ScanResult scan) {
+    @Internal
+    @PackageScope
+    void checkIdUsage(ScanResult scan) {
         if (!ignoreIdUsage) {
             List<String> ids = ClassIntrospectionUtils.findIdUsages(scan)
             if (!ids.isEmpty()) {
@@ -452,19 +456,21 @@ class TranspileDependenciesTask extends DefaultTask {
         }
 
         LOGGER.info('Performing annotation scan...')
-        ScanResult scan = LogUtils.measureTime('Scan completed') {
+        LogUtils.measureTime('Scan completed') {
             ClassIntrospectionUtils.getAnnotationScan(project)
-        }
-
-        if (vaadin.compatibilityMode) {
-            bundleInCompatibilityMode(scan)
-        } else {
-            checkIdUsage(scan)
-            bundle(scan)
+        }.withCloseable { ScanResult scan ->
+            if (vaadin.compatibilityMode) {
+                bundleInCompatibilityMode(scan)
+            } else {
+                checkIdUsage(scan)
+                bundle(scan)
+            }
         }
     }
 
-    private void bundleInCompatibilityMode(ScanResult scan) {
+    @Internal
+    @PackageScope
+    void bundleInCompatibilityMode(ScanResult scan) {
         LOGGER.info('Searching for HTML imports...')
         List<String> imports = initHTMLImportsFromComponents(scan)
 
