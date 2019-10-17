@@ -15,6 +15,7 @@
  */
 package com.devsoap.vaadinflow.util
 
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import groovy.util.logging.Log
 import io.github.classgraph.AnnotationInfo
 import io.github.classgraph.ClassGraph
@@ -222,11 +223,17 @@ class ClassIntrospectionUtils {
      *      the result of the scan
      */
     static ScanResult getAnnotationScan(Project project) {
-        new ClassGraph()
+        ClassGraph dependencies = new ClassGraph()
                 .overrideClassLoaders(getClassLoader(project))
                 .enableAnnotationInfo()
                 .enableInterClassDependencies()
-                .scan()
+
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        if (vaadin.whitelistedPackages) {
+            dependencies = dependencies.whitelistPackages(vaadin.whitelistedPackages as String[])
+        }
+
+        dependencies.scan()
     }
 
     private static Map<String, Map<String,String>> findThemes(Project project) {
