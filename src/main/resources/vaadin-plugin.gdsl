@@ -53,6 +53,7 @@ contributor(vaadinCtx, {
         property name: 'compatibilityMode', type: Boolean.name
         property name: 'submitStatistics', type: Boolean.name
         property name: 'baseTheme', type: String.name
+        property name: 'whitelistedPackages', type: String[].name
     }
 })
 
@@ -67,6 +68,7 @@ contributor(closureCtx, {
         property name: 'compatibilityMode', type: Boolean.name
         property name: 'submitStatistics', type: Boolean.name
         property name: 'baseTheme', type: String.name
+        property name: 'whitelistedPackages', type: String[].name
     }
     if(enclosingCall(vaadinClientProperty)) {
         property name: 'offlineCachePath', type: String.name

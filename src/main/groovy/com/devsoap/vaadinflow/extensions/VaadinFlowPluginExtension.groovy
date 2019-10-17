@@ -26,6 +26,7 @@ import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.plugins.ExtraPropertiesExtension
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
 /**
@@ -54,6 +55,7 @@ class VaadinFlowPluginExtension {
     private final Property<Boolean> productionMode
     private final Property<Boolean> compatibilityMode
     private final Property<Boolean> submitStatistics
+    private final ListProperty<String> whitelistedPackages
     private final Property<String> baseTheme
 
     private final DependencyHandler dependencyHandler
@@ -73,6 +75,7 @@ class VaadinFlowPluginExtension {
         productionMode = project.objects.property(Boolean)
         compatibilityMode = project.objects.property(Boolean)
         submitStatistics = project.objects.property(Boolean)
+        whitelistedPackages = project.objects.listProperty(String)
         baseTheme = project.objects.property(String)
 
         project.afterEvaluate {
@@ -215,6 +218,20 @@ class VaadinFlowPluginExtension {
     void setSubmitStatistics(boolean enabled) {
         statisticsApplied = true
         submitStatistics.set(enabled)
+    }
+
+    /**
+     * Get an optional whitelist with packages to scan
+     */
+    Collection<String> getWhitelistedPackages() {
+        whitelistedPackages.getOrElse([])
+    }
+
+    /**
+     * Set an optional whitelist with packages to scan
+     */
+    void setWhitelistedPackages(Collection<String> packages) {
+        whitelistedPackages.set(packages)
     }
 
     /**
