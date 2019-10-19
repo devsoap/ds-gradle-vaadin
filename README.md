@@ -23,6 +23,9 @@ With a PRO subscription you will further get the following perks:
 
 You can order your PRO subscription [here](https://devsoap.com/store/?product=gradle-vaadin-flow).
 
+*New!!* 
+For every pull request you get merged you will get a one month PRO subscription for **FREE**. Once the pull request is merged, monitor your email address used in your commit for the credentials.
+
 # License
 
 This plugin is distributed under the Apache License 2.0 license. For more information about the license see the LICENSE file 
