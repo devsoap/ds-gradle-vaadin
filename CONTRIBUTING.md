@@ -128,9 +128,3 @@ again.
 
 It is encouraged to use git rebase when pushing changes to the pull request branches as that will keep the Git history
 clean once the pull request is merged.
-
-
-
-
-
-
