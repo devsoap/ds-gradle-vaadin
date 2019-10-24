@@ -21,6 +21,7 @@ import groovy.transform.Memoized
 import groovy.transform.PackageScope
 import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
+import org.gradle.api.Project
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
@@ -71,12 +72,13 @@ class VersionCheckTask extends DefaultTask {
     @TaskAction
     void run() {
         VersionNumber pluginVersion =  Versions.version('vaadin.plugin.version')
-        if (latestReleaseVersion > pluginVersion) {
-            LOGGER.warning "A newer version of the Gradle Vaadin Flow plugin is available ($latestReleaseVersion)"
+        VersionNumber latestVersion = getLatestReleaseVersion(project)
+        if (latestVersion > pluginVersion) {
+            LOGGER.warning "A newer version of the Gradle Vaadin Flow plugin is available ($latestVersion)"
         } else {
             LOGGER.info('You are using the latest plugin. Excellent!')
         }
-        versionCacheFile.text = latestReleaseVersion.toString()
+        versionCacheFile.text = latestVersion.toString()
     }
 
     /**
@@ -85,8 +87,13 @@ class VersionCheckTask extends DefaultTask {
      * @return
      *      the latest released version number
      */
-    static VersionNumber getLatestReleaseVersion() {
+    static VersionNumber getLatestReleaseVersion(Project project) {
         VersionNumber version = VersionNumber.UNKNOWN
+
+        if (project.gradle.startParameter.offline) {
+            return version
+        }
+
         try {
             String html = URL.toURL().text
             Matcher matcher = html =~ /Version (\S+)/
