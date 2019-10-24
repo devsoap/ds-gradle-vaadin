@@ -17,6 +17,7 @@ package com.devsoap.vaadinflow.actions
 
 import static com.devsoap.license.DevsoapLicenseExtension.Credential
 
+import org.gradle.api.internal.artifacts.BaseRepositoryFactory
 import com.devsoap.license.DevsoapLicenseExtension
 import com.devsoap.license.DevsoapLicensePlugin
 import com.devsoap.license.Validator
@@ -87,7 +88,10 @@ class VaadinFlowPluginAction extends PluginAction {
 
             repositories.maven { repository ->
                 repository.name = 'Gradle Plugin Portal'
-                repository.url = 'https://plugins.gradle.org/m2/'
+                repository.url = (
+                        System.getProperty(BaseRepositoryFactory.PLUGIN_PORTAL_OVERRIDE_URL_PROPERTY) ?:
+                                BaseRepositoryFactory.PLUGIN_PORTAL_DEFAULT_URL
+                )
             }
 
             String pluginDependency =
