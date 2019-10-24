@@ -84,6 +84,7 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String WARN_BUNDLE_EXCLUDES_ONLY_AVAILABLE_IN_COMP_MODE =
             'bundleExcludes only supported in compatibility mode.'
     private static final String RUN_WITH_INFO_FOR_MORE_INFORMATION = 'Run with --info to get more information.'
+    private static final String VAADIN_FLOW_PACKAGE = 'com.vaadin.flow'
 
     final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
@@ -397,6 +398,38 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
+    @Internal
+    @PackageScope
+    void checkJsModulesInCompatibilityMode(ScanResult scan) {
+        Map<String,String> modules = ClassIntrospectionUtils
+                .findJsModules(scan)
+                .findAll { k, v -> !v.startsWith(VAADIN_FLOW_PACKAGE) }
+        if (!modules.isEmpty()) {
+            LOGGER.severe('Javascript modules is not supported in compatibility mode.')
+            LOGGER.severe('The following classes contains @JSModule annotations')
+            modules.fineach { k, v -> LOGGER.severe("\t$v") }
+            LOGGER.severe('Please use HTML imports instead.')
+            throw new GradleException('Unsupported @JavascriptModule annotations found in compatibility mode. ' +
+                    RUN_WITH_INFO_FOR_MORE_INFORMATION)
+        }
+    }
+
+    @Internal
+    @PackageScope
+    void checkCssImportsInCompatibilityMode(ScanResult scan) {
+        Map<String,String> imports = ClassIntrospectionUtils
+                .findCssImports(scan)
+                .findAll { k, v -> !v.startsWith(VAADIN_FLOW_PACKAGE) }
+        if (!imports.isEmpty()) {
+            LOGGER.severe('Css imports is not supported in compatibility mode.')
+            LOGGER.severe('The following classes contains @CssImport annotations')
+            imports.each { k, v -> LOGGER.severe("\t$v") }
+            LOGGER.severe('Please use Stylesheet imports instead.')
+            throw new GradleException('Unsupported @CssImport annotations found in compatibility mode. ' +
+                    RUN_WITH_INFO_FOR_MORE_INFORMATION)
+        }
+    }
+
     @TaskAction
     void run() {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
@@ -460,6 +493,8 @@ class TranspileDependenciesTask extends DefaultTask {
             ClassIntrospectionUtils.getAnnotationScan(project)
         }.withCloseable { ScanResult scan ->
             if (vaadin.compatibilityMode) {
+                checkJsModulesInCompatibilityMode(scan)
+                checkCssImportsInCompatibilityMode(scan)
                 bundleInCompatibilityMode(scan)
             } else {
                 checkIdUsage(scan)
