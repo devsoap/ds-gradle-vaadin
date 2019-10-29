@@ -28,8 +28,10 @@ For every pull request you get merged you will get a one month PRO subscription 
 
 # License
 
-This plugin is distributed under the Apache License 2.0 license. For more information about the license see the LICENSE file 
-in the root directory of the repository. A signed CLA is required when contributing to the project.
+This plugin is distributed under the Creative Commons Attribution-NoDerivatives 4.0 International Public License. For more 
+information about the license see the LICENSE file in the root directory of the repository. 
+
+A signed CLA is required when contributing to the project.
 
 # Contributing to the project
 
