@@ -50,10 +50,10 @@ class InstallYarnDependenciesTask extends DefaultTask {
     private static final String PACKAGE_JSON = 'package.json'
     private static final String NODE_MODULES = 'node_modules'
 
-    final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
-    final File distDir = new File(workingDir, 'dist')
+    protected final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+    protected final File distDir = new File(workingDir, 'dist')
 
-    final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
+    protected final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
 
     @OutputFile
     final File appPackageJson = new File(distDir, PACKAGE_JSON)

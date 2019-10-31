@@ -36,7 +36,7 @@ class FunctionalTest extends Specification {
 
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
 
-    static final String DEFAULT_TEST_VAADIN_VERSION = '14.0.3'
+    static final String DEFAULT_TEST_VAADIN_VERSION = '14.0.11'
 
     @Rule
     protected TemporaryFolder testProjectDir

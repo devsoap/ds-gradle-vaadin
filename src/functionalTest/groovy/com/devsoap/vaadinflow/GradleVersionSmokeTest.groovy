@@ -31,7 +31,7 @@ import spock.lang.Unroll
 @Smoke
 class GradleVersionSmokeTest extends FunctionalTest {
 
-    private static final List<String> VERSIONS = ['5.6']
+    private static final List<String> VERSIONS = ['5.6', '6.0-rc-2']
 
     @Unroll
     void 'Test Gradle #version'(String version) {
@@ -41,7 +41,10 @@ class GradleVersionSmokeTest extends FunctionalTest {
             '''.stripIndent()
             run( { it.withGradleVersion(version) }, 'vaadinCreateProject')
         when:
-            BuildResult result = run( { it.withGradleVersion(version) }, 'jar')
+            BuildResult result = run( {
+                it.withGradleVersion(version)
+                it.arguments = ['--warning-mode', 'all'] + it.arguments
+            }, 'jar')
         then:
             result.task(':jar').outcome == TaskOutcome.SUCCESS
             !result.output.contains('Deprecated Gradle features')

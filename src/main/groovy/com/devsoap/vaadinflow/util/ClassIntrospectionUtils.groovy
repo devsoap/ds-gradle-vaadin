@@ -69,6 +69,8 @@ class ClassIntrospectionUtils {
                 File file = new File(frontendDir, path)
                 if (file.exists()) {
                     addImport(project, file, htmlImports, path, themes.get(selectedTheme, null))
+                } else {
+                    LOGGER.warning("Could not find HTML import $file.path, import will be ignored.")
                 }
             }
         }
@@ -225,17 +227,17 @@ class ClassIntrospectionUtils {
      *      the result of the scan
      */
     static ScanResult getAnnotationScan(Project project) {
-        ClassGraph dependencies = new ClassGraph()
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        Collection<String> whitelist = vaadin.whitelistedPackages
+        LOGGER.info('Scanning with whitelist:')
+        whitelist.each { LOGGER.info("\t${it}") }
+
+        new ClassGraph()
                 .overrideClassLoaders(getClassLoader(project))
                 .enableAnnotationInfo()
                 .enableInterClassDependencies()
-
-        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        if (vaadin.whitelistedPackages) {
-            dependencies = dependencies.whitelistPackages(vaadin.whitelistedPackages as String[])
-        }
-
-        dependencies.scan()
+                .whitelistPackages(whitelist as String[])
+                .scan()
     }
 
     private static Map<String, Map<String,String>> findThemes(Project project) {

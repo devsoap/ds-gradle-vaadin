@@ -197,6 +197,12 @@ class NodeSetupTask extends DefaultTask {
                     ivy NodeSetupTask.IVY_XML_PATH
                 }
             }
+            if (IvyArtifactRepository.metaClass.respondsTo(this, 'metadataSources', Closure)) {
+                //Gradle 6 ->
+                metadataSources {
+                    artifact()
+                }
+            }
         }
     }
 
