@@ -27,6 +27,8 @@ import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 
 import java.nio.file.Paths
@@ -52,6 +54,7 @@ class WrapCssTask extends DefaultTask {
 
     @Optional
     @InputDirectory
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final Closure<File> cssSourceDir = {
         AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
@@ -63,6 +66,7 @@ class WrapCssTask extends DefaultTask {
 
     @Optional
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final Closure<FileTree> cssFiles = {
         File stylesPath = cssSourceDir.call()
         if (stylesPath && stylesPath.exists()) {
@@ -73,6 +77,7 @@ class WrapCssTask extends DefaultTask {
 
     @Optional
     @InputFiles
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final Closure<FileTree> sassCssFiles = {
         File stylesPath = Paths.get(project.buildDir.canonicalPath, 'jsass').toFile()
         stylesPath.exists() ? project.fileTree(stylesPath).matching { it.include(CSS_REGEXP) } : null

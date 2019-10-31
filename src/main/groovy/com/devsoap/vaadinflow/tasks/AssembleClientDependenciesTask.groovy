@@ -26,6 +26,8 @@ import org.gradle.api.GradleException
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.LocalState
 import org.gradle.api.tasks.TaskAction
 
 import java.nio.file.Paths
@@ -48,19 +50,21 @@ class AssembleClientDependenciesTask extends DefaultTask {
     private static final String VAADIN = 'VAADIN'
     private static final String BUILD = 'build'
     private static final String WEBCOMPONENTS_LOADER = 'webcomponents-loader.js'
-    public static final String BUNDLES = 'bundles/*.js'
 
-    final File frontendBuildDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
-    final File sourceDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es5')
-    final File sourceDirEs6 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR + '/build/frontend-es6')
+    protected static final String BUNDLES = 'bundles/*.js'
 
-    final File webAppGenDir = new File(project.buildDir, 'webapp-gen')
-    final File webAppGenFrontendDir = new File(webAppGenDir, FRONTEND)
+    protected final File frontendBuildDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+    protected final File sourceDirEs5 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR +
+            '/build/frontend-es5')
+    protected final File sourceDirEs6 = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR +
+            '/build/frontend-es6')
 
-    final File targetDirEs5 = new File(webAppGenDir, 'frontend-es5')
-    final File targetDirEs6 = new File(webAppGenDir, 'frontend-es6')
+    protected final File webAppGenDir = new File(project.buildDir, 'webapp-gen')
+    protected final File webAppGenFrontendDir = new File(webAppGenDir, FRONTEND)
+    protected final File targetDirEs5 = new File(webAppGenDir, 'frontend-es5')
+    protected final File targetDirEs6 = new File(webAppGenDir, 'frontend-es6')
 
-    final RegularFileProperty webappDir = project.objects.fileProperty()
+    protected final RegularFileProperty webappDir = project.objects.fileProperty()
 
     /**
      * Assembles the built client artifacts into the webapp frontend directories
@@ -196,6 +200,7 @@ class AssembleClientDependenciesTask extends DefaultTask {
     /**
      * Get the webapp directory which contains the frontend directory
      */
+    @Internal
     File getWebappDir() {
         webappDir.getOrElse(null)?.asFile ?: project.file('src/main/webapp')
     }
@@ -210,6 +215,7 @@ class AssembleClientDependenciesTask extends DefaultTask {
     /**
      * Has the webapp directory been set by the user?
      */
+    @Internal
     boolean isWebappDirSet() {
         webappDir.present
     }

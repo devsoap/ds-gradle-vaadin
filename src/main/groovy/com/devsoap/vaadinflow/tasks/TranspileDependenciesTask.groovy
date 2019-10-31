@@ -36,12 +36,15 @@ import org.gradle.api.GradleException
 import org.gradle.api.file.CopySpec
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.CacheableTask
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 import org.gradle.internal.hash.HashUtil
@@ -88,12 +91,12 @@ class TranspileDependenciesTask extends DefaultTask {
     private static final String RUN_WITH_INFO_FOR_MORE_INFORMATION = 'Run with --info to get more information.'
     private static final String VAADIN_FLOW_PACKAGE = 'com.vaadin.flow'
 
-    final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
-    final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
-    final File srcDir = new File(workingDir, 'src')
-    final File webappGenDir = new File(project.buildDir, 'webapp-gen')
-    final File webappGenFrontendDir = new File(webappGenDir, FRONTEND)
-    final Closure<File> configDir = {
+    protected final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+    protected final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
+    protected final File srcDir = new File(workingDir, 'src')
+    protected final File webappGenDir = new File(project.buildDir, 'webapp-gen')
+    protected final File webappGenFrontendDir = new File(webappGenDir, FRONTEND)
+    protected final Closure<File> configDir = {
         File rootDir = SpringBootAction.isActive(project) ? webappGenDir :
                 Paths.get(project.buildDir.canonicalPath, 'resources', 'main').toFile()
         Paths.get(rootDir.canonicalPath, 'META-INF', VAADIN, 'config').toFile()
@@ -109,6 +112,7 @@ class TranspileDependenciesTask extends DefaultTask {
     @Deprecated
     @Optional
     @InputDirectory
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final Closure<File> webappGenFrontendStylesDir = {
         new File(webappGenFrontendDir, STYLES).with { it.exists() ? it : null }
     }
@@ -116,6 +120,7 @@ class TranspileDependenciesTask extends DefaultTask {
     @Deprecated
     @Optional
     @InputDirectory
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final Closure<File> webappGenFrontendTemplatesDir = {
         new File(webappGenFrontendDir, TEMPLATES).with { it.exists() ? it : null }
     }
@@ -123,6 +128,7 @@ class TranspileDependenciesTask extends DefaultTask {
     @Deprecated
     @Optional
     @InputDirectory
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final Closure<File> webTemplatesDir = {
         AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
         Paths.get(assembleTask.webappDir.canonicalPath, FRONTEND, TEMPLATES).toFile().with { it.exists() ? it : null }
@@ -131,12 +137,14 @@ class TranspileDependenciesTask extends DefaultTask {
     @Deprecated
     @Optional
     @InputDirectory
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final Closure<File> webStylesDir = {
         AssembleClientDependenciesTask assembleTask = project.tasks.findByName(AssembleClientDependenciesTask.NAME)
         Paths.get(assembleTask.webappDir.canonicalPath, FRONTEND, STYLES).toFile().with { it.exists() ? it : null }
     }
 
     @InputDirectory
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final File nodeModules = new File(workingDir, NODE_MODULES)
 
     @Optional
@@ -149,18 +157,21 @@ class TranspileDependenciesTask extends DefaultTask {
     @Deprecated
     @Optional
     @InputDirectory
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final Closure<File> bowerComponents = {
         new File(workingDir, BOWER_COMPONENTS).with { it.exists() ? it : null }
     }
 
     @Optional
     @InputDirectory
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final Closure<File> unpackedStaticResources = {
         new File(workingDir, 'static').with { it.exists() ? it : null }
     }
 
     @Optional
     @InputDirectory
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final Closure<File> stylesheetsSources = {
         Paths.get(project.projectDir.canonicalPath,
                 JavaPluginAction.STYLESHEETS_SOURCES.split(SLASH))
@@ -169,6 +180,7 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @Optional
     @InputDirectory
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final Closure<File> javascriptSources = {
         Paths.get(project.projectDir.canonicalPath,
                 JavaPluginAction.JAVASCRIPT_SOURCES.split(SLASH))
@@ -176,6 +188,7 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final File packageJson = new File(workingDir, PACKAGE_JSON_FILE)
 
     @Optional
@@ -286,7 +299,6 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
-    @Internal
     @PackageScope
     void bundle(ScanResult scan) {
 
@@ -384,7 +396,6 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
-    @Internal
     @PackageScope
     void checkIdUsage(ScanResult scan) {
         if (!ignoreIdUsage) {
@@ -400,7 +411,6 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
-    @Internal
     @PackageScope
     void checkJsModulesInCompatibilityMode(ScanResult scan) {
         Map<String,String> modules = ClassIntrospectionUtils
@@ -416,7 +426,6 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
-    @Internal
     @PackageScope
     void checkCssImportsInCompatibilityMode(ScanResult scan) {
         Map<String,String> imports = ClassIntrospectionUtils
@@ -505,7 +514,6 @@ class TranspileDependenciesTask extends DefaultTask {
         }
     }
 
-    @Internal
     @PackageScope
     void bundleInCompatibilityMode(ScanResult scan) {
         LOGGER.info('Searching for HTML imports...')
@@ -570,6 +578,7 @@ class TranspileDependenciesTask extends DefaultTask {
      * @deprecated since 1.3 in favour of importExcludes
      */
     @Deprecated
+    @Internal
     List<String> getBundleExcludes() {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
         if (vaadin.compatibilityMode) {
@@ -581,6 +590,7 @@ class TranspileDependenciesTask extends DefaultTask {
     /**
      * Get import exclusions
      */
+    @Input
     List<String> getImportExcludes() {
         importExcludes.getOrElse([])
     }

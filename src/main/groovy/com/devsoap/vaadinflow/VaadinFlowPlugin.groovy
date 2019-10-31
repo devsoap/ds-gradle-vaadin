@@ -66,7 +66,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
     static final String PLUGIN_ID = 'com.devsoap.vaadin-flow'
     static final String PRODUCT_NAME = 'gradle-vaadin-flow'
 
-    private static final String COMPILE_CONFIGURATION = 'compile'
+    private static final String COMPILE_CONFIGURATION = 'implementation'
     private final List<PluginAction> actions = []
 
     @Inject

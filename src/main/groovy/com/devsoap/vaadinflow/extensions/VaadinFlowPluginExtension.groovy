@@ -19,6 +19,7 @@ package com.devsoap.vaadinflow.extensions
 
 import com.devsoap.license.Validator
 import com.devsoap.vaadinflow.VaadinFlowPlugin
+import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
 import org.gradle.api.GradleException
@@ -27,9 +28,13 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.dsl.RepositoryHandler
 import org.gradle.api.artifacts.repositories.ArtifactRepository
+import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.plugins.ExtraPropertiesExtension
+import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.tasks.SourceSet
+import org.gradle.util.RelativePathUtil
 
 /**
  * The main plugin extension
@@ -41,16 +46,18 @@ import org.gradle.api.provider.Property
 class VaadinFlowPluginExtension {
 
     static final String NAME = VAADIN
-    static final String GROUP = 'com.vaadin'
+    static final String GROUP = VAADIN_ROOT_PACKAGE
     static final String VAADIN = 'vaadin'
 
     private static final String COLON = ':'
-    private static final String COMPILE = 'compile'
+    private static final String COMPILE = 'implementation'
     private static final String BOM_ARTIFACT_NAME = 'bom'
     private static final String VAADIN_VERSION_PROPERTY = 'vaadinVersion'
     private static final String LUMO = 'lumo'
     private static final String TRUE = 'true'
     private static final String COMPATIBILITY_MODE_PROPERTY = 'vaadin.compatibilityMode'
+    private static final String VAADIN_ROOT_PACKAGE = 'com.vaadin'
+    private static final String GROOVY_STRING = 'groovy'
 
     private final Property<String> version
     private final Property<Boolean> unsupportedVersion
@@ -224,9 +231,42 @@ class VaadinFlowPluginExtension {
 
     /**
      * Get an optional whitelist with packages to scan
+     *
+     *  Defaults to all project packages as well as com.vaadin-packages
      */
     Collection<String> getWhitelistedPackages() {
-        whitelistedPackages.getOrElse([])
+        if (whitelistedPackages.present && !whitelistedPackages.get().empty) {
+            return whitelistedPackages.get()
+        }
+
+        LOGGER.info('Returning default whitelisted packages...')
+        List<String> defaultPackages = [VAADIN_ROOT_PACKAGE]
+        ProjectType type = ProjectType.get(project)
+        JavaPluginConvention javaPlugin = project.convention.getPlugin(JavaPluginConvention)
+
+        List<SourceDirectorySet> sourceDirectories = []
+
+        SourceSet mainSourceSet = javaPlugin.sourceSets.main
+        sourceDirectories.add(mainSourceSet.java)
+
+        if (mainSourceSet.hasProperty(GROOVY_STRING)) {
+           sourceDirectories.add(mainSourceSet.groovy)
+        }
+
+        if (mainSourceSet.hasProperty('kotlin')) {
+            sourceDirectories.add(mainSourceSet.kotlin)
+        }
+
+        sourceDirectories.each { srcDirSet ->
+            File srcDir = srcDirSet.sourceDirectories.first()
+            defaultPackages += mainSourceSet.allSource
+                .filter { File f -> f.path.endsWith(".${type.extension}") }
+                .filter { File f -> f.exists() }
+                .collect { File f -> RelativePathUtil.relativePath(srcDir, f.parentFile) }
+                .findAll { String path -> !path.startsWith('..') }
+                .collect { String path -> path.replace('/', '.').trim() }
+        }
+        defaultPackages.unique()
     }
 
     /**
@@ -263,7 +303,7 @@ class VaadinFlowPluginExtension {
 
         DependencyHandler dh = dependencyHandler // Because Groovy bug hiding this private field from closure
 
-        project.plugins.withId('groovy') {
+        project.plugins.withId(GROOVY_STRING) {
             dh.add(COMPILE, groovy())
         }
 
@@ -460,7 +500,7 @@ class VaadinFlowPluginExtension {
     }
 
     /**
-     * Provides a clusure that will exclude all Vaadin theme dependencies
+     * Provides a closure that will exclude all Vaadin theme dependencies
      */
     private final Closure<Void> excludeThemesConfiguration = {
         exclude group: GROUP, module: 'vaadin-material-theme'
