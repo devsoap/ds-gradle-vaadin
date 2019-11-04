@@ -69,8 +69,6 @@ class ClassIntrospectionUtils {
                 File file = new File(frontendDir, path)
                 if (file.exists()) {
                     addImport(project, file, htmlImports, path, themes.get(selectedTheme, null))
-                } else {
-                    LOGGER.warning("Could not find HTML import $file.path, import will be ignored.")
                 }
             }
         }
