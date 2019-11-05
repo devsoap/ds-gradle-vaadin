@@ -70,7 +70,7 @@ class NodePlugin implements Plugin<Project> {
     }
 
     private void addTasks() {
-        this.project.tasks.create( NpmInstallTask.NAME, NpmInstallTask )
+        this.project.tasks.create( NpmInstallTask.NAME, YarnInstallTask )
         this.project.tasks.create( YarnInstallTask.NAME, YarnInstallTask )
         this.setupTask = this.project.tasks.create( NodeSetupTask.NAME, NodeSetupTask )
         this.npmSetupTask = this.project.tasks.create( NpmSetupTask.NAME, NpmSetupTask )
