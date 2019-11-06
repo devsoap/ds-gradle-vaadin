@@ -6,7 +6,7 @@ not yet support ES6 and helps with integrating with other useful Gradle plugins.
 
 [![Build Status](https://api.travis-ci.org/devsoap/gradle-vaadin-flow.svg?branch=master)](https://travis-ci.org/devsoap/gradle-vaadin-flow)
 [![Latest Release](https://img.shields.io/github/release/devsoap/gradle-vaadin-flow.svg)](https://plugins.gradle.org/plugin/com.devsoap.vaadin-flow)
-[![License](https://img.shields.io/github/license/devsoap/gradle-vaadin-flow.svg)](https://github.com/devsoap/gradle-vaadin-flow/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/devsoap/gradle-vaadin-flow.svg)](https://creativecommons.org/licenses/by-nd/4.0/)
 
 # Getting started
 
