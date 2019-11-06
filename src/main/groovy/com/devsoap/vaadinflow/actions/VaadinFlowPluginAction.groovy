@@ -123,11 +123,14 @@ class VaadinFlowPluginAction extends PluginAction {
             DevsoapLicenseExtension devsoap = project.extensions[DevsoapLicenseExtension.NAME]
             Credential credential = devsoap.getCredential(VaadinFlowPlugin.PRODUCT_NAME)
             LogUtils.printIfNotPrintedBefore( project,
-                    "Using DS Gradle Vaadin Flow Plugin $vaadinVersion (Licensed to ${credential.email})"
+                    "Using DS Gradle Vaadin Flow Plugin $vaadinVersion (Licensed to ${credential.email})",
+                    true
             )
         } else {
             LogUtils.printIfNotPrintedBefore( project,
-                    "Using DS Gradle Vaadin Flow Plugin $vaadinVersion (UNLICENSED)"
+                    "Using DS Gradle Vaadin Flow Plugin $vaadinVersion (UNLICENSED). Hide this message using --quiet " +
+                            'with PRO subscription.',
+                    false
             )
         }
 

@@ -19,15 +19,12 @@ package com.devsoap.vaadinflow.util
 
 import groovy.time.TimeCategory
 import groovy.time.TimeDuration
-import groovy.transform.MapConstructor
-import groovy.transform.Memoized
 import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.internal.io.LineBufferingOutputStream
 import org.gradle.internal.io.TextStream
 
 import javax.annotation.Nullable
-import java.nio.charset.StandardCharsets
 import java.util.logging.Level
 
 /**
@@ -52,8 +49,8 @@ class LogUtils {
         result
     }
 
-    static final void printIfNotPrintedBefore(Project project, String message) {
-        SingletonPrinter.instance.printIfNotPrintedBefore(project, message)
+    static final void printIfNotPrintedBefore(Project project, String message, boolean licensed) {
+        SingletonPrinter.instance.printIfNotPrintedBefore(project, message, licensed)
     }
 
     @Log('LOGGER')
@@ -86,10 +83,14 @@ class LogUtils {
 
         private final Map<String, Boolean> messageStatus = [:]
 
-        void printIfNotPrintedBefore(Project project, String message) {
+        void printIfNotPrintedBefore(Project project, String message, boolean licensed) {
             messageStatus.putIfAbsent(message, true)
             if ( messageStatus[message] ) {
-                project.logger.quiet(message)
+                if (!licensed) {
+                    project.logger.quiet(message)
+                } else if (project.logger.lifecycleEnabled) {
+                    project.logger.lifecycle(message)
+                }
                 messageStatus[message] = false
             }
         }
