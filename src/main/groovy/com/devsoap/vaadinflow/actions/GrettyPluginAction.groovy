@@ -24,6 +24,7 @@ import com.devsoap.vaadinflow.util.PackagingUtil
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import com.devsoap.vaadinflow.util.Versions
 import com.devsoap.vaadinflow.util.WebJarHelper
+import groovy.transform.PackageScope
 import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -49,7 +50,8 @@ class GrettyPluginAction extends PluginAction {
     private static final String SERVLET_CONTAINER = 'jetty9.4'
     private static final String JAR_TASK = 'jar'
 
-    private boolean buildingProduct = false
+    @PackageScope
+    protected boolean buildingProduct = false
 
     @Override
     void apply(Project project) {
@@ -61,7 +63,9 @@ class GrettyPluginAction extends PluginAction {
     protected void execute(Project project) {
         super.execute(project)
         project.gretty.servletContainer = SERVLET_CONTAINER
-        buildingProduct = project.gradle.startParameter.taskNames.findAll { it.contains('buildProduct') }.size() > 0
+        project.gradle.taskGraph.whenReady {
+            it.allTasks.each { buildingProduct |= it.name.contains('buildProduct') }
+        }
     }
 
     @Override
