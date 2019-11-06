@@ -102,6 +102,7 @@ class NodePluginAction extends PluginAction {
         File npmrc = new File(frontend, NPM_RC_FILENAME)
         if (!npmrc.exists()) {
             Map<String, Object> params = [:]
+            params['update-notifier'] = false
 
             if (HttpUtils.httpsProxy) {
                 params['https-proxy'] = HttpUtils.httpsProxy
