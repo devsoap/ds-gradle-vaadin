@@ -19,6 +19,7 @@ package com.devsoap.vaadinflow.util
 
 import com.devsoap.vaadinflow.VaadinFlowPlugin
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
+import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.moowork.gradle.node.NodeExtension
 import com.moowork.gradle.node.variant.Variant
 import org.gradle.api.Project
@@ -56,6 +57,10 @@ class VaadinYarnRunnerTest extends Specification {
         project.extensions.getByType(NodeExtension).with {
             variant = new Variant()
             variant.windows = false
+        }
+
+        project.extensions.getByType(VaadinFlowPluginExtension).with {
+            compatibilityMode = true
         }
 
         runner = new TestRunner(project, workingDir, Mock(ExecResult))
