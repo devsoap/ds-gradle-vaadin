@@ -195,8 +195,11 @@ class VaadinFlowPluginExtension {
             compatibilityMode.getOrElse(Boolean.parseBoolean(System.getProperty(COMPATIBILITY_MODE_PROPERTY,
                     Boolean.FALSE.toString())))
         } else {
-            LOGGER.info('License check failed, running in compatibility mode.')
-            true
+            LOGGER.severe('Vaadin 14 support is only available for PRO subscribers. ' +
+                    'Please provide your PRO credentials or set vaadin.compatibilityMode=true ' +
+                    'to run in compatibility mode for free.')
+            throw new GradleException('Vaadin 14 NPM support is only available for PRO subscribers. Set vaadin' +
+                    '.compatibilityMode=true to use the plugin for free.')
         }
     }
 
