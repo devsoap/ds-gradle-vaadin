@@ -58,6 +58,7 @@ class VaadinFlowPluginExtension {
     private static final String COMPATIBILITY_MODE_PROPERTY = 'vaadin.compatibilityMode'
     private static final String VAADIN_ROOT_PACKAGE = 'com.vaadin'
     private static final String GROOVY_STRING = 'groovy'
+    private static final String ROUTE = 'route'
 
     private final Property<String> version
     private final Property<Boolean> unsupportedVersion
@@ -65,6 +66,7 @@ class VaadinFlowPluginExtension {
     private final Property<Boolean> compatibilityMode
     private final Property<Boolean> submitStatistics
     private final ListProperty<String> whitelistedPackages
+    private final Property<String> scanStrategy
     private final Property<String> baseTheme
 
     private final DependencyHandler dependencyHandler
@@ -85,6 +87,7 @@ class VaadinFlowPluginExtension {
         compatibilityMode = project.objects.property(Boolean)
         submitStatistics = project.objects.property(Boolean)
         whitelistedPackages = project.objects.listProperty(String)
+        scanStrategy = project.objects.property(String)
         baseTheme = project.objects.property(String)
 
         project.afterEvaluate {
@@ -291,6 +294,36 @@ class VaadinFlowPluginExtension {
      */
     void setBaseTheme(String theme) {
         baseTheme.set(theme)
+    }
+
+    /**
+     * Get the strategy which the classpath scanner uses to resolve dependencies
+     *
+     * The strategy can be one of the following:
+     *   route - Uses @Route and scans all its referencing classes
+     *   whitelist - Finds all classes that matches the whitelistedPackages filter
+     *
+     * @return
+     *      the current strategy. By default 'route'
+     */
+    String getScanStrategy() {
+        scanStrategy.getOrElse(ROUTE)
+    }
+
+    /**
+     * Set the strategy which the classpath scanner uses to resolve dependencies
+     *
+     * The strategy can be one of the following:
+     *   route - Uses @Route and scans all its referencing classes
+     *   whitelist - Finds all classes that matches the whitelistedPackages filter
+     *
+     */
+    void setScanStrategy(String strategy) {
+        if (strategy in [ROUTE, 'whitelist']) {
+            scanStrategy.set(strategy)
+        } else {
+            throw new IllegalArgumentException("Scan strategy can either be 'route' or 'whitelist'.")
+        }
     }
 
     /**

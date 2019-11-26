@@ -94,6 +94,15 @@ class ClassIntrospectionUtils {
         jsImports
     }
 
+    /**
+     * Get all Javascript imports by route
+     *
+     * @since 1.3
+     * @param scan
+     *       The classpath scan with the annotations
+     * @return
+     *        a list of Js imports
+     */
     static final Map<String, String> findJsImportsByRoute(ScanResult scan) {
         Map<String, String> modules = [:]
         List<String> processedClasses = []
@@ -102,6 +111,25 @@ class ClassIntrospectionUtils {
         }
         LOGGER.info("Scanned ${processedClasses.size()} classes.")
         modules
+    }
+
+    /**
+     * Get all Javascript imports by whitelist
+     *
+     * @since 1.3
+     * @param scan
+     *       The classpath scan with the annotations
+     * @return
+     *        a list of Js imports
+     */
+    static final Map<String, String> findJsImportsByWhitelist(ScanResult scan) {
+        Map<String, String> jsImports = [:]
+        scan.getClassesWithAnnotation(JS_IMPORT_FQN).each { clz ->
+            clz.getAnnotationInfoRepeatable(JS_IMPORT_FQN).each {
+                jsImports.put(it.parameterValues.value.value.toString(), clz.name)
+            }
+        }
+        jsImports
     }
 
     /**
@@ -143,14 +171,14 @@ class ClassIntrospectionUtils {
     }
 
     /**
-     * Find all JsModules in project
+     * Find all JsModules in project using route strategy
      *
      * @param scan
      *      the classpath scan with the annotations
      * @return
      *      the values of the js modules
      */
-    static final Map<String, String> findJsModules(ScanResult scan) {
+    static final Map<String, String> findJsModulesByRoute(ScanResult scan) {
         Map<String, String> modules = [:]
         List<String> processedClasses = []
         scan.getClassesWithAnnotation(ROUTE_FQN).each { ClassInfo ci ->
@@ -161,20 +189,61 @@ class ClassIntrospectionUtils {
     }
 
     /**
-     * Find all CSSImports in project
+     * Gets all JsModules from the whitelisted scan
+     *
+     * The whitelist is set in #VaadinFlowPluginExtension.whitelistedPackages and is performed
+     * when the scan is created.
+     *
+     * @param scan
+     *      the classpath scan with the annotations
+     * @return
+     *      the values of the js modules
+     */
+    static final Map<String,String> findJsModulesByWhitelist(ScanResult scan) {
+        Map<String, String> modules = [:]
+        scan.getClassesWithAnnotation(JS_MODULE_FQN).each { ClassInfo ci ->
+            ci.getAnnotationInfoRepeatable(JS_MODULE_FQN).each { AnnotationInfo a ->
+                modules[a.parameterValues.value.value.toString()] = ci.name
+            }
+        }
+        modules
+    }
+
+    /**
+     * Find all CSSImports in project using route strategy
+     *
      * @since 1.3
      * @param scan
-     *      the classpath scan with the annoations
+     *      the classpath scan with the annotations
      * @return
      *      the values of the css imports
      */
-    static final Map<String,String> findCssImports(ScanResult scan) {
+    static final Map<String,String> findCssImportsByRoute(ScanResult scan) {
         Map<String, String> imports = [:]
         List<String> processedClasses = []
         scan.getClassesWithAnnotation(ROUTE_FQN).each { ClassInfo ci ->
             findImportModulesByDependencies(ci, imports, CSS_IMPORT_FQN, processedClasses)
         }
         LOGGER.info("Scanned ${processedClasses.size()} classes.")
+        imports
+    }
+
+    /**
+     * Find all CSSImports in project using whitelist
+     *
+     * @since 1.3
+     * @param scan
+     *      the classpath scan with the annotations
+     * @return
+     *      the values of the css imports
+     */
+    static final Map<String,String> findCssImportsByWhitelist(ScanResult scan) {
+        Map<String, String> imports = [:]
+        scan.getClassesWithAnnotation(CSS_IMPORT_FQN).collect { ClassInfo ci ->
+            ci.getAnnotationInfoRepeatable(CSS_IMPORT_FQN).each { AnnotationInfo a ->
+                imports[a.parameterValues.value.value.toString()] = ci.name
+            }
+        }
         imports
     }
 
