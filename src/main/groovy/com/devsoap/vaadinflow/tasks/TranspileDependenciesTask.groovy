@@ -151,7 +151,7 @@ class TranspileDependenciesTask extends DefaultTask {
     @OutputDirectory
     final Closure<File> appNodeModules = {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        vaadin.compatibilityMode ?  null : Paths.get(workingDir.canonicalPath, 'dist', NODE_MODULES).toFile()
+        vaadin.compatibilityMode ? null : Paths.get(workingDir.canonicalPath, 'dist', NODE_MODULES).toFile()
     }
 
     @Deprecated
@@ -312,10 +312,10 @@ class TranspileDependenciesTask extends DefaultTask {
                 .substitutions(['theme': vaadin.baseTheme])
                 .build().write()
 
-        LOGGER.info('Searching for JS modules...')
+        LOGGER.info("Searching for JS modules with scan strategy '${vaadin.scanStrategy}'...")
         Map<String, String> modules = [:]
         LogUtils.measureTime('Scanning Js modules completed') {
-            modules = ClassIntrospectionUtils.findJsModules(scan)
+            modules = findJsModules(vaadin, scan)
         }
 
         LOGGER.info('Validating JS module imports...')
@@ -324,19 +324,19 @@ class TranspileDependenciesTask extends DefaultTask {
         LOGGER.info('Checking for theme variants of JS modules...')
         replaceBaseThemeModules(modules)
 
-        LOGGER.info('Search for JS imports...')
+        LOGGER.info("Searching for JS imports with scan strategy '${vaadin.scanStrategy}'...")
         Map<String, String> jsImports = [:]
         LogUtils.measureTime('Scanning Js imports completed') {
-            jsImports = ClassIntrospectionUtils.findJsImportsByRoute(scan)
-                .collectEntries { k, v -> [ (k - 'frontend://') : v ] }
-                .collectEntries { k, v -> [ (DOTSLASH + k) : v ] }
-                .findAll { k, v -> !modules.containsKey(k.toString().replace(JAVASCRIPT_FILE_TYPE, '-es6.js')) }
+            jsImports = findJsImports(vaadin, scan)
+                    .collectEntries { k, v -> [(k - 'frontend://'): v] }
+                    .collectEntries { k, v -> [(DOTSLASH + k): v] }
+                    .findAll { k, v -> !modules.containsKey(k.toString().replace(JAVASCRIPT_FILE_TYPE, '-es6.js')) }
         }
 
-        LOGGER.info('Searching for CSS imports...')
-        Map<String,String> cssImports = [:]
+        LOGGER.info("Searching for CSS imports with scan strategy '${vaadin.scanStrategy}'...")
+        Map<String, String> cssImports = [:]
         LogUtils.measureTime('Scanning CSS imports completed') {
-            cssImports = ClassIntrospectionUtils.findCssImports(scan)
+            cssImports = findCssImports(vaadin, scan)
         }
 
         LOGGER.info('Validating CSS imports..')
@@ -397,6 +397,42 @@ class TranspileDependenciesTask extends DefaultTask {
     }
 
     @PackageScope
+    Map<String, String> findJsModules(VaadinFlowPluginExtension vaadin, ScanResult scan) {
+        switch (vaadin.scanStrategy) {
+            case 'route':
+                return ClassIntrospectionUtils.findJsModulesByRoute(scan)
+            case 'whitelist':
+                return ClassIntrospectionUtils.findJsModulesByWhitelist(scan)
+            default:
+                throw new GradleException("Scan strategy $vaadin.scanStrategy has not been implemented.")
+        }
+    }
+
+    @PackageScope
+    Map<String, String> findJsImports(VaadinFlowPluginExtension vaadin, ScanResult scan) {
+        switch (vaadin.scanStrategy) {
+            case 'route':
+                return ClassIntrospectionUtils.findJsImportsByRoute(scan)
+            case 'whitelist':
+                return ClassIntrospectionUtils.findJsImportsByWhitelist(scan)
+            default:
+                throw new GradleException("Scan strategy $vaadin.scanStrategy has not been implemented.")
+        }
+    }
+
+    @PackageScope
+    Map<String, String> findCssImports(VaadinFlowPluginExtension vaadin, ScanResult scan) {
+        switch (vaadin.scanStrategy) {
+            case 'route':
+                return ClassIntrospectionUtils.findCssImportsByRoute(scan)
+            case 'whitelist':
+                return ClassIntrospectionUtils.findCssImportsByWhitelist(scan)
+            default:
+                throw new GradleException("Scan strategy $vaadin.scanStrategy has not been implemented.")
+        }
+    }
+
+    @PackageScope
     void checkIdUsage(ScanResult scan) {
         if (!ignoreIdUsage) {
             List<String> ids = ClassIntrospectionUtils.findIdUsages(scan)
@@ -413,9 +449,8 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @PackageScope
     void checkJsModulesInCompatibilityMode(ScanResult scan) {
-        Map<String,String> modules = ClassIntrospectionUtils
-                .findJsModules(scan)
-                .findAll { k, v -> !v.startsWith(VAADIN_FLOW_PACKAGE) }
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        Map<String,String> modules = findJsModules(vaadin, scan).findAll { k, v -> !v.startsWith(VAADIN_FLOW_PACKAGE) }
         if (!modules.isEmpty()) {
             LOGGER.severe('Javascript modules is not supported in compatibility mode.')
             LOGGER.severe('The following classes contains @JSModule annotations')
@@ -428,9 +463,8 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @PackageScope
     void checkCssImportsInCompatibilityMode(ScanResult scan) {
-        Map<String,String> imports = ClassIntrospectionUtils
-                .findCssImports(scan)
-                .findAll { k, v -> !v.startsWith(VAADIN_FLOW_PACKAGE) }
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        Map<String,String> imports = findCssImports(vaadin, scan).findAll { k, v -> !v.startsWith(VAADIN_FLOW_PACKAGE) }
         if (!imports.isEmpty()) {
             LOGGER.severe('Css imports is not supported in compatibility mode.')
             LOGGER.severe('The following classes contains @CssImport annotations')
