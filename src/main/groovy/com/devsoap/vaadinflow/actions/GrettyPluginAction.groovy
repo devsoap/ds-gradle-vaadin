@@ -31,7 +31,10 @@ import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.CopySpec
 import org.gradle.api.file.DuplicatesStrategy
+import org.gradle.api.internal.plugins.DefaultAppliedPlugin
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.tooling.UnsupportedVersionException
+import org.gradle.util.VersionNumber
 
 import java.nio.file.Paths
 
@@ -65,6 +68,21 @@ class GrettyPluginAction extends PluginAction {
         project.gretty.servletContainer = SERVLET_CONTAINER
         project.gradle.taskGraph.whenReady {
             it.allTasks.each { buildingProduct |= it.name.contains('buildProduct') }
+        }
+
+        VersionNumber gradleVersion = VersionNumber.parse(project.gradle.gradleVersion)
+        if (gradleVersion.major >= 6) {
+            VersionNumber pluginVersion = VersionNumber.parse(project
+                    .buildscript
+                    .configurations
+                    .classpath
+                    .resolvedConfiguration
+                    .firstLevelModuleDependencies
+                    .find { it.moduleName == 'org.gretty.gradle.plugin' }
+                    .moduleVersion)
+            if (pluginVersion.major < 3) {
+                throw new UnsupportedVersionException('Using Gradle 6 requires a Gretty plugin >= 3.0.0')
+            }
         }
     }
 
