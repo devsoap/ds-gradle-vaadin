@@ -583,7 +583,7 @@ class TranspileDependenciesTask extends DefaultTask {
             String relativePath = it.path - workingDir.path - "static${File.separator}"
             String absolutePath = workingDir.canonicalPath + relativePath
             File file = new File(absolutePath)
-            GFileUtils.deleteFileQuietly(file)
+            GFileUtils.deleteQuietly(file)
             while (file.parentFile.listFiles().length == 0) {
                 file = file.parentFile
                 GFileUtils.deleteDirectory(file)
