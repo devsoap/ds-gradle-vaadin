@@ -9,7 +9,7 @@
  * Note: This script is only intended for use when developing the plugin itself
  */
 buildscript {
-    def gradlePluginDirectory =  System.getProperty("user.home")+'/Repositories/gradle-vaadin-flow/build/libs'
+    def gradlePluginDirectory =  System.getProperty("user.home") + '/Repositories/ds-gradle-vaadin/build/libs'
     def pluginVersion = '2.0-SNAPSHOT-'+ new Date().format('yyyyMMdd')
     repositories {
         mavenCentral()
@@ -28,7 +28,7 @@ buildscript {
 }
 
 repositories {
-    def gradlePluginDirectory =  System.getProperty("user.home")+'/Repositories/gradle-vaadin-flow/build/libs'
+    def gradlePluginDirectory =  System.getProperty("user.home")+'/Repositories/ds-gradle-vaadin/build/libs'
     def pluginVersion = '2.0-SNAPSHOT-'+ new Date().format('yyyyMMdd')
     flatDir dirs: gradlePluginDirectory
 }
