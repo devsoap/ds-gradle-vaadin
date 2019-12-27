@@ -30,7 +30,7 @@ import org.gradle.api.tasks.options.Option
  *
  * Usage:
  * <code>
- *     vaadinCreateWebComponent --dependency 'bower:PolymerElements/paper-slider:v2.0.5'
+ *     vaadinCreateWebComponent --dependency 'bower:paper-slider:v2.0.5'
  * </code>
  *
  * @author John Ahlroos

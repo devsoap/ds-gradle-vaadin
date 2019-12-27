@@ -64,7 +64,7 @@ class KotlinProjectTest extends FunctionalTest {
             run 'vaadinCreateComponent'
             run 'vaadinCreateComposite'
             run 'vaadinCreateWebTemplate'
-            run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider:v2.0.5'
+            run 'vaadinCreateWebComponent', '--dependency', 'bower:paper-slider:v2.0.5'
 
             BuildResult result = run'jar'
         then:
