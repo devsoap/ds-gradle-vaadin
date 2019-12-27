@@ -31,8 +31,8 @@ import spock.lang.Unroll
 @Smoke
 class VaadinVersionSmokeTest extends FunctionalTest {
 
-    private static final List<String> VERSIONS = ['10.0.4', '11.0.0', '12.0.0', '13.0.0']
-    private static final String NEXT_VERSION = '14.0.3'
+    private static final List<String> VERSIONS = ['10.0.4', '11.0.0', '12.0.0', '13.0.0', '14.0.0']
+    private static final String NEXT_VERSION = '15.0.0.alpha11'
 
     @Unroll
     void 'Test development mode with Vaadin #version'(String version) {
