@@ -33,7 +33,7 @@ class LegacyClientDependenciesTest extends FunctionalTest {
         setup:
         buildFile << """
                 vaadinClientDependencies {
-                    bower 'PolymerElements/paper-slider:v2.0.5'
+                    bower 'paper-slider:v2.0.5'
                 }
 
                 vaadin.autoconfigure()
@@ -82,7 +82,7 @@ class LegacyClientDependenciesTest extends FunctionalTest {
             '''.stripIndent()
             run 'vaadinCreateProject'
         when:
-            run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider:v2.0.5'
+            run 'vaadinCreateWebComponent', '--dependency', 'bower:paper-slider:v2.0.5'
             BuildResult result = run 'jar'
         then:
             result.task(':vaadinInstallClientDependencies').outcome == TaskOutcome.UP_TO_DATE
@@ -116,7 +116,7 @@ class LegacyClientDependenciesTest extends FunctionalTest {
                 '''.stripIndent()
             run 'vaadinCreateProject'
         when:
-            run 'vaadinCreateWebComponent', '--dependency', 'bower:PolymerElements/paper-slider:v2.0.5'
+            run 'vaadinCreateWebComponent', '--dependency', 'bower:paper-slider:v2.0.5'
             run('jar')
         then:
 
