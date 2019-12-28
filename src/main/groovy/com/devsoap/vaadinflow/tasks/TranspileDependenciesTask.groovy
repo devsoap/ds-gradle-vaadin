@@ -17,6 +17,8 @@
  */
 package com.devsoap.vaadinflow.tasks
 
+import com.devsoap.license.Validator
+import com.devsoap.vaadinflow.VaadinFlowPlugin
 import com.devsoap.vaadinflow.actions.JavaPluginAction
 import com.devsoap.vaadinflow.actions.SpringBootAction
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
@@ -90,6 +92,8 @@ class TranspileDependenciesTask extends DefaultTask {
             'bundleExcludes only supported in compatibility mode.'
     private static final String RUN_WITH_INFO_FOR_MORE_INFORMATION = 'Run with --info to get more information.'
     private static final String VAADIN_FLOW_PACKAGE = 'com.vaadin.flow'
+    private static final String UNSUPPORTED_ID_ANNOTATIONS_MSG =
+            'Unsupported @Id annotations found in polymer templates. '
 
     protected final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
     protected final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
@@ -106,6 +110,7 @@ class TranspileDependenciesTask extends DefaultTask {
     private final ListProperty<String> importExcludes = project.objects.listProperty(String)
 
     @Internal
+    @Deprecated // Issue fixed in Vaadin 14.1.2
     @Option(option = 'ignore-id-usage', description = 'Should @Id be checked (#285)')
     boolean ignoreIdUsage = false
 
@@ -434,16 +439,25 @@ class TranspileDependenciesTask extends DefaultTask {
 
     @PackageScope
     void checkIdUsage(ScanResult scan) {
-        if (!ignoreIdUsage) {
-            List<String> ids = ClassIntrospectionUtils.findIdUsages(scan)
-            if (!ids.isEmpty()) {
-                LOGGER.severe('Plugin does not currently support @Id annotations in Polymer templates')
-                LOGGER.severe('The following classes contains @Id annotations:')
-                ids.each { LOGGER.severe("\t$it") }
-                LOGGER.severe('Please replace them with model access instead.')
-                throw new GradleException('Unsupported @Id annotations found in polymer templates. ' +
-                        RUN_WITH_INFO_FOR_MORE_INFORMATION)
-            }
+        VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
+        if (vaadin.idSupported && Validator.isValidLicense(project, VaadinFlowPlugin.PRODUCT_NAME)) {
+            return
+        }
+
+        List<String> ids = ClassIntrospectionUtils.findIdUsages(scan)
+
+        if (!ids.empty && vaadin.idSupported) {
+            LOGGER.severe('@Id is a PRO only feature. Please register your license to enable it.')
+            logIdClasses(ids)
+            throw new GradleException(UNSUPPORTED_ID_ANNOTATIONS_MSG + RUN_WITH_INFO_FOR_MORE_INFORMATION)
+        }
+
+        if (!ids.empty && !ignoreIdUsage) {
+            LOGGER.severe('The Plugin does not currently support @Id annotations in ' +
+                    'Polymer templates with the selected Vaadin version. ' +
+                    'Please upgrade your Vaadin version to >= 14.1.2')
+            logIdClasses(ids)
+            throw new GradleException(UNSUPPORTED_ID_ANNOTATIONS_MSG + RUN_WITH_INFO_FOR_MORE_INFORMATION)
         }
     }
 
@@ -819,5 +833,12 @@ class TranspileDependenciesTask extends DefaultTask {
     @PackageScope
     static String frontendAlias(String path) {
         path.replaceFirst(/^\./, 'Frontend')
+    }
+
+    @PackageScope
+    static void logIdClasses(List<String> classes) {
+        LOGGER.severe('The following classes contains @Id annotations:')
+        classes.each { LOGGER.severe("\t$it") }
+        LOGGER.severe('Please replace them with model access instead.')
     }
 }
