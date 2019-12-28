@@ -35,6 +35,7 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.SourceSet
 import org.gradle.util.RelativePathUtil
+import org.gradle.util.VersionNumber
 
 /**
  * The main plugin extension
@@ -147,6 +148,16 @@ class VaadinFlowPluginExtension {
     boolean isSupportedVersion() {
         String[] supportedVersions = Versions.rawVersion('vaadin.supported.versions').split(',')
         getVersion().startsWithAny(supportedVersions)
+    }
+
+    /**
+     * Is @Id annotation supported by Vaadin version
+     *
+     * @since 1.3.2
+     */
+    boolean isIdSupported() {
+        VersionNumber vaadinVersion = VersionNumber.parse(getVersion())
+        vaadinVersion.major >= 14 && vaadinVersion.minor >= 1 && vaadinVersion.micro >= 2
     }
 
     /**
