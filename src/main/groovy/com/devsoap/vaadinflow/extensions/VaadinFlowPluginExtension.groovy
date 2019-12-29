@@ -60,6 +60,7 @@ class VaadinFlowPluginExtension {
     private static final String VAADIN_ROOT_PACKAGE = 'com.vaadin'
     private static final String GROOVY_STRING = 'groovy'
     private static final String ROUTE = 'route'
+    private static final int MAJOR_VERSION_14 = 14
 
     private final Property<String> version
     private final Property<Boolean> unsupportedVersion
@@ -75,7 +76,6 @@ class VaadinFlowPluginExtension {
     private final Project project
 
     private boolean dependencyApplied = false
-    private boolean statisticsApplied = false
     private boolean bomApplied = false
 
     VaadinFlowPluginExtension(Project project) {
@@ -157,7 +157,17 @@ class VaadinFlowPluginExtension {
      */
     boolean isIdSupported() {
         VersionNumber vaadinVersion = VersionNumber.parse(getVersion())
-        vaadinVersion.major >= 14 && vaadinVersion.minor >= 1 && vaadinVersion.micro >= 2
+        vaadinVersion.major >= MAJOR_VERSION_14 && vaadinVersion.minor >= 1 && vaadinVersion.micro >= 2
+    }
+
+    /**
+     * Is the statistics dependency supported by the project
+     *
+     * @since 1.3.3
+     */
+    boolean isStatisticsBowerDependencySupported() {
+        VersionNumber vaadinVersion = VersionNumber.parse(getVersion())
+        vaadinVersion.major < MAJOR_VERSION_14 || isCompatibilityMode()
     }
 
     /**
@@ -232,17 +242,9 @@ class VaadinFlowPluginExtension {
     }
 
     /**
-     * Has the submit statistics property not been set
-     */
-    boolean isSubmitStatisticsUnset() {
-        !statisticsApplied
-    }
-
-    /**
      * Should the plugin allow submitting statistics information to Vaadin Ltd.
      */
     void setSubmitStatistics(boolean enabled) {
-        statisticsApplied = true
         submitStatistics.set(enabled)
     }
 
@@ -474,7 +476,10 @@ class VaadinFlowPluginExtension {
 
     /**
      * Returns the opt-out statistics module
+     *
+     * @deprecated Only works for Vaadin 10-14 (using Bower).
      */
+    @Deprecated
     Dependency disableStatistics() {
         String version = Versions.rawVersion('vaadin.statistics.version')
         dependencyHandler.create("org.webjars.bowergithub.vaadin:vaadin-usage-statistics:$version")

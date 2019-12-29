@@ -122,7 +122,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
 
     private static void disableStatistics(Project project) {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        if (!vaadin.submitStatistics) {
+        if (!vaadin.submitStatistics && vaadin.statisticsBowerDependencySupported) {
             Dependency statistics = vaadin.disableStatistics()
             project.configurations[COMPILE_CONFIGURATION].dependencies.add(statistics)
             project.configurations.all { DefaultConfiguration config ->
