@@ -90,7 +90,7 @@ dependencies {
     compile localGroovy()
 
     compile group: 'com.moowork.node', name: 'com.moowork.node.gradle.plugin', version: '1.3.1'
-    compile 'com.devsoap:devsoap-license-plugin:1.0.9'
+    compile 'com.devsoap:devsoap-license-plugin:1.0.13'
     compile 'io.github.classgraph:classgraph:4.8.49'
     testCompile('org.spockframework:spock-core:1.3-groovy-2.5')
 
