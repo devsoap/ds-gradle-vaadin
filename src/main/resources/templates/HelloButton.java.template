@@ -4,24 +4,27 @@ import com.vaadin.flow.component.HasComponents;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.polymertemplate.EventHandler;
+import com.vaadin.flow.component.polymertemplate.Id;
 import com.vaadin.flow.component.polymertemplate.PolymerTemplate;
+import com.vaadin.flow.dom.Element;
 import com.vaadin.flow.templatemodel.TemplateModel;
 
 @Tag("hello-button")
 @JsModule("./hello-button.js")
 public class HelloButton extends PolymerTemplate<HelloButton.HelloButtonModel> {
 
+    @Id("caption")
+    private Element caption;
+
     public HelloButton() {
-        getModel().setCaption("Click Me!");
+       caption.setText("Click Me!");
     }
 
     @EventHandler
     private void sayHello() {
-        getModel().setCaption("You clicked, how can I help you? Click again!");
+        caption.setText("You clicked, how can I help you? Click again!");
         getParent().ifPresent(layout -> ((HasComponents)layout).add(new HelloButton()));
     }
 
-    public interface HelloButtonModel extends TemplateModel {
-        void setCaption(String greeting);
-    }
+    public interface HelloButtonModel extends TemplateModel { }
 }
