@@ -45,3 +45,11 @@ class ClientPackage {
 
     Map<String, String> dependencies
 }
+
+/**
+ * @since 1.3.3
+ */
+class PackageJson extends ClientPackage {
+
+    Map<String, Object> vaadin
+}

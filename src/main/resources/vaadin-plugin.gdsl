@@ -42,7 +42,6 @@ contributor(vaadinCtx, {
         method name: 'bom', type: gradleDependencyType
         method name: 'servletApi', type: gradleDependencyType
         method name: 'slf4j', type: gradleDependencyType
-        method name: 'disableStatistics', type: gradleDependencyType
         method name: 'groovy', type: gradleDependencyType
         method name: 'lumoTheme', type: gradleDependencyType
         method name: 'materialTheme', type: gradleDependencyType
@@ -53,7 +52,6 @@ contributor(vaadinCtx, {
         property name: "unsupportedVersion", type:  Boolean.name
         property name: 'productionMode', type: Boolean.name
         property name: 'compatibilityMode', type: Boolean.name
-        property name: 'submitStatistics', type: Boolean.name
         property name: 'baseTheme', type: String.name
         property name: 'whitelistedPackages', type: String[].name
         property name: 'scanStrategy', type: String.name
@@ -69,7 +67,6 @@ contributor(closureCtx, {
         property name: "unsupportedVersion", type:  Boolean.name
         property name: 'productionMode', type: Boolean.name
         property name: 'compatibilityMode', type: Boolean.name
-        property name: 'submitStatistics', type: Boolean.name
         property name: 'baseTheme', type: String.name
         property name: 'whitelistedPackages', type: String[].name
         property name: 'scanStrategy', type: String.name

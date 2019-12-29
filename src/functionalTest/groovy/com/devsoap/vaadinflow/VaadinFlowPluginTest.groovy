@@ -163,9 +163,11 @@ class VaadinFlowPluginTest extends FunctionalTest {
             result.output.contains 'Cannot set vaadin.version after dependencies have been added'
     }
 
+    @Deprecated // Only Bower
     void 'statistics are not submitted by default'() {
         setup:
             buildFile << '''
+                vaadin.compatibilityMode = true
                 vaadin.autoconfigure()
             '''.stripIndent()
         when:
@@ -175,13 +177,14 @@ class VaadinFlowPluginTest extends FunctionalTest {
             result.task(':dependencyInsight').outcome == SUCCESS
             result.output.contains('org.webjars.bowergithub.vaadin:vaadin-usage-statistics')
             result.output.contains('-> 1.0.0-optout')
-            result.output.contains('Allow Vaadin to gather usage statistics')
     }
 
+    @Deprecated // Only Bower
     void 'statistics are submitted when turned on'() {
         setup:
             buildFile << '''
                     vaadin.submitStatistics = true
+                    vaadin.compatibilityMode = true
                     vaadin.autoconfigure()
                 '''.stripIndent()
         when:
@@ -191,20 +194,6 @@ class VaadinFlowPluginTest extends FunctionalTest {
             result.task(':dependencyInsight').outcome == SUCCESS
             result.output.contains('org.webjars.bowergithub.vaadin:vaadin-usage-statistics')
             !result.output.contains('-> 1.0.0-optout')
-            !result.output.contains('Allow Vaadin to gather usage statistics')
-    }
-
-    void 'statistics message turned off when set to false'() {
-        setup:
-            buildFile << '''
-                    vaadin.submitStatistics = false
-                    vaadin.autoconfigure()
-                '''.stripIndent()
-        when:
-            BuildResult result = run('dependencyInsight', '--dependency',
-                'org.webjars.bowergithub.vaadin:vaadin-usage-statistics')
-        then:
-            !result.output.contains('Allow Vaadin to gather usage statistics')
     }
 
     void 'fail if un-versioned dependency is applied before BOM'() {

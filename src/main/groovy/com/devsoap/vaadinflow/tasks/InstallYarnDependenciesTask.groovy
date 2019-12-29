@@ -22,7 +22,7 @@ import static com.devsoap.vaadinflow.util.ClassIntrospectionUtils.getAnnotationS
 
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
-import com.devsoap.vaadinflow.models.ClientPackage
+import com.devsoap.vaadinflow.models.PackageJson
 import com.devsoap.vaadinflow.util.ClientPackageUtils
 import com.devsoap.vaadinflow.util.VaadinYarnRunner
 import com.devsoap.vaadinflow.util.WebJarHelper
@@ -123,8 +123,10 @@ class InstallYarnDependenciesTask extends DefaultTask {
         }
 
         JsonSlurper json = new JsonSlurper()
-        ClientPackage pkg = vaadin.compatibilityMode ?
-                json.parse(packageJson) as ClientPackage : json.parse(appPackageJson) as ClientPackage
+        PackageJson pkg = vaadin.compatibilityMode ?
+                json.parse(packageJson) as PackageJson : json.parse(appPackageJson) as PackageJson
+
+        pkg.vaadin = ['disableUsageStatistics': !vaadin.submitStatistics]
 
         pkg.dependencies = pkg.dependencies ?: [:]
 

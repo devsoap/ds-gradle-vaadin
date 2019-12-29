@@ -139,11 +139,6 @@ class VaadinFlowPluginAction extends PluginAction {
             LOGGER.warning('vaadin.version is not set, falling back to latest Vaadin version')
         }
 
-        if (vaadin.submitStatisticsUnset) {
-            LOGGER.warning('Allow Vaadin to gather usage statistics by setting ' +
-                    'vaadin.submitStatistics=true (hide this message by setting it to false)')
-        }
-
         if (vaadin.compatibilityMode && Validator.isValidLicense(project, VaadinFlowPlugin.PRODUCT_NAME)) {
             LOGGER.warning(
                     RUNNING_IN_COMPATIBILITY_MODE_MESSAGE +
