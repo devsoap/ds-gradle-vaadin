@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Devsoap Inc.
+ * Copyright 2018-2020 Devsoap Inc.
  *
  * Licensed under the Creative Commons Attribution-NoDerivatives 4.0
  * International Public License (the "License"); you may not use this file
