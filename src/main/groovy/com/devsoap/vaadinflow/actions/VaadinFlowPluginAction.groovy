@@ -82,7 +82,6 @@ class VaadinFlowPluginAction extends PluginAction {
         project.with {
             tasks[PROCESS_RESOURCES].with {
                 dependsOn(VersionCheckTask.NAME)
-                dependsOn(WrapCssTask.NAME)
                 dependsOn(ConvertGroovyTemplatesToHTML.NAME)
             }
 
