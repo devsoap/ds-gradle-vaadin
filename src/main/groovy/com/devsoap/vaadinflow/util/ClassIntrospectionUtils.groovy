@@ -18,12 +18,14 @@
 package com.devsoap.vaadinflow.util
 
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
+import groovy.transform.PackageScope
 import groovy.util.logging.Log
 import io.github.classgraph.AnnotationInfo
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ClassInfo
 import io.github.classgraph.ClassInfoList
 import io.github.classgraph.ScanResult
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 
 import java.nio.file.Path
@@ -218,11 +220,18 @@ class ClassIntrospectionUtils {
      * @return
      *      the values of the css imports
      */
-    static final Map<String,String> findCssImportsByRoute(ScanResult scan) {
-        Map<String, String> imports = [:]
+    static final Map<String,Map<String,String>> findCssImportsByRoute(ScanResult scan) {
+        Map<String, Map<String,String>> imports = [:]
         List<String> processedClasses = []
         scan.getClassesWithAnnotation(ROUTE_FQN).each { ClassInfo ci ->
-            findImportModulesByDependencies(ci, imports, CSS_IMPORT_FQN, processedClasses)
+            findImportModulesByDependencies(ci, imports, CSS_IMPORT_FQN, processedClasses) { info, a ->
+                [
+                    'className' : info.name,
+                    'include' : a.parameterValues.include?.value,
+                    'id' : a.parameterValues.id?.value,
+                    'target' : a.parameterValues.themeFor?.value
+                ]
+            }
         }
         LOGGER.info("Scanned ${processedClasses.size()} classes.")
         imports
@@ -237,14 +246,30 @@ class ClassIntrospectionUtils {
      * @return
      *      the values of the css imports
      */
-    static final Map<String,String> findCssImportsByWhitelist(ScanResult scan) {
-        Map<String, String> imports = [:]
+    static final Map<String, Map<String,String>> findCssImportsByWhitelist(ScanResult scan) {
+        Map<String, Map<String,String>> imports = [:]
         scan.getClassesWithAnnotation(CSS_IMPORT_FQN).collect { ClassInfo ci ->
             ci.getAnnotationInfoRepeatable(CSS_IMPORT_FQN).each { AnnotationInfo a ->
-                imports[a.parameterValues.value.value.toString()] = ci.name
+                imports[a.parameterValues.value.value.toString()] = [
+                    'className' : ci.name,
+                    'include' : a.parameterValues.include?.value,
+                    'id' : a.parameterValues.id?.value,
+                    'target' : a.parameterValues.themeFor?.value
+                ]
             }
         }
         imports
+    }
+
+    static final Map<String, Map<String,String>> findCssImports(VaadinFlowPluginExtension vaadin, ScanResult scan) {
+        switch (vaadin.scanStrategy) {
+            case 'route':
+                return findCssImportsByRoute(scan)
+            case 'whitelist':
+                return findCssImportsByWhitelist(scan)
+            default:
+                throw new GradleException("Scan strategy $vaadin.scanStrategy has not been implemented.")
+        }
     }
 
     /**
@@ -269,18 +294,21 @@ class ClassIntrospectionUtils {
      *      the annotation to search for
      * @param processedClasses
      *      the accumulated processedClasses
+     * @param valueGenerator
+     *      the generator that generates the returned map values
      */
-    static final void findImportModulesByDependencies(ClassInfo info, Map<String, String> imports, String annotation,
-                                                      List<String> processedClasses) {
+    static final <T> void findImportModulesByDependencies(ClassInfo info, Map<String, T> imports, String annotation,
+                                                          List<String> processedClasses,
+                                                          Closure<T> valueGenerator = { i, a -> i.name }) {
         processedClasses << info.name
         if (info.hasAnnotation(annotation)) {
             info.getAnnotationInfoRepeatable(annotation).each { AnnotationInfo a ->
-                imports[a.parameterValues.value.value.toString()] = info.name
+                imports[a.parameterValues.value.value.toString()] = valueGenerator.call(info, a)
             }
         }
         info.classDependencies.each { ClassInfo childInfo ->
             if (!processedClasses.contains(childInfo.name)) {
-                findImportModulesByDependencies(childInfo, imports, annotation, processedClasses)
+                findImportModulesByDependencies(childInfo, imports, annotation, processedClasses, valueGenerator)
             }
         }
     }
