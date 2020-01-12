@@ -35,6 +35,10 @@ class ThemeTest extends FunctionalTest {
 
     void 'CSS styles are wrapped to HTML'() {
         setup:
+            compatibilityMode = true
+            buildFile << '''
+                vaadin.autoconfigure()
+            '''.stripIndent()
             File rootDir = testProjectDir.root
             File stylesDir = Paths.get(rootDir.canonicalPath,
                     'build', 'webapp-gen', 'frontend', 'styles').toFile()
@@ -47,8 +51,9 @@ class ThemeTest extends FunctionalTest {
             stylesDir.listFiles()[0].name == "${rootDir.name}-theme.html"
     }
 
-    void 'default theme is created'() {
+    void 'default legacy theme is created'() {
         setup:
+            compatibilityMode = true
             File rootDir = testProjectDir.root
             File webappDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'webapp').toFile()
             File frontendDir = new File(webappDir, 'frontend')
@@ -69,5 +74,31 @@ class ThemeTest extends FunctionalTest {
             uiFile.exists()
             uiFile.text.contains("@HtmlImport(\"frontend://styles/${cssFile.name - '.css'}.html\")")
             uiFile.text.contains('@Theme(Lumo.class)')
+    }
+
+    void 'default theme is created'() {
+        setup:
+            compatibilityMode = false
+            buildFile << '''
+                vaadin.autoconfigure()
+            '''.stripIndent()
+            File rootDir = testProjectDir.root
+            File stylesheetsDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'stylesheets').toFile()
+            File cssFile = new File(stylesheetsDir, 'theme.css')
+
+            File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
+            File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
+                    testProjectDir.root.name.toLowerCase()).toFile()
+            File viewFile = Paths.get(pkg.canonicalPath,
+                    "${testProjectDir.root.name.capitalize()}View.java").toFile()
+        when:
+            BuildResult result = run 'vaadinCreateProject'
+        then:
+            result.task(':vaadinCreateProject').outcome == SUCCESS
+            cssFile.exists()
+            cssFile.text.contains('This file contains the Application theme')
+            viewFile.exists()
+            viewFile.text.contains('@CssImport("./theme.css")')
+            viewFile.text.contains('@Theme(Lumo.class)')
     }
 }
