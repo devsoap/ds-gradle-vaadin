@@ -18,12 +18,12 @@
 package com.devsoap.vaadinflow.util
 
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
-import groovy.transform.PackageScope
 import groovy.util.logging.Log
 import io.github.classgraph.AnnotationInfo
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ClassInfo
-import io.github.classgraph.ClassInfoList
+import io.github.classgraph.Resource
+import io.github.classgraph.ResourceList
 import io.github.classgraph.ScanResult
 import org.gradle.api.GradleException
 import org.gradle.api.Project
@@ -335,19 +335,47 @@ class ClassIntrospectionUtils {
                 .scan()
     }
 
-    private static Map<String, Map<String,String>> findThemes(Project project) {
-        ClassLoader cl = getClassLoader(project)
-        ClassInfoList themeClasses = new ClassGraph()
-                .overrideClassLoaders(cl)
-                .enableClassInfo()
-                .scan()
-                .getClassesImplementing(ABSTRACT_THEME_FQN)
+    /**
+     * Finds CSS Files in the classpath of the project
+     *
+     * @param project
+     *      the project to scan
+     * @param paths
+     *      the paths to whitelist
+     * @return
+     *      the css files found in the project
+     */
+    static final Map<String, String> findCssInResources(Project project, Collection<String> paths) {
+        Map<String,String> cssFiles = [:]
+        new ClassGraph()
+            .overrideClassLoaders(getClassLoader(project))
+            .scan()
+            .withCloseable {
+                it.getResourcesWithExtension('css').each { Resource resource ->
+                    if (paths.find { resource.pathRelativeToClasspathElement.endsWith(it) }) {
+                        cssFiles[resource.pathRelativeToClasspathElement] = resource.contentAsString
+                    }
+                }
+            }
+        cssFiles
+    }
 
+    private static Map<String, Map<String,String>> findThemes(Project project) {
         Map<String, Map<String,String>> themes = [:]
-        themeClasses.each {
-            Object instance = cl.loadClass(it.name).newInstance()
-            themes.put(it.simpleName.toLowerCase(), [ 'baseUrl' :  instance.baseUrl, 'themeUrl' : instance.themeUrl ])
-        }
+        URLClassLoader cl = getClassLoader(project)
+        new ClassGraph()
+            .overrideClassLoaders(cl)
+            .enableClassInfo()
+            .scan()
+            .withCloseable {
+                it.getClassesImplementing(ABSTRACT_THEME_FQN).each {
+                    Object instance = cl.loadClass(it.name).newInstance()
+                    themes[it.simpleName.toLowerCase()] = [
+                        'baseUrl' :  instance.baseUrl.toString(),
+                        'themeUrl' : instance.themeUrl.toString()
+                    ]
+                }
+            }
         themes
     }
 
