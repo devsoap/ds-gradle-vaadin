@@ -131,8 +131,10 @@ class InstallYarnDependenciesTask extends DefaultTask {
         pkg.dependencies = pkg.dependencies ?: [:]
 
         // Add classpath dependencies to package.json
-        findNpmPackages(getAnnotationScan(project)).each { String name, String version ->
-            pkg.dependencies[name] = version
+        getAnnotationScan(project).withCloseable {
+            findNpmPackages(it).each { String name, String version ->
+                pkg.dependencies[name] = version
+            }
         }
 
         // Add dependencies to package.json

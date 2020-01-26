@@ -72,6 +72,7 @@ class TranspileDependenciesTask extends DefaultTask {
     // Need to be public for closure to have access to them
     static final String DOTSLASH = './'
     static final String JAVASCRIPT_FILE_TYPE = '.js'
+    static final String CSS_FILE_TYPE = '.css'
 
     private static final String PACKAGE_JSON_FILE = 'package.json'
     private static final String BOWER_COMPONENTS = 'bower_components'
@@ -372,7 +373,7 @@ class TranspileDependenciesTask extends DefaultTask {
         jsImports.each { p, c -> importsJs << "import '${frontendAlias(p)}';\n" }
 
         importsJs << '// CSS imports\n'
-        cssImports.each { p, c -> importsJs << "import '${frontendAlias(p) - '.css'}.js';\n" }
+        cssImports.each { p, c -> importsJs << "import '${frontendAlias(p) - CSS_FILE_TYPE}.js';\n" }
 
         LOGGER.info('Checking for legacy imports...')
         Map<String, File> legacyImports = ClassIntrospectionUtils.findHtmlImports(project, scan, vaadin.baseTheme)
@@ -805,9 +806,10 @@ class TranspileDependenciesTask extends DefaultTask {
 
     private void removeInvalidCSSImports(Map<String,String> imports) {
         imports.removeAll { p, c ->
-            File importFile = Paths.get(srcDir.canonicalPath, p.split(SLASH)).toFile()
+            String path = (p - CSS_FILE_TYPE) + JAVASCRIPT_FILE_TYPE
+            File importFile = Paths.get(srcDir.canonicalPath, path.split(SLASH)).toFile()
             if (!importFile.exists()) {
-                LOGGER.warning("$c: No Css import with the name '$p' could be found. Import ignored.")
+                LOGGER.warning("$c: No Css import with the name '$path' could be found. Import ignored.")
                 return true
             }
             false
