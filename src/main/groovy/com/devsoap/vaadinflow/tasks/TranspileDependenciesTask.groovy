@@ -469,7 +469,7 @@ class TranspileDependenciesTask extends DefaultTask {
         if (!modules.isEmpty()) {
             LOGGER.severe('Javascript modules is not supported in compatibility mode.')
             LOGGER.severe('The following classes contains @JSModule annotations')
-            modules.fineach { k, v -> LOGGER.severe("\t$v") }
+            modules.each { k, v -> LOGGER.severe("\t$v") }
             LOGGER.severe('Please use HTML imports instead.')
             throw new GradleException('Unsupported @JavascriptModule annotations found in compatibility mode. ' +
                     RUN_WITH_INFO_FOR_MORE_INFORMATION)
