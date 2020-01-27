@@ -101,4 +101,56 @@ class ThemeTest extends FunctionalTest {
             viewFile.text.contains('@CssImport("./theme.css")')
             viewFile.text.contains('@Theme(Lumo.class)')
     }
+
+    void 'CSSImports are wrapped'() {
+        setup:
+            compatibilityMode = false
+            extraPlugins['io.freefair.jsass-java'] = '4.1.6'
+            buildFile.delete()
+            initBuildFile()
+            buildFile << '''
+                    vaadin.autoconfigure()
+            '''.stripIndent()
+
+            run 'vaadinCreateProject'
+
+            File rootDir = testProjectDir.root
+            File stylesheetsDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'stylesheets').toFile()
+
+            new File(stylesheetsDir, 'sass-theme.scss').tap {
+                it.text = '$primary-color: green; label { color: $primary_color; }'
+            }
+
+            new File(stylesheetsDir, 'test/subdir-theme.scss').tap {
+                it.parentFile.mkdirs()
+                it.text = '$primary-color: red; label { color: $primary_color; }'
+            }
+
+            File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'java').toFile()
+            File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
+                    testProjectDir.root.name.toLowerCase()).toFile()
+
+            Paths.get(pkg.canonicalPath, "${testProjectDir.root.name.capitalize()}View.java").toFile()
+                    .tap {
+                it.text = it.text.replace('@CssImport("./theme.css")', """
+                    @CssImport("./theme.css")
+                    @CssImport("sass-theme.scss")
+                    @CssImport("test/subdir-theme.scss")
+                """.trim().stripIndent())
+            }
+
+            File srcDir = Paths.get(rootDir.canonicalPath, 'build',  'frontend', 'src').toFile()
+            File wrappedThemeCss = new File(srcDir, 'theme.js')
+            File wrappedSassCss = new File(srcDir, 'sass-theme.js')
+            File wrappedSubDirCss = new File(srcDir, 'test/subdir-theme.js')
+        when:
+            BuildResult result = run ('clean', 'vaadinWrapCss')
+        then:
+            result.task(':vaadinWrapCss').outcome == SUCCESS
+            wrappedThemeCss.exists()
+            wrappedSassCss.exists()
+            wrappedSassCss.text.contains('color: green')
+            wrappedSubDirCss.exists()
+            wrappedSubDirCss.text.contains('color: red')
+    }
 }
