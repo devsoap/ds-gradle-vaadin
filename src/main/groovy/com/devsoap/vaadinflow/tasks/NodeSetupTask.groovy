@@ -27,6 +27,7 @@ import org.gradle.api.artifacts.repositories.ArtifactRepository
 import org.gradle.api.artifacts.repositories.IvyArtifactRepository
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
@@ -107,7 +108,7 @@ class NodeSetupTask extends DefaultTask {
 
     private void copyNodeExe() {
         project.copy {
-            from nodeExeFile
+            from resolveSingle( variant.exeDependency )
             into variant.nodeBinDir
             rename 'node.+\\.exe', 'node.exe'
         }
@@ -118,6 +119,7 @@ class NodeSetupTask extends DefaultTask {
     }
 
     private void unpackNodeArchive() {
+        File nodeArchiveFile = resolveSingle( variant.archiveDependency )
         if ( nodeArchiveFile.name.endsWith( 'zip' ) ) {
             project.copy {
                 from project.zipTree( nodeArchiveFile )
@@ -160,14 +162,6 @@ class NodeSetupTask extends DefaultTask {
         if (!this.variant.windows) {
             new File( this.variant.nodeExec ).setExecutable( true )
         }
-    }
-
-    protected File getNodeExeFile() {
-        resolveSingle( variant.exeDependency )
-    }
-
-    protected File getNodeArchiveFile() {
-        resolveSingle( variant.archiveDependency )
     }
 
     private File resolveSingle( String name ) {

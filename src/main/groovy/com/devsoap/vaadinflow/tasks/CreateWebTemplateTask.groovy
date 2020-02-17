@@ -23,6 +23,8 @@ import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.models.WebTemplate
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
@@ -36,12 +38,18 @@ class CreateWebTemplateTask extends DefaultTask {
 
     static final String NAME = 'vaadinCreateWebTemplate'
 
+    @Input
+    @Optional
     @Option(option = 'name', description = 'Template name')
     String templateName
 
+    @Input
+    @Optional
     @Option(option = 'package', description = 'Template package')
     String templatePackage
 
+    @Input
+    @Optional
     @Option(option = 'tag', description = 'Template tag')
     String templateTag
 
