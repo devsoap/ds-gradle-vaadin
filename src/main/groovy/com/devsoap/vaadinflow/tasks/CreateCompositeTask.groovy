@@ -22,6 +22,8 @@ import com.devsoap.vaadinflow.creators.ComponentCreator
 import com.devsoap.vaadinflow.models.Composite
 import com.devsoap.vaadinflow.models.ProjectType
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
 
@@ -40,12 +42,18 @@ class CreateCompositeTask extends DefaultTask {
 
     static final String NAME = 'vaadinCreateComposite'
 
+    @Input
+    @Optional
     @Option(option = 'name', description = 'Component name')
     String componentName
 
+    @Input
+    @Optional
     @Option(option = 'package', description = 'Component package')
     String componentPackage
 
+    @Input
+    @Optional
     @Option(option = 'baseClass', description = 'Component base class')
     String baseClass
 

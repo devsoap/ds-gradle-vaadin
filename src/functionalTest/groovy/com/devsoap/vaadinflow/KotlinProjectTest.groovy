@@ -33,7 +33,7 @@ class KotlinProjectTest extends FunctionalTest {
 
     void 'Create a Kotlin project'() {
         setup:
-            extraPlugins = ['org.jetbrains.kotlin.jvm':'1.2.51']
+            extraPlugins = ['org.jetbrains.kotlin.jvm':'1.3.70']
             File rootDir = testProjectDir.root
             File javaSourceDir = Paths.get(rootDir.canonicalPath, 'src', 'main', 'kotlin').toFile()
             File pkg = Paths.get(javaSourceDir.canonicalPath, 'com', 'example',
@@ -55,7 +55,7 @@ class KotlinProjectTest extends FunctionalTest {
 
     void 'Kotlin project compiles'() {
         setup:
-            extraPlugins = ['org.jetbrains.kotlin.jvm':'1.2.51']
+            extraPlugins = ['org.jetbrains.kotlin.jvm':'1.3.70']
             buildFile << '''
                     vaadin.autoconfigure()
                 '''.stripIndent()

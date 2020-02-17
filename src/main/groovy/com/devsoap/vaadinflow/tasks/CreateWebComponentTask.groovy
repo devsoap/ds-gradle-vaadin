@@ -29,6 +29,8 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.options.Option
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.Input
 
 /**
  * Creates a new Web Component
@@ -52,15 +54,23 @@ class CreateWebComponentTask extends DefaultTask {
 
     static final String NAME = 'vaadinCreateWebComponent'
 
+    @Input
+    @Optional
     @Option(option = 'name', description = 'Component name')
     String componentName
 
+    @Input
+    @Optional
     @Option(option = 'package', description = 'Component package')
     String componentPackage
 
+    @Input
+    @Optional
     @Option(option = 'tag', description = 'Component tag')
     String componentTag
 
+    @Input
+    @Optional
     @Option(option = 'dependency', description = 'Component dependency (prefix with bower: or yarn:')
     String componentDependency
 

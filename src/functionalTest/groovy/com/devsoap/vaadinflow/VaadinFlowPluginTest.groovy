@@ -45,7 +45,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
         then:
             result.output.contains("Your gradle version (${version}.0) is too old.")
         where:
-            version = '4.10'
+            version = '5.6'
     }
 
     @Unroll
@@ -55,7 +55,7 @@ class VaadinFlowPluginTest extends FunctionalTest {
         then:
             result.task(':jar').outcome == SUCCESS
         where:
-            version = '5.6'
+            version = '6.0'
     }
 
     void 'server dependencies are applied to project'() {

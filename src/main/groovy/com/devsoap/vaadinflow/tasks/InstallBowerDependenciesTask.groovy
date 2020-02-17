@@ -29,6 +29,8 @@ import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 
 /**
@@ -43,11 +45,12 @@ class InstallBowerDependenciesTask extends DefaultTask {
 
     static final String NAME = 'vaadinInstallBowerDependencies'
 
-    final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
+    protected final File workingDir = project.file(VaadinClientDependenciesExtension.FRONTEND_BUILD_DIR)
 
-    final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
+    protected final VaadinYarnRunner yarnRunner = new VaadinYarnRunner(project, workingDir)
 
     @InputFile
+    @PathSensitive(PathSensitivity.ABSOLUTE)
     final File packageJson = new File(workingDir, 'package.json')
 
     @OutputFile

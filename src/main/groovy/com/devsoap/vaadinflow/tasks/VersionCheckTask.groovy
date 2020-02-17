@@ -25,6 +25,7 @@ import groovy.util.logging.Log
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.VersionNumber
@@ -43,25 +44,26 @@ class VersionCheckTask extends DefaultTask {
 
     static final String NAME = 'vaadinPluginVersionCheck'
 
+    static final String VERSION_CACHE_FILE = '.vaadin-gradle-flow-version.check'
+
     private static final String URL = "https://plugins.gradle.org/plugin/$VaadinFlowPlugin.PLUGIN_ID"
 
-    @InputFile
-    @OutputFile
-    @PackageScope
-    final File versionCacheFile = new File(project.buildDir, '.vaadin-gradle-flow-version.check')
+    private final File versionCacheFile = new File(project.buildDir, VERSION_CACHE_FILE)
 
     VersionCheckTask() {
         description = 'Checks if there is a newer version of the plugin available'
         group = 'Vaadin'
         project.afterEvaluate {
             boolean firstRun = false
-            if (!versionCacheFile.exists()) {
-                versionCacheFile.parentFile.mkdirs()
-                versionCacheFile.createNewFile()
+            if (!getVersionCacheFile()) {
+                new File(project.buildDir, VERSION_CACHE_FILE).with {
+                    it.parentFile.mkdirs()
+                    it.createNewFile()
+                }
                 firstRun = true
             }
 
-            long cacheAge = System.currentTimeMillis() - versionCacheFile.lastModified()
+            long cacheAge = System.currentTimeMillis() - getVersionCacheFile().lastModified()
             long cacheTime = TimeUnit.DAYS.toMillis(1)
             outputs.upToDateWhen { !firstRun && cacheAge < cacheTime }
             onlyIf { firstRun || cacheAge > cacheTime }
@@ -80,7 +82,7 @@ class VersionCheckTask extends DefaultTask {
         } else {
             LOGGER.info('You are using the latest plugin. Excellent!')
         }
-        versionCacheFile.text = latestVersion.toString()
+        getVersionCacheFile().text = latestVersion.toString()
     }
 
     /**
@@ -106,5 +108,13 @@ class VersionCheckTask extends DefaultTask {
             version = VersionNumber.UNKNOWN
         }
         version
+    }
+
+    /**
+     * Get version cache file
+     */
+    @OutputFile
+    protected File getVersionCacheFile() {
+        versionCacheFile
     }
 }
