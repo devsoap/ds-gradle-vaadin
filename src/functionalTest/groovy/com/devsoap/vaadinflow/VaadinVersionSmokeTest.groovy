@@ -20,6 +20,7 @@ package com.devsoap.vaadinflow
 import com.devsoap.spock.Smoke
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
+import org.junit.Ignore
 import spock.lang.Unroll
 
 /**
@@ -31,12 +32,34 @@ import spock.lang.Unroll
 @Smoke
 class VaadinVersionSmokeTest extends FunctionalTest {
 
-    private static final List<String> VERSIONS = ['10.0.4', '11.0.0', '12.0.0', '13.0.0', '14.0.0']
+    private static final List<String> LEGACY_VERSIONS = ['10.0.4', '11.0.0', '12.0.0', '13.0.0', '14.0.0']
+    private static final List<String> VERSIONS = ['15.0.0']
     private static final String NEXT_VERSION = '15.0.0.alpha11'
 
     @Unroll
     void 'Test development mode with Vaadin #version'(String version) {
         setup:
+        compatibilityMode = false
+        vaadinVersion = version
+        buildFile << '''
+                    vaadin.autoconfigure()
+                '''.stripIndent()
+        run 'vaadinCreateProject'
+        when:
+        BuildResult result = run 'jar'
+        BuildResult depInsightResult = run('dependencyInsight', '--dependency', 'com.vaadin:flow-server')
+        then:
+        result.task(':jar').outcome == TaskOutcome.SUCCESS
+        depInsightResult.task(':dependencyInsight').outcome == TaskOutcome.SUCCESS
+        depInsightResult.output.contains("com.vaadin:vaadin-core:$version")
+        where:
+        version << VERSIONS
+    }
+
+    @Unroll
+    void 'Test development mode with legacy Vaadin #version'(String version) {
+        setup:
+            compatibilityMode = true
             vaadinVersion = version
             buildFile << '''
                     vaadin.autoconfigure()
@@ -51,12 +74,13 @@ class VaadinVersionSmokeTest extends FunctionalTest {
             depInsightResult.task(':dependencyInsight').outcome == TaskOutcome.SUCCESS
             depInsightResult.output.contains("com.vaadin:vaadin-core:$version")
         where:
-            version << VERSIONS
+            version << LEGACY_VERSIONS
     }
 
     @Unroll
-    void 'Test production mode with Vaadin #version'(String version) {
+    void 'Test production mode with legacy Vaadin #version'(String version) {
         setup:
+            compatibilityMode = true
             vaadinVersion = version
             buildFile << '''
                     vaadin.productionMode = true
@@ -68,12 +92,31 @@ class VaadinVersionSmokeTest extends FunctionalTest {
         then:
             result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
         where:
-            version << VERSIONS
+            version << LEGACY_VERSIONS
+    }
+
+    @Unroll
+    void 'Test production mode with Vaadin #version'(String version) {
+        setup:
+        compatibilityMode = false
+        vaadinVersion = version
+        buildFile << '''
+                    vaadin.productionMode = true
+                    vaadin.autoconfigure()
+                '''.stripIndent()
+        run 'vaadinCreateProject'
+        when:
+        BuildResult result = run 'vaadinAssembleClient'
+        then:
+        result.task(':vaadinAssembleClient').outcome == TaskOutcome.SUCCESS
+        where:
+        version << VERSIONS
     }
 
     @Unroll
     void 'Test development mode with unsupported Vaadin #version'(String version) {
         setup:
+            compatibilityMode = false
             vaadinVersion = version
             buildFile << '''
                 repositories { vaadin.prereleases() }
@@ -85,7 +128,6 @@ class VaadinVersionSmokeTest extends FunctionalTest {
             BuildResult result = run 'jar'
             BuildResult depInsightResult = run('dependencyInsight', '--dependency', 'com.vaadin:flow-server')
         then:
-            result.task(':vaadinAssembleClient').outcome == TaskOutcome.SKIPPED
             result.task(':jar').outcome == TaskOutcome.SUCCESS
             depInsightResult.task(':dependencyInsight').outcome == TaskOutcome.SUCCESS
             depInsightResult.output.contains("com.vaadin:vaadin-core:$version")
@@ -96,6 +138,7 @@ class VaadinVersionSmokeTest extends FunctionalTest {
     @Unroll
     void 'Test production mode with unsupported Vaadin #version'(String version) {
         setup:
+            compatibilityMode = false
             vaadinVersion = version
             buildFile << '''
                 repositories { vaadin.prereleases() }

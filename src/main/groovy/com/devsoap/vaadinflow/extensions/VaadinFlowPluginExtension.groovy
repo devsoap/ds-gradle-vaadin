@@ -157,7 +157,8 @@ class VaadinFlowPluginExtension {
      */
     boolean isIdSupported() {
         VersionNumber vaadinVersion = VersionNumber.parse(getVersion())
-        vaadinVersion.major >= MAJOR_VERSION_14 && vaadinVersion.minor >= 1 && vaadinVersion.micro >= 2
+        vaadinVersion.major > MAJOR_VERSION_14 || (vaadinVersion.major == MAJOR_VERSION_14
+                && vaadinVersion.minor >= 1 && vaadinVersion.micro >= 2)
     }
 
     /**
