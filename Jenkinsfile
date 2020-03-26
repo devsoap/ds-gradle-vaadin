@@ -18,7 +18,7 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-        sh "./gradlew assemble -PBUILD_VERSION=${params.buildVersion}"
+        sh "./gradlew --build-cache assemble -PBUILD_VERSION=${params.buildVersion}"
       }
     }
 
@@ -27,7 +27,8 @@ pipeline {
         expression { params.publish }
       }
       steps {     
-        sh "./gradlew publishPlugins -PBUILD_VERSION=${params.buildVersion} -Pgradle.publish.key=${env.GRADLE_PUBLISH_KEY} -Pgradle.publish.secret=${env.GRADLE_PUBLISH_SECRET}"
+        sh "./gradlew --build-cache publishPlugins -PBUILD_VERSION=${params.buildVersion} -Pgradle.publish.key=${env
+        .GRADLE_PUBLISH_KEY} -Pgradle.publish.secret=${env.GRADLE_PUBLISH_SECRET}"
         archiveArtifacts artifacts: '**/build/libs/*.jar', fingerprint: true
       }
     }
@@ -37,7 +38,7 @@ pipeline {
         expression { params.documentation }
       }
       steps {
-        sh "./gradlew groovyDoc -PBUILD_VERSION=${params.buildVersion}"
+        sh "./gradlew --build-cache groovyDoc -PBUILD_VERSION=${params.buildVersion}"
       }
     }
 
@@ -64,7 +65,7 @@ pipeline {
 
     stage('Cleanup') {
       steps {
-        sh "./gradlew clean"
+        sh "./gradlew --build-cache clean"
         sh "rm -rf /tmp/docs"
       }
     }
