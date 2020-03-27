@@ -154,9 +154,13 @@ groovydoc {
  * Testing & Quality
  *
  ***********************************************************************************************************************/
+
+test.outputs.upToDateWhen { false } // Tests should not be cached
+
 task functionalTest(type: Test) {
     dependsOn test, jar
     group = 'Verification'
+    outputs.upToDateWhen { false } // Tests should not be cached
 
     systemProperties = System.properties as Map
     if (!systemProperties['spock.configuration']) {
@@ -187,6 +191,8 @@ task functionalTest(type: Test) {
         exceptionFormat = 'full'
         showStandardStreams = true
     }
+
+
 }
 check.dependsOn functionalTest
 
