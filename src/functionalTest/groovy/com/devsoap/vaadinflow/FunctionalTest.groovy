@@ -114,7 +114,7 @@ class FunctionalTest extends Specification {
         System.setProperty('vaadin.compatibilityMode', compatibilityMode.toString() )
         GradleRunner runner = GradleRunner.create()
                 .withProjectDir(testProjectDir.root)
-                .withArguments(['--stacktrace', '--info'] + (args as List))
+                .withArguments(['--stacktrace', '--info', '--build-cache'] + (args as List))
                 .withPluginClasspath()
         config.run(runner)
         println "Running gradle ${runner.arguments.join(' ')}"
@@ -133,7 +133,7 @@ class FunctionalTest extends Specification {
         System.setProperty('vaadin.compatibilityMode', compatibilityMode.toString() )
         GradleRunner runner = GradleRunner.create()
                 .withProjectDir(testProjectDir.root)
-                .withArguments(['--stacktrace', '--info'] + (args as List))
+                .withArguments(['--stacktrace', '--info', '--build-cache'] + (args as List))
                 .withPluginClasspath()
         config.run(runner)
         println "Running gradle ${args.join(' ')}"
@@ -165,6 +165,22 @@ class FunctionalTest extends Specification {
 
     private void initSettingsFile() {
         settingsFile = testProjectDir.newFile('settings.gradle')
+        settingsFile << """
+        plugins {
+            id "com.devsoap.cache" version "1.0.2"
+        }
+
+        devsoap {
+            email = '${ System.getenv('DEVSOAP_EMAIL') }'
+            key = '${ System.getenv('DEVSOAP_KEY') }'
+        }
+
+        buildCache {
+            local {
+                enabled = false
+            }
+        }
+        """.stripIndent()
     }
 
     private String getOfflineCachePath() {
