@@ -49,8 +49,8 @@ class LogUtils {
         result
     }
 
-    static final void printIfNotPrintedBefore(Project project, String message, boolean licensed) {
-        SingletonPrinter.instance.printIfNotPrintedBefore(project, message, licensed)
+    static final void printIfNotPrintedBefore(Project project, String message) {
+        SingletonPrinter.instance.printIfNotPrintedBefore(project, message)
     }
 
     @Log('LOGGER')
@@ -83,12 +83,10 @@ class LogUtils {
 
         private final Map<String, Boolean> messageStatus = [:]
 
-        void printIfNotPrintedBefore(Project project, String message, boolean licensed) {
+        void printIfNotPrintedBefore(Project project, String message) {
             messageStatus.putIfAbsent(message, true)
             if ( messageStatus[message] ) {
-                if (!licensed) {
-                    project.logger.quiet(message)
-                } else if (project.logger.lifecycleEnabled) {
+                if (project.logger.lifecycleEnabled) {
                     project.logger.lifecycle(message)
                 }
                 messageStatus[message] = false

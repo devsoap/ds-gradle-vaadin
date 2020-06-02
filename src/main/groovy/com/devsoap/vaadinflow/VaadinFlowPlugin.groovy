@@ -17,7 +17,6 @@
  */
 package com.devsoap.vaadinflow
 
-import com.devsoap.license.Validator
 import com.devsoap.vaadinflow.actions.GrettyDeprecatedPluginAction
 import com.devsoap.vaadinflow.actions.GrettyPluginAction
 import com.devsoap.vaadinflow.actions.JavaPluginAction
@@ -113,7 +112,7 @@ class VaadinFlowPlugin implements Plugin<Project> {
                 register(VersionCheckTask.NAME, VersionCheckTask)
             }
 
-            Validator.afterLicenseValidated {
+            project.afterEvaluate {
                 disableStatistics(project)
                 enableProductionMode(project)
                 validateVaadinVersion(project)

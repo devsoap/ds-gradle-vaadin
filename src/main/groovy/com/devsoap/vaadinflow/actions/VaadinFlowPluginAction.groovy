@@ -19,10 +19,8 @@ package com.devsoap.vaadinflow.actions
 
 import static com.devsoap.license.DevsoapLicenseExtension.Credential
 
-import org.gradle.api.internal.artifacts.BaseRepositoryFactory
 import com.devsoap.license.DevsoapLicenseExtension
 import com.devsoap.license.DevsoapLicensePlugin
-import com.devsoap.license.Validator
 import com.devsoap.vaadinflow.VaadinFlowPlugin
 import com.devsoap.vaadinflow.extensions.VaadinFlowPluginExtension
 import com.devsoap.vaadinflow.tasks.AssembleClientDependenciesTask
@@ -30,13 +28,13 @@ import com.devsoap.vaadinflow.tasks.ConvertGroovyTemplatesToHTML
 import com.devsoap.vaadinflow.tasks.InstallBowerDependenciesTask
 import com.devsoap.vaadinflow.tasks.InstallYarnDependenciesTask
 import com.devsoap.vaadinflow.tasks.VersionCheckTask
-import com.devsoap.vaadinflow.tasks.WrapCssTask
 import com.devsoap.vaadinflow.util.LogUtils
 import com.devsoap.vaadinflow.util.Versions
 import com.devsoap.vaadinflow.util.WebJarHelper
 import groovy.util.logging.Log
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.internal.artifacts.BaseRepositoryFactory
 
 /**
  * Action taken when the Vaadin plugin is applied to a project
@@ -118,34 +116,18 @@ class VaadinFlowPluginAction extends PluginAction {
         super.executeAfterEvaluate(project)
 
         String vaadinVersion = Versions.version(PLUGIN_VERSION_KEY)
-        if (Validator.isValidLicense(project, VaadinFlowPlugin.PRODUCT_NAME)) {
-            DevsoapLicenseExtension devsoap = project.extensions[DevsoapLicenseExtension.NAME]
-            Credential credential = devsoap.getCredential(VaadinFlowPlugin.PRODUCT_NAME)
-            LogUtils.printIfNotPrintedBefore( project,
-                    "Using DS Gradle Vaadin Flow Plugin $vaadinVersion (Licensed to ${credential.email})",
-                    true
-            )
-        } else {
-            LogUtils.printIfNotPrintedBefore( project,
-                    "Using DS Gradle Vaadin Flow Plugin $vaadinVersion (UNLICENSED). Hide this message using --quiet " +
-                            'with PRO subscription.',
-                    false
-            )
-        }
+
+        LogUtils.printIfNotPrintedBefore( project, "Using DS Gradle Vaadin Flow Plugin $vaadinVersion")
 
         VaadinFlowPluginExtension vaadin = project.extensions[VaadinFlowPluginExtension.NAME]
         if (!vaadin.versionSet) {
             LOGGER.warning('vaadin.version is not set, falling back to latest Vaadin version')
         }
 
-        if (vaadin.compatibilityMode && Validator.isValidLicense(project, VaadinFlowPlugin.PRODUCT_NAME)) {
+        if (vaadin.compatibilityMode) {
             LOGGER.warning(
                     RUNNING_IN_COMPATIBILITY_MODE_MESSAGE +
-                    'To disable compatibility mode set vaadin.compatibilityMode=false. (experimental)')
-        } else if (vaadin.compatibilityMode) {
-            LOGGER.warning(
-                    RUNNING_IN_COMPATIBILITY_MODE_MESSAGE +
-                    ' Running in NPM mode is only available for PRO subscribers.')
+                    'To disable compatibility mode set vaadin.compatibilityMode=false.')
         }
     }
 }

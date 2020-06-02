@@ -17,8 +17,6 @@
  */
 package com.devsoap.vaadinflow.tasks
 
-import com.devsoap.license.Validator
-import com.devsoap.vaadinflow.VaadinFlowPlugin
 import com.devsoap.vaadinflow.actions.JavaPluginAction
 import com.devsoap.vaadinflow.actions.SpringBootAction
 import com.devsoap.vaadinflow.extensions.VaadinClientDependenciesExtension
@@ -441,7 +439,7 @@ class TranspileDependenciesTask extends DefaultTask {
     @PackageScope
     void checkIdUsage(ScanResult scan) {
         VaadinFlowPluginExtension vaadin = project.extensions.getByType(VaadinFlowPluginExtension)
-        if (vaadin.idSupported && Validator.isValidLicense(project, VaadinFlowPlugin.PRODUCT_NAME)) {
+        if (vaadin.idSupported) {
             return
         }
 
