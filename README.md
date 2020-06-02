@@ -12,17 +12,6 @@ not yet support ES6 and helps with integrating with other useful Gradle plugins.
 
 To get started using the plugin have a look a the plugin documentation at https://docs.devsoap.com/vaadin_flow_gradle_plugin
 
-# Become PRO
-
-With a PRO subscription you will further get the following perks:
-
-* Early access to new features in the Gradle plugin
-* Priority treatment of bug issues on github
-* Access to PRO only documentation in DS Docs
-* A good and fuzzy feeling knowing you are supporting a Open Source project
-
-You can order your PRO subscription [here](https://devsoap.com/store/?product=gradle-vaadin-flow).
-
 # License
 
 This plugin is distributed under the Creative Commons Attribution-NoDerivatives 4.0 International Public License. For more 
