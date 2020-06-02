@@ -17,8 +17,6 @@
  */
 package com.devsoap.vaadinflow.extensions
 
-import com.devsoap.license.Validator
-import com.devsoap.vaadinflow.VaadinFlowPlugin
 import com.devsoap.vaadinflow.models.ProjectType
 import com.devsoap.vaadinflow.util.Versions
 import groovy.util.logging.Log
@@ -216,16 +214,9 @@ class VaadinFlowPluginExtension {
         if (System.getProperty(COMPATIBILITY_MODE_PROPERTY)?.toLowerCase() == TRUE) {
             return true
         }
-        if (Validator.isValidLicense(project, VaadinFlowPlugin.PRODUCT_NAME)) {
-            compatibilityMode.getOrElse(Boolean.parseBoolean(System.getProperty(COMPATIBILITY_MODE_PROPERTY,
+
+        compatibilityMode.getOrElse(Boolean.parseBoolean(System.getProperty(COMPATIBILITY_MODE_PROPERTY,
                     Boolean.FALSE.toString())))
-        } else {
-            LOGGER.severe('Vaadin 14 support is only available for PRO subscribers. ' +
-                    'Please provide your PRO credentials or set vaadin.compatibilityMode=true ' +
-                    'to run in compatibility mode for free.')
-            throw new GradleException('Vaadin 14 NPM support is only available for PRO subscribers. Set vaadin' +
-                    '.compatibilityMode=true to use the plugin for free.')
-        }
     }
 
     /**
