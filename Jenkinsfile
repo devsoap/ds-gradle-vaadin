@@ -13,6 +13,8 @@ pipeline {
      GRADLE_PUBLISH_KEY = credentials('GRADLE_PUBLISH_KEY')
      GRADLE_PUBLISH_SECRET = credentials('GRADLE_PUBLISH_SECRET')
      PRODUCT_SIGNATURE = credentials('license-server-product-signature')
+     DEVSOAP_EMAIL = credentials('DEVSOAP_EMAIL')
+     DEVSOAP_KEY = credentials('DEVSOAP_KEY')
   }
 
   stages {
