@@ -36,7 +36,7 @@ class ClientDependenciesTest extends FunctionalTest {
             vaadin.autoconfigure()
             '''.stripIndent()
         when:
-            BuildResult createResult = run 'vaadinCreateProject'
+            run 'vaadinCreateProject'
             BuildResult jarResult = run('jar')
             File build = Paths.get(testProjectDir.root.canonicalPath, 'build').toFile()
             File frontend = Paths.get(build.canonicalPath, 'frontend').toFile()
