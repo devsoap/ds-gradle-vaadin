@@ -1,0 +1,154 @@
+/*
+  * Copyright 2018-2020 Devsoap Inc.
+  *
+  * Licensed under the Creative Commons Attribution-NoDerivatives 4.0
+  * International Public License (the "License"); you may not use this file
+  * except in compliance with the License.
+  *
+  * You may obtain a copy of the License at
+  *
+  *      https://creativecommons.org/licenses/by-nd/4.0/
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+kind: pipeline
+name: default
+type: docker
+
+steps:
+
+  - name: Build Plugin
+    image: gradle:jdk8
+    volumes:
+      - name: gradle
+        path: /home/gradle/.gradle
+    commands:
+      - ./gradlew assemble
+    environment:
+      ORG_GRADLE_PROJECT_BUILD_VERSION: ${DRONE_TAG}
+      DEVSOAP_EMAIL:
+        from_secret: DEVSOAP_EMAIL
+      DEVSOAP_KEY:
+        from_secret: DEVSOAP_KEY
+
+  - name: Run Basic Tests
+    image: gradle:jdk8
+    volumes:
+      - name: gradle
+        path: /home/gradle/.gradle
+    commands:
+      - ./gradlew --stacktrace --info check
+    environment:
+      ORG_GRADLE_PROJECT_BUILD_VERSION: ${DRONE_TAG}
+      DEVSOAP_EMAIL:
+        from_secret: DEVSOAP_EMAIL
+      DEVSOAP_KEY:
+        from_secret: DEVSOAP_KEY
+    when:
+      not:
+        target:
+          - production
+
+  - name: Run Functional Tests
+    image: gradle:jdk8
+    volumes:
+      - name: gradle
+        path: /home/gradle/.gradle
+    commands:
+      - apt-get update -y
+      - apt-get install -y build-essential
+      - ./gradlew --stacktrace --info --parallel functionalTest
+    environment:
+      ORG_GRADLE_PROJECT_BUILD_VERSION: ${DRONE_TAG}
+      DEVSOAP_EMAIL:
+        from_secret: DEVSOAP_EMAIL
+      DEVSOAP_KEY:
+        from_secret: DEVSOAP_KEY
+    when:
+        target:
+          - tests
+
+  - name: Build Documentation
+    image: gradle:jdk8
+    volumes:
+      - name: gradle
+        path: /home/gradle/.gradle
+    commands:
+      - ./gradlew groovyDoc
+    environment:
+      ORG_GRADLE_PROJECT_BUILD_VERSION: ${DRONE_TAG}
+      DEVSOAP_EMAIL:
+        from_secret: DEVSOAP_EMAIL
+      DEVSOAP_KEY:
+        from_secret: DEVSOAP_KEY
+    when:
+      target:
+        - production
+
+  - name: Publish Plugin
+    image: gradle:jdk8
+    volumes:
+      - name: gradle
+        path: /home/gradle/.gradle
+    commands:
+      - ./gradlew -Dgradle.publish.key=$${GRADLE_PUBLISH_KEY} -Dgradle.publish.secret=$${GRADLE_PUBLISH_SECRET} publishPlugins
+    environment:
+      ORG_GRADLE_PROJECT_BUILD_VERSION: ${DRONE_TAG}
+      GRADLE_PUBLISH_KEY:
+        from_secret: GRADLE_PUBLISH_KEY
+      GRADLE_PUBLISH_SECRET:
+        from_secret: GRADLE_PUBLISH_SECRET
+      DEVSOAP_EMAIL:
+        from_secret: DEVSOAP_EMAIL
+      DEVSOAP_KEY:
+        from_secret: DEVSOAP_KEY
+    when:
+      target:
+        - production
+
+  - name: Publish Documentation
+    image: drone/git
+    commands:
+      - git clone --depth=1 https://$${GITHUB_USERNAME}:$${GITHUB_PUSH_TOKEN}@github.com/devsoap/docs.git build/repo/docs
+      - cp -R build/docs/groovydoc build/repo/docs/docs/_vaadin_flow_gradle_plugin_api
+      - cd build/repo/docs
+      - git config user.email 'ci@devsoap.com'
+      - git config user.name 'Devsoap Build Bot'
+      - git checkout -b vaadin-flow-gradle-plugin/$${DRONE_TAG}
+      - git add docs/_vaadin_flow_gradle_plugin_api
+      - git commit -m "Update API documentation for Vaadin Flow Gradle Plugin ${DRONE_TAG}"
+      - git push origin vaadin-flow-gradle-plugin/$${DRONE_TAG}
+    environment:
+      GITHUB_USERNAME:
+        from_secret: GITHUB_USERNAME
+      GITHUB_PUSH_TOKEN:
+        from_secret: GITHUB_PUSH_TOKEN
+    when:
+      target:
+        - production
+
+  - name: Cleanup
+    image: gradle:jdk8
+    volumes:
+      - name: gradle
+        path: /home/gradle/.gradle
+    commands:
+      - rm -rf build
+      - ./gradlew clean
+      - ./gradlew --stop
+    environment:
+      ORG_GRADLE_PROJECT_BUILD_VERSION: ${DRONE_TAG}
+
+trigger:
+  ref:
+    include:
+      - refs/tags/**
+
+volumes:
+  - name: gradle
+    host:
+      path: /tmp/drone/gradle

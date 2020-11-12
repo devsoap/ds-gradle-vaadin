@@ -194,7 +194,6 @@ task functionalTest(type: Test) {
 
 
 }
-check.dependsOn functionalTest
 
 codenarc{
     toolVersion = '1.1'
